@@ -33,3 +33,4 @@ def classFactory(iface):  # pylint: disable=invalid-name
     #
     from .sensehawk_qc import SensehawkQC
     return SensehawkQC(iface)
+
