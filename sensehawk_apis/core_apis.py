@@ -1,12 +1,8 @@
 import requests
 import json
 import os
-
-
-CORE_URL = "https://core-stage-server.sensehawk.com"
-MAP_SERVER_URL = "https://mapserver.sensehawk.com/"
-TERRA_URL = "https://terra-stage-server.sensehawk.com"
-THERM_URL = "https://therm-stage-server.sensehawk.com"
+from .constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
+from .aws import create_presigned_url
 
 
 def get_project_details(project_uid, token):
@@ -81,3 +77,20 @@ def core_login(username, password):
         print(e)
         token = None
     return token
+
+
+def get_report_url(report_object):
+    """
+    Takes the sensehawk report object and returns the project name and the object url
+    """
+    service_object = report_object.get("service", None)
+    if not service_object:
+        return None
+    bucket_name = service_object["bucket"]
+    object_name = service_object["key"]
+    region_name = service_object["region"]
+    url = create_presigned_url(bucket_name, object_name, region_name)
+    if not url:
+        return None
+    return url
+
