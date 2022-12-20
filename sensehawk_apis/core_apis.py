@@ -1,14 +1,17 @@
 import requests
 import json
 import os
-from .constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
-from .aws import create_presigned_url
+from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL, STORAGE_URL, STORAGE_PRIVATE_KEY
+import jwt
+import base64
 
 
 def get_project_details(project_uid, token):
     url = CORE_URL+"/api/v1/projects/{}/?reports=true".format(project_uid)
     headers = {"Authorization": "Token {}".format(token)}
     project_details = requests.get(url, headers=headers).json()
+    if project_details.get("detail", None) == "Not found.":
+        return None
     return project_details
 
 
@@ -39,18 +42,21 @@ def get_project_geojson(project_uid, token, project_type):
     return res.json()
 
 
-def save_project_geojson(geojson_path, project_uid, token, project_type="terra"):
-    if not os.path.exists(geojson_path):
-        return False
-    geojson = json.load(open(geojson_path))
+def save_project_geojson(geojson, project_uid, token, project_type="terra"):
     project_details = get_project_details(project_uid, token)
     headers = {"Authorization": "Token {}".format(token)}
     url = None
     if project_type == "terra":
         url = TERRA_URL + "/qc/project/{}/features/?organization={}".format(project_uid,
                                                                             project_details["organization"]["uid"])
+        properties_to_remove = ["element", "uid"]
         for f in geojson["features"]:
-            f["properties"]["workflowProgress"] = {}
+            for p in properties_to_remove:
+                try:
+                    del f["properties"][p]
+                except KeyError:
+                    continue
+
     elif project_type == "therm":
         url = THERM_URL + "/qc/projects/{}?organization={}".format(project_uid,
                                                                    project_details["organization"]["uid"])
@@ -58,6 +64,8 @@ def save_project_geojson(geojson_path, project_uid, token, project_type="terra")
     if not url:
         return False
     res = requests.post(url, json={"geojson": geojson}, headers=headers)
+    with open("/home/kiranhegde/Downloads/new_test_test.json.geojson", "w") as fi:
+        json.dump(geojson, fi)
     return res.json()
 
 
@@ -86,11 +94,9 @@ def get_report_url(report_object):
     service_object = report_object.get("service", None)
     if not service_object:
         return None
-    bucket_name = service_object["bucket"]
-    object_name = service_object["key"]
-    region_name = service_object["region"]
-    url = create_presigned_url(bucket_name, object_name, region_name)
-    if not url:
-        return None
-    return url
-
+    data = {
+        "service": service_object,
+    }
+    private_key = base64.b64decode(STORAGE_PRIVATE_KEY).decode('utf-8')
+    payload = jwt.encode(data, private_key, algorithm='RS256')
+    return STORAGE_URL % payload

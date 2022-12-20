@@ -22,11 +22,14 @@
 #  ***************************************************************************/
 # """
 
-from ..core_apis import core_login
-from ..windows.load_save import LoadSaveWindow
+from ..sensehawk_apis.core_apis import core_login
+from ..windows.load import LoadWindow
+from ..constants import STORAGE_PRIVATE_KEY
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsMessageLog, Qgis
+from qgis.PyQt.QtCore import Qt
+
 import os
 
 LOGIN_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'login.ui'))
@@ -34,7 +37,7 @@ LOGIN_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'login.ui')
 
 class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
 
-    def __init__(self, widget=None):
+    def __init__(self, iface):
         """Constructor."""
         super(LoginWindow, self).__init__()
         self.setupUi(self)
@@ -42,7 +45,10 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
         self.user_name = None
         self.user_password = None
         self.core_token = None
-        self.widget = widget
+        self.iface = iface
+        # Add to the left docking area by default
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
+        self.load_window = None
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -57,12 +63,12 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
         self.core_token = core_login(self.user_name, self.user_password)
         if self.core_token:
             self.logger("Successfully logged in...")
-            self.show_next_window()
+            self.show_load_window()
         else:
             self.logger("incorrect username or password...", level=Qgis.Warning)
 
-    def show_next_window(self):
-        # Initialize load save window
-        self.load_save_window = LoadSaveWindow(self.core_token)
-        self.widget.setWidget(self.load_save_window)
-
+    def show_load_window(self):
+        # Initialize load save window (next window post login)
+        self.load_window = LoadWindow(self.core_token, self.iface)
+        self.load_window.show()
+        self.hide()

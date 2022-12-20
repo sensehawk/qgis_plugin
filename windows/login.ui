@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>LoginScreen</class>
- <widget class="QDockWidget" name="LoginScreen">
+ <class>LoginWidget</class>
+ <widget class="QDockWidget" name="LoginWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -35,6 +35,12 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
     <property name="placeholderText">
      <string>Password</string>
     </property>
@@ -47,6 +53,12 @@
       <width>89</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
     </property>
     <property name="text">
      <string>Login</string>
@@ -62,7 +74,7 @@
      </rect>
     </property>
     <property name="sizePolicy">
-     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
       <horstretch>0</horstretch>
       <verstretch>0</verstretch>
      </sizepolicy>
@@ -92,6 +104,11 @@
    <header>qgspasswordlineedit.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>userName</tabstop>
+  <tabstop>userPassword</tabstop>
+  <tabstop>loginButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

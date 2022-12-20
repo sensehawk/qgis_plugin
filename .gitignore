@@ -4,3 +4,4 @@
 # all pycache files
 *.pyc
 *__pycache__*
+*/__pycache__/*

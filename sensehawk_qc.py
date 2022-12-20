@@ -21,14 +21,13 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction, QApplication, QMainWindow, QDockWidget
 # Initialize Qt resources from file resources.py
 from .resources import *
 
 # Import the code for the DockWidget
-from .windows.load_save import LoadSaveWindow
 from .windows.login import LoginWindow
 
 import os
@@ -73,7 +72,6 @@ class SensehawkQC:
         #print "** INITIALIZING SensehawkQC"
 
         self.pluginIsActive = False
-        self.dockwidget = QDockWidget()
 
 
     # noinspection PyMethodMayBeStatic
@@ -216,11 +214,7 @@ class SensehawkQC:
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            # Add the empty dock widget created at init to the left dock widget area
-            self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
-
             # Initialize login window
-            self.login_window = LoginWindow(widget=self.dockwidget)
-            self.dockwidget.setWidget(self.login_window)
-
+            self.login_window = LoginWindow(self.iface)
+            self.login_window.show()
 
