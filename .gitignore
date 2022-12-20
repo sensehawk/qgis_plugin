@@ -1,2 +1,6 @@
 # ignore ALL SECRET files
 *SECRET*
+
+# all pycache files
+*.pyc
+*__pycache__*
