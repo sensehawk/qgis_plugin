@@ -1,7 +1,8 @@
-from ..constants import SCM_URL, CLIP_FUNCTION_URL
+from ..constants import SCM_URL
 import requests
 from .core_apis import get_project_details, get_report_url, get_project_geojson
 from .terra_apis import get_terra_classmaps
+from ..utils import combined_geojson
 
 
 def get_models_list(project_uid):
@@ -38,19 +39,3 @@ def approve(project_uid, user_email, token):
     response = requests.request("POST", url, json=request_body)
     return response.json()
 
-
-def clip_request(logger, project_details, geojson, clip_boundary_class_name):
-    try:
-        ortho_report_object = [r for r in project_details["reports"] if r.get("report_type", None) == "ortho"][0]
-    except Exception:
-        logger("No ortho found for project...", level=Qgis.Warning)
-        return None
-    ortho_url = get_report_url(ortho_report_object)
-    request_body = {"project_uid": project_details.get("uid", None),
-                    "raster_url": ortho_url,
-                    "geojson": geojson,
-                    "clip_boundary_class_name": clip_boundary_class_name}
-
-    response = requests.post(CLIP_FUNCTION_URL, json=request_body)
-    logger("Clipping request sent...")
-    return response.json()

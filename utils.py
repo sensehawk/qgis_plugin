@@ -97,61 +97,8 @@ def categorize_layer(class_maps=None):
 
     layer.triggerRepaint()
 
-def Clear_fields():
-    loaded_layers = qgis.utils.iface.activeLayer()
-    loaded_layers.startEditing()
-    loaded_layers.selectAll()
-    iface.actionAddFeature().trigger()
-    features = loaded_layers.getFeatures()
-    for feature in features:
-        feature['uid'] = None
-        feature['name'] = None
-        print(feature['uid'])
-        loaded_layers.updateFeature(feature)
-        loaded_layers.updateExtents()
-    loaded_layers.removeSelection()
 
-
-def vlayer_load(geojson, project_details):
-
-    vlayer_dicto = project_details['asset']['name'], project_details['group']['name']
-    project_name = project_details['name']
-    asset_group_name = '_'.join(vlayer_dicto)
-
-    # saving json from the server at C:\Users\user_name\Documents\QgisQc_backup as a Backup
-    user_name = os.getlogin()
-    Bkup_path = os.path.join(f'C:\\Users\\{user_name}\\Documents\\QgisQc_backup\\{asset_group_name}\\{project_name}')
-    geojson_path = os.path.join(f'C:\\Users\\{user_name}\\Documents\\QgisQc_backup\\{asset_group_name}\\{project_name}', "{}.json".format(project_name))
-
-    # separating tables and issues
-
-    if not os.path.isdir(Bkup_path):
-        os.makedirs(Bkup_path)
-
-    separated = {'table': [], 'issue': []}
-    features = geojson['features']
-    for feature in features:
-        if feature['properties']['class_name'] == 'table':
-            separated['table'].append(feature)
-        else:
-            separated['issue'].append(feature)
-
-    template = {'type': 'FeatureCollection', 'features': []}
-    for class_name, features in separated.items():
-        template["features"] = features
-        o_path = geojson_path.replace(".json", f"_{class_name}.json")
-        with open(o_path, "w") as fi:
-            json.dump(template, fi)
-        vlayer = QgsVectorLayer(o_path, project_name+f'{class_name}', "ogr")
-        QgsProject.instance().addMapLayer(vlayer)
-
-        # coloring the layers
-        categorized_layer()
-
-        # clear uid and name fields to avoid duplicate keys
-        Clear_fields()
-
-def load_vectors(qgis_project, project_details, project_type, class_maps, class_groups,
+def load_vectors(project_details, project_type, class_maps, class_groups,
                  raster_bounds, core_token, logger):
     project_uid = project_details["uid"]
 
@@ -164,7 +111,7 @@ def load_vectors(qgis_project, project_details, project_type, class_maps, class_
                                                                        raster_bounds[1],
                                                                        raster_bounds[2],
                                                                        raster_bounds[3])).asJson())
-        extent_feature = {"type": "Feature", "properties": {"name": "Ortho Extent", "class_name": None},
+        extent_feature = {"type": "Feature", "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None},
                           "geometry": extent_geometry}
         geojson["features"] += [extent_feature]
 
@@ -217,14 +164,13 @@ def load_vectors(qgis_project, project_details, project_type, class_maps, class_
 
     logger("Saving project geojsons...")
 
+    vlayers = []
     # Load vectors
     for geojson_path in geojson_paths:
         vlayer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
-        qgis_project.addMapLayer(vlayer)
-        # Apply styling
-        categorize_layer(class_maps=class_maps)
+        vlayers.append(vlayer)
 
-    return geojson_paths, len(geojson["features"])
+    return vlayers, geojson_paths, len(geojson["features"])
 
 def combined_geojson(geojson_paths):
     # Combine all geojsons

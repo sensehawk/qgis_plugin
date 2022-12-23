@@ -27,6 +27,8 @@ from ..sensehawk_apis.terra_apis import get_terra_classmaps
 
 from ..utils import download_file, categorize_layer, load_vectors
 
+from ..tasks import loadTask
+
 from ..windows.terra_tools import TerraToolsWindow
 
 import os
@@ -36,7 +38,7 @@ import json
 
 from qgis.PyQt import QtGui, QtWidgets, uic
 from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer, QgsRectangle, QgsFeature, \
-    QgsGeometry, QgsField, QgsCategorizedSymbolRenderer
+    QgsGeometry, QgsField, QgsCategorizedSymbolRenderer, QgsApplication, QgsTask
 from qgis.PyQt.QtCore import Qt, QVariant
 from qgis.gui import QgsMessageBar
 import qgis
@@ -53,7 +55,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         """Constructor."""
         super(LoadWindow, self).__init__()
         self.setupUi(self)
-        self.loadProject.clicked.connect(self.load_project)
+        self.loadProject.clicked.connect(self.start_project_load)
         self.toolsButton.clicked.connect(self.show_tools_window)
         self.project_type = None
         self.project_uid = None
@@ -75,68 +77,33 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
-    def load_project(self):
-        self.project_type = self.projectType.currentText().lower()
-        self.logger('Loading SenseHawk {} project...'.format(self.project_type))
-        self.project_uid = self.projectUid.text()
-        self.logger('UID specified: {}'.format(self.project_uid))
-        if not self.project_uid:
-            self.logger('Please specify project UID', level=Qgis.Warning)
+    def load_callback(self, load_task_status, load_task):
+        if load_task_status != 3:
             return None
-
-        # Get project details from core
-        self.project_details = get_project_details(self.project_uid, self.core_token)
-        if not self.project_details:
-            self.logger('Project not found', level=Qgis.Warning)
-            return None
-
-        # Get the class maps for vectors from terra / therm
-        if self.project_type == "terra":
-            self.class_maps, self.class_groups = get_terra_classmaps(self.project_details, self.core_token)
-
-        # Get base url for ortho tiles
-        base_orthotiles_url = get_ortho_tiles_url(self.project_uid, self.core_token)
-
-        # Get metadata from the base url
-        ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
-        ortho_bounds = ortho_tiles_details["bounds"]
-        self.bounds = ortho_bounds
-
-        zmax = ortho_tiles_details["maxzoom"]
-        zmin = ortho_tiles_details["center"][-1]
-
-        orthotiles_url = "type=xyz&url=" + \
-                         base_orthotiles_url + "/{z}/{x}/{y}.png" + \
-                         "&zmax={}&zmin={}".format(zmax, zmin)
-        self.logger("Ortho tiles url: {}...".format(orthotiles_url))
-
-        # Load ortho tiles from url
-        rlayer = QgsRasterLayer(orthotiles_url, self.project_uid + "_ortho", 'wms')
+        self.logger("Load task started the load callback run...")
+        result = load_task.returned_values
+        rlayer = result['rlayer']
+        vlayers = result['vlayers']
+        # Add layers to the qgis project
         self.qgis_project.addMapLayer(rlayer)
-
-        # Load vectors
-        try:
-            self.geojson_paths, self.loaded_feature_count = load_vectors(self.qgis_project, self.project_details,
-                                                                        self.project_type, self.class_maps,
-                                                                        self.class_groups,
-                                                                        self.bounds, self.core_token, self.logger)
-        except Exception as e:
-            self.logger("Features not found...", level=Qgis.Warning)
-            return None
-
-        # Set load_successful variable to True
-        self.logger("Successfully loaded project...")
-        self.load_successful = True
-
+        for v in vlayers:
+            self.qgis_project.addMapLayer(v)
+        # Apply styling
+        categorize_layer(class_maps=self.class_maps)
         # Show tools window
         self.show_tools_window()
+
+    def start_project_load(self):
+        load_task = QgsTask.fromFunction("Load", loadTask, load_window=self)
+        QgsApplication.taskManager().addTask(load_task)
+        load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
     def show_tools_window(self):
         # Load the correct tools window
         if self.project_type == "terra" and self.load_successful:
             if not self.terra_tools_window:
                 # Initialize terra tools window
-                self.tools_window = TerraToolsWindow(self, iface)
+                self.tools_window = TerraToolsWindow(self, self.iface)
                 self.tools_window.show()
             else:
                 self.terra_tools_window.show()

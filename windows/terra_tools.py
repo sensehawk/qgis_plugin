@@ -23,13 +23,16 @@
 # """
 
 from ..sensehawk_apis.core_apis import core_login, save_project_geojson
-from ..sensehawk_apis.scm_apis import get_models_list, clip_request
+from ..sensehawk_apis.scm_apis import get_models_list
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
 from ..utils import categorize_layer, combined_geojson
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
+from ..tasks import clipRequest
+
+from ..constants import STORAGE_PRIVATE_KEY
 
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import QgsMessageLog, Qgis
+from qgis.core import QgsMessageLog, Qgis, QgsApplication
 from qgis.PyQt.QtCore import Qt
 import os
 from threading import Thread
@@ -50,7 +53,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.setupUi(self)
         self.backButton.clicked.connect(self.show_load_window)
         self.loadModelsButton.clicked.connect(self.load_models)
-        self.clipButton.clicked.connect(self.clip)
+        self.clipButton.clicked.connect(self.start_clip_task)
         self.saveProject.clicked.connect(self.save_project)
         self.load_window = load_window
         self.core_token = self.load_window.core_token
@@ -108,36 +111,24 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
     # Shortcut
     def save_layer(self):
         layer = self.iface.activeLayer()
+        if not isinstance(layer, qgis._core.QgsVectorLayer):
+            return None
+        # Deselect any selected features
+        layer.removeSelection()
         layer.commitChanges()
         categorize_layer(self.class_maps)
 
-    def clip(self):
-        clip_boundary_class_name = None
-        # Get the class_name for clip_boundary
-        for i in self.class_maps.items():
-            if i[1].get("name") == "clip_boundary":
-                clip_boundary_class_name = i[0]
-        if not clip_boundary_class_name:
-            self.logger("Please add clip_boundary feature type in Terra...", level=Qgis.Warning)
-            return None
-        geojson = combined_geojson(self.load_window.geojson_paths)
-        all_clip_feature_names = []
-        for f in geojson["features"]:
-            properties = f["properties"]
-            if properties["class_name"] == clip_boundary_class_name:
-                name = properties.get("name", None)
-                all_clip_feature_names.append(name)
-        n_clip_features = len(all_clip_feature_names)
-        n_unique_clip_names = len(list(set(all_clip_feature_names)))
-        # If there are no unique clip feature names or if any of them has None
-        if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
-            self.logger("Please provide unique name property to all clip_boundary features before clipping...", level=Qgis.Warning)
-            return None
-        clip_request(self.logger, self.project_details, geojson, clip_boundary_class_name)
+    def start_clip_task(self):
+        clip_task = clipRequest(self.logger, self.project_details, self.load_window.geojson_paths, self.class_maps)
+        QgsApplication.taskManager().addTask(clip_task)
 
     # Shortcut function
     def change_feature_type(self, class_name):
         layer = self.iface.activeLayer()
+        if not isinstance(layer, qgis._core.QgsVectorLayer):
+            self.logger("Activate a vector layer or select feature to change feature type...")
+            return None
+        layer.startEditing()
         # If there are selected items, change feature type for those or else change feature type of last added feature
         selected_features = list(layer.selectedFeatures())
         if selected_features:
@@ -206,6 +197,11 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         # 'P' key to change feature properties / show attributes table
         self.keyboard_shortcuts[80] = KeypressShortcut({"key_code": 80,
                                                         "name": "Show attribute table",
+                                                        "function": "iface.showAttributeTable(iface.activeLayer())",
+                                                        "shortcut_type": "QGIS tools"})
+        # 'E' key to toggle editing of selected layer
+        self.keyboard_shortcuts[69] = KeypressShortcut({"key_code": 69,
+                                                        "name": "Toggle selected layer edit",
                                                         "function": "iface.showAttributeTable(iface.activeLayer())",
                                                         "shortcut_type": "QGIS tools"})
 

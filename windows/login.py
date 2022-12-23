@@ -54,8 +54,10 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def login(self):
-        self.user_name = self.userName.text()
-        self.user_password = self.userPassword.text()
+        # self.user_name = self.userName.text()
+        # self.user_password = self.userPassword.text()
+        self.user_name = "kiranh@sensehawk.com"
+        self.user_password = "%Fortress123&sens"
         self.logger('Logging in SenseHawk user {}...'.format(self.user_name))
         if not self.user_name or not self.user_password:
             self.logger('Username or Password empty...', level=Qgis.Warning)
