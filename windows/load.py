@@ -51,7 +51,7 @@ LOAD_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'load.ui'))
 
 
 class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
-    def __init__(self, core_token, iface):
+    def __init__(self, user_email, core_token, iface):
         """Constructor."""
         super(LoadWindow, self).__init__()
         self.setupUi(self)
@@ -61,6 +61,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.project_uid = None
         self.geojson_paths = []
         self.core_token = core_token
+        self.user_email = user_email
         self.project_details = None
         self.tools_window = None
         self.iface = iface

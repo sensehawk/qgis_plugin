@@ -22,17 +22,17 @@
 #  ***************************************************************************/
 # """
 
-from ..sensehawk_apis.core_apis import core_login, save_project_geojson
-from ..sensehawk_apis.scm_apis import get_models_list
+from ..sensehawk_apis.core_apis import core_login, save_project_geojson, get_project_geojson
+from ..sensehawk_apis.scm_apis import get_models_list, detect
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
 from ..utils import categorize_layer, combined_geojson
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
-from ..tasks import clipRequest
+from ..tasks import clipRequest, detectionTask
 
 from ..constants import STORAGE_PRIVATE_KEY
 
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import QgsMessageLog, Qgis, QgsApplication
+from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask
 from qgis.PyQt.QtCore import Qt
 import os
 from threading import Thread
@@ -53,6 +53,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.setupUi(self)
         self.backButton.clicked.connect(self.show_load_window)
         self.loadModelsButton.clicked.connect(self.load_models)
+        self.detectButton.clicked.connect(self.start_detect_task)
         self.clipButton.clicked.connect(self.start_clip_task)
         self.saveProject.clicked.connect(self.save_project)
         self.load_window = load_window
@@ -93,9 +94,9 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.models_dict = get_models_list(self.load_window.project_uid)
         models_list = list(self.models_dict.keys())
         if models_list:
-            list_items = ["Select detection model..."] + models_list
+            list_items = models_list
         else:
-            list_items = ["No models available..."]
+            list_items = ["No models available"]
         # Clear list to avoid duplicates
         self.detectionModel.clear()
         self.detectionModel.addItems(list_items)
@@ -121,6 +122,27 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
     def start_clip_task(self):
         clip_task = clipRequest(self.logger, self.project_details, self.load_window.geojson_paths, self.class_maps)
         QgsApplication.taskManager().addTask(clip_task)
+
+    def detection_callback(self, task):
+        if task.returned_values:
+            self.logger(str(task.returned_values))
+
+    def start_detect_task(self):
+        self.logger("Detection called..")
+        geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
+        self.logger("Getting model information...")
+        model_name = self.detectionModel.currentText()
+        if model_name not in self.models_dict:
+            self.logger("Invalid model...")
+            return None
+        model_url = self.models_dict[model_name]
+        self.logger("Initiating detection request task...")
+        detection_task = QgsTask.fromFunction("Detect", detectionTask,
+                                              detection_task_input=[self.project_details, geojson, model_url,
+                                                                    self.load_window.user_email])
+        QgsApplication.taskManager().addTask(detection_task)
+        detection_task.statusChanged.connect(lambda:self.detection_callback(detection_task))
+        self.logger("Detection request made...")
 
     # Shortcut function
     def change_feature_type(self, class_name):

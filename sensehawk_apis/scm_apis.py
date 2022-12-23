@@ -12,22 +12,22 @@ def get_models_list(project_uid):
     return response.json()
 
 
-def detect(logger, project_uid, models_url, user_email, token):
+def detect(project_details, geojson, models_url, user_email):
     url = SCM_URL + "/predict"
-    project_details = get_project_details(project_uid, token)
     try:
         ortho_report_object = [r for r in project_details["reports"] if r.get("report_type", None) == "ortho"][0]
     except Exception:
-        logger("No ortho found for project...", level=Qgis.Warning)
+        return None
+    project_uid = project_details.get("uid", None)
+    if not project_uid:
         return None
     ortho_url = get_report_url(ortho_report_object)
-    tables_geojson = get_project_geojson(project_uid, token, "terra")
     request_body = {"data": {"ortho": ortho_url, "ml_models": models_url},
                     "details": {"project_uid": project_uid, "user_email": user_email},
-                    "geojson": tables_geojson
+                    "geojson": geojson
                     }
-    response = requests.request("POST", url, json=request_body)
-    return response.json()
+    response = requests.request("POST", url, json=request_body).json()
+    return response
 
 
 def approve(project_uid, user_email, token):

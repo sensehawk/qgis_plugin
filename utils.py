@@ -179,4 +179,3 @@ def combined_geojson(geojson_paths):
         features = json.load(open(geojson_path))["features"]
         geojson["features"] += features
     return geojson
-

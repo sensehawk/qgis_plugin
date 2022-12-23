@@ -44,7 +44,7 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
         super(LoginWindow, self).__init__()
         self.setupUi(self)
         self.loginButton.clicked.connect(self.start_login_task)
-        self.user_name = None
+        self.user_email = None
         self.user_password = None
         self.core_token = None
         self.iface = iface
@@ -71,6 +71,6 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
 
     def show_load_window(self):
         # Initialize load save window (next window post login)
-        self.load_window = LoadWindow(self.core_token, self.iface)
+        self.load_window = LoadWindow(self.user_email, self.core_token, self.iface)
         self.load_window.show()
         self.hide()

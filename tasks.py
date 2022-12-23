@@ -1,6 +1,7 @@
 from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
 from .sensehawk_apis.terra_apis import get_terra_classmaps
-from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login
+from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson
+from .sensehawk_apis.scm_apis import detect, approve
 from .utils import combined_geojson, load_vectors, get_project_details
 import requests
 from .constants import CLIP_FUNCTION_URL
@@ -122,16 +123,25 @@ class clipRequest(QgsTask):
 
 
 def loginTask(task, login_window):
-    login_window.user_name = login_window.userName.text()
+    login_window.user_email = login_window.userName.text()
     login_window.user_password = login_window.userPassword.text()
-    login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_name))
-    if not login_window.user_name or not login_window.user_password:
-        login_window.logger('Username or Password empty...', level=Qgis.Warning)
+    login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
+    if not login_window.user_email or not login_window.user_password:
+        login_window.logger('User email or Password empty...', level=Qgis.Warning)
         return None
-    login_window.core_token = core_login(login_window.user_name, login_window.user_password)
+    login_window.core_token = core_login(login_window.user_email, login_window.user_password)
     if login_window.core_token:
         login_window.logger("Successfully logged in...")
         return {"login_window": login_window, "task": task.description()}
     else:
-        login_window.logger("incorrect username or password...", level=Qgis.Warning)
+        login_window.logger("incorrect user email or password...", level=Qgis.Warning)
         return None
+
+
+def detectionTask(task, detection_task_input):
+    project_details, geojson, models_url, user_email = detection_task_input
+    try:
+        detect(project_details, geojson, models_url, user_email)
+        return {"task": task.description(), "Exception": None, "success": True}
+    except Exception as e:
+        return {"task": task.description(), "Exception": e, "success": False}
