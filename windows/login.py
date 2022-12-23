@@ -27,8 +27,10 @@ from ..windows.load import LoadWindow
 from ..constants import STORAGE_PRIVATE_KEY
 
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import QgsMessageLog, Qgis
+from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
 from qgis.PyQt.QtCore import Qt
+
+from ..tasks import loginTask
 
 import os
 
@@ -41,7 +43,7 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
         """Constructor."""
         super(LoginWindow, self).__init__()
         self.setupUi(self)
-        self.loginButton.clicked.connect(self.login)
+        self.loginButton.clicked.connect(self.start_login_task)
         self.user_name = None
         self.user_password = None
         self.core_token = None
@@ -53,21 +55,19 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
-    def login(self):
-        # self.user_name = self.userName.text()
-        # self.user_password = self.userPassword.text()
-        self.user_name = "kiranh@sensehawk.com"
-        self.user_password = "%Fortress123&sens"
-        self.logger('Logging in SenseHawk user {}...'.format(self.user_name))
-        if not self.user_name or not self.user_password:
-            self.logger('Username or Password empty...', level=Qgis.Warning)
+    def login_callback(self, login_task_status, login_task):
+        if login_task_status != 3:
             return None
-        self.core_token = core_login(self.user_name, self.user_password)
-        if self.core_token:
-            self.logger("Successfully logged in...")
-            self.show_load_window()
-        else:
-            self.logger("incorrect username or password...", level=Qgis.Warning)
+        self.logger("Login task started the login callback run...")
+        if not login_task.returned_values:
+            self.logger("Login task returned None...")
+            return None
+        self.show_load_window()
+
+    def start_login_task(self):
+        login_task = QgsTask.fromFunction("Login", loginTask, login_window=self)
+        QgsApplication.taskManager().addTask(login_task)
+        login_task.statusChanged.connect(lambda login_task_status: self.login_callback(login_task_status, login_task))
 
     def show_load_window(self):
         # Initialize load save window (next window post login)

@@ -1,6 +1,6 @@
 from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
 from .sensehawk_apis.terra_apis import get_terra_classmaps
-from .sensehawk_apis.core_apis import get_ortho_tiles_url
+from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login
 from .utils import combined_geojson, load_vectors, get_project_details
 import requests
 from .constants import CLIP_FUNCTION_URL
@@ -119,3 +119,21 @@ class clipRequest(QgsTask):
     def finished(self, result):
         if not result:
             self.logger("Clip request failed...")
+
+
+def loginTask(task, login_window):
+    # login_window.user_name = login_window.userName.text()
+    # login_window.user_password = login_window.userPassword.text()
+    login_window.user_name = "kiranh@sensehawk.com"
+    login_window.user_password = "%Fortress123&sens"
+    login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_name))
+    if not login_window.user_name or not login_window.user_password:
+        login_window.logger('Username or Password empty...', level=Qgis.Warning)
+        return None
+    login_window.core_token = core_login(login_window.user_name, login_window.user_password)
+    if login_window.core_token:
+        login_window.logger("Successfully logged in...")
+        return {"login_window": login_window, "task": task.description()}
+    else:
+        login_window.logger("incorrect username or password...", level=Qgis.Warning)
+        return None
