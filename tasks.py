@@ -122,10 +122,8 @@ class clipRequest(QgsTask):
 
 
 def loginTask(task, login_window):
-    # login_window.user_name = login_window.userName.text()
-    # login_window.user_password = login_window.userPassword.text()
-    login_window.user_name = "kiranh@sensehawk.com"
-    login_window.user_password = "%Fortress123&sens"
+    login_window.user_name = login_window.userName.text()
+    login_window.user_password = login_window.userPassword.text()
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_name))
     if not login_window.user_name or not login_window.user_password:
         login_window.logger('Username or Password empty...', level=Qgis.Warning)
