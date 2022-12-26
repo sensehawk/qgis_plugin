@@ -98,8 +98,7 @@ def categorize_layer(class_maps=None):
     layer.triggerRepaint()
 
 
-def load_vectors(project_details, project_type, class_maps, class_groups,
-                 raster_bounds, core_token, logger):
+def load_vectors(project_details, project_type, raster_bounds, core_token, logger):
     project_uid = project_details["uid"]
 
     # Download vectors
@@ -115,67 +114,14 @@ def load_vectors(project_details, project_type, class_maps, class_groups,
                           "geometry": extent_geometry}
         geojson["features"] += [extent_feature]
 
-    # Split geojson into groups for easy editing
-    # Split vectors into class groups if the project type is terra
-    # or else create class groups first for therm (Tables and Issues)
-    # Grouping all new features with NULL class_name into one group (Unknown in Terra and Issues in Therm)
-    if class_groups:
-        class_groups["Unknown"] = [None]
-        geojson_groups = {i:[] for i in class_groups}
-    else:
-        # If therm project, split into tables and issues
-        class_groups = {"Tables": ["table"], "Issues": [None]}
-        geojson_groups = {i:[] for i in class_groups}
+    # Save geojson
+    geojson_path = os.path.join(tempfile.gettempdir(), "{}.json".format(project_uid))
+    with open(geojson_path, "w") as fi:
+        json.dump(geojson, fi)
 
-    # Gather all known class names
-    known_class_names = []
-    for group in class_groups:
-        known_class_names += class_groups[group]
+    logger("Saving project geojson...")
 
-    logger("Class groups: "+str(class_groups))
-    logger("Class maps: "+str(class_maps))
-
-    # Loop through features and group them
-    for f in geojson["features"]:
-        class_name = f["properties"]["class_name"]
-        if class_name not in known_class_names:
-            class_name = None
-        # Find the group this feature belongs to
-        class_group = None
-        for group in class_groups:
-            if class_name in class_groups[group]:
-                class_group = group
-                break
-        if not class_group:
-            continue
-        geojson_groups[class_group].append(f)
-
-    # Save all geojson groups
-    geojson_paths = []
-    for geojson_group in geojson_groups:
-        grouped_features = geojson_groups[geojson_group]
-        if not grouped_features:
-            continue
-        geojson["features"] = grouped_features
-        geojson_path = os.path.join(tempfile.gettempdir(), "{}-{}.json".format(project_uid, geojson_group))
-        with open(geojson_path, "w") as fi:
-            json.dump(geojson, fi)
-        geojson_paths.append(geojson_path)
-
-    logger("Saving project geojsons...")
-
-    vlayers = []
     # Load vectors
-    for geojson_path in geojson_paths:
-        vlayer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
-        vlayers.append(vlayer)
+    vlayer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
 
-    return vlayers, geojson_paths, len(geojson["features"])
-
-def combined_geojson(geojson_paths):
-    # Combine all geojsons
-    geojson = json.load(open(geojson_paths[0]))
-    for geojson_path in geojson_paths[1:]:
-        features = json.load(open(geojson_path))["features"]
-        geojson["features"] += features
-    return geojson
+    return vlayer, geojson_path, len(geojson["features"])

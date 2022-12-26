@@ -25,9 +25,9 @@
 from ..sensehawk_apis.core_apis import core_login, save_project_geojson, get_project_geojson
 from ..sensehawk_apis.scm_apis import get_models_list, detect
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
-from ..utils import categorize_layer, combined_geojson
+from ..utils import categorize_layer
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
-from ..tasks import clipRequest, detectionTask
+from ..tasks import clipRequest, detectionTask, approveTask
 
 from ..constants import STORAGE_PRIVATE_KEY
 
@@ -40,6 +40,8 @@ from qgis.gui import QgsMapToolEmitPoint
 import qgis
 
 from qgis.utils import iface
+
+import json
 
 
 TERRA_TOOLS_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'terra_tools.ui'))
@@ -54,6 +56,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.backButton.clicked.connect(self.show_load_window)
         self.loadModelsButton.clicked.connect(self.load_models)
         self.detectButton.clicked.connect(self.start_detect_task)
+        self.approveButton.clicked.connect(self.start_approve_task)
         self.clipButton.clicked.connect(self.start_clip_task)
         self.saveProject.clicked.connect(self.save_project)
         self.load_window = load_window
@@ -63,9 +66,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.iface = iface
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-
         self.models_dict = {}
-
         ## Keyboard shortcuts
         self.keyboard_shortcuts = {}
         # Create the feature change shortcuts for this particular project using class maps
@@ -120,14 +121,14 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         categorize_layer(self.class_maps)
 
     def start_clip_task(self):
-        clip_task = clipRequest(self.logger, self.project_details, self.load_window.geojson_paths, self.class_maps)
+        clip_task = clipRequest(self.logger, self.project_details, self.load_window.geojson_path, self.class_maps)
         QgsApplication.taskManager().addTask(clip_task)
 
-    def detection_callback(self, task):
-        if task.returned_values:
-            self.logger(str(task.returned_values))
-
     def start_detect_task(self):
+        def callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(str(result))
         self.logger("Detection called..")
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
         self.logger("Getting model information...")
@@ -138,11 +139,23 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         model_url = self.models_dict[model_name]
         self.logger("Initiating detection request task...")
         detection_task = QgsTask.fromFunction("Detect", detectionTask,
-                                              detection_task_input=[self.project_details, geojson, model_url,
-                                                                    self.load_window.user_email])
+                                              detection_task_input=[self.project_details, geojson,
+                                                                    model_url, self.load_window.user_email])
+        detection_task.statusChanged.connect(lambda:callback(detection_task, self.logger))
         QgsApplication.taskManager().addTask(detection_task)
-        detection_task.statusChanged.connect(lambda:self.detection_callback(detection_task))
-        self.logger("Detection request made...")
+
+    def start_approve_task(self):
+        def callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(str(result))
+        self.logger("Approve called...")
+        geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
+        approve_task = QgsTask.fromFunction("Approve", approveTask,
+                                            approve_task_input=[self.project_details, geojson,
+                                                                self.load_window.user_email])
+        approve_task.statusChanged.connect(lambda:callback(approve_task, self.logger))
+        QgsApplication.taskManager().addTask(approve_task)
 
     # Shortcut function
     def change_feature_type(self, class_name):
@@ -237,16 +250,19 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
 
     def save_project(self):
         if self.load_window.load_successful:
-            self.logger("Combining following geojsons: "+str(self.load_window.geojson_paths))
-            # Combine all geojsons that were split when loading
-            geojson = combined_geojson(self.load_window.geojson_paths)
+            self.logger("Saving following geojson: "+str(self.load_window.geojson_path))
+            geojson = json.load(open(self.load_window.geojson_path))
+            if self.load_window.project_type == "terra":
+                for f in geojson["features"]:
+                    if not f["properties"]["class_id"]:
+                        f["properties"]["class_id"] = 0
             # Upload vectors
             self.logger('Saving SenseHawk project...')
             saved = save_project_geojson(geojson, self.load_window.project_uid, self.core_token, project_type=self.load_window.project_type)
             if saved:
-                self.logger("Save successful...")
+                self.logger(str(saved))
             else:
-                self.logger("Save failed...", Qgis.Warning)
+                self.logger("Save failed", Qgis.Warning)
 
 
 

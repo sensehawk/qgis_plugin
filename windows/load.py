@@ -59,7 +59,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.toolsButton.clicked.connect(self.show_tools_window)
         self.project_type = None
         self.project_uid = None
-        self.geojson_paths = []
+        self.geojson_path = None
         self.core_token = core_token
         self.user_email = user_email
         self.project_details = None
@@ -81,14 +81,15 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
     def load_callback(self, load_task_status, load_task):
         if load_task_status != 3:
             return None
-        self.logger("Load task started the load callback run...")
         result = load_task.returned_values
+        if not result:
+            self.logger("Load failed...", level=Qgis.Warning)
+            return None
         rlayer = result['rlayer']
-        vlayers = result['vlayers']
+        vlayer = result['vlayer']
         # Add layers to the qgis project
         self.qgis_project.addMapLayer(rlayer)
-        for v in vlayers:
-            self.qgis_project.addMapLayer(v)
+        self.qgis_project.addMapLayer(vlayer)
         # Apply styling
         categorize_layer(class_maps=self.class_maps)
         # Show tools window
@@ -118,7 +119,6 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
     def closeEvent(self, event):
         event.accept()
         # Delete project geojsons
-        for g in self.geojson_paths:
-            os.remove(g)
+        os.remove(self.geojson_path)
 
 

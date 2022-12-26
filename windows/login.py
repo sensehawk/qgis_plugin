@@ -58,9 +58,8 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
     def login_callback(self, login_task_status, login_task):
         if login_task_status != 3:
             return None
-        self.logger("Login task started the login callback run...")
         if not login_task.returned_values:
-            self.logger("Login task returned None...")
+            self.logger("Login task returned None...", level=Qgis.Warning)
             return None
         self.show_load_window()
 

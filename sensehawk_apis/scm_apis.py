@@ -2,7 +2,6 @@ from ..constants import SCM_URL
 import requests
 from .core_apis import get_project_details, get_report_url, get_project_geojson
 from .terra_apis import get_terra_classmaps
-from ..utils import combined_geojson
 
 
 def get_models_list(project_uid):
@@ -30,11 +29,10 @@ def detect(project_details, geojson, models_url, user_email):
     return response
 
 
-def approve(project_uid, user_email, token):
+def approve(project_details, geojson, user_email):
     url = SCM_URL + "/approve"
-    project_geojson = get_project_geojson(project_uid, token, "terra")
-    request_body = {"details": {"user_email": user_email, "project_uid": project_uid},
-                    "geojson": project_geojson
+    request_body = {"details": {"user_email": user_email, "project_uid": project_details.get("uid", None)},
+                    "geojson": geojson
                     }
     response = requests.request("POST", url, json=request_body)
     return response.json()

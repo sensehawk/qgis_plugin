@@ -2,9 +2,10 @@ from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
 from .sensehawk_apis.terra_apis import get_terra_classmaps
 from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson
 from .sensehawk_apis.scm_apis import detect, approve
-from .utils import combined_geojson, load_vectors, get_project_details
+from .utils import load_vectors, get_project_details
 import requests
 from .constants import CLIP_FUNCTION_URL
+import json
 
 
 def loadTask(task, load_window):
@@ -47,10 +48,11 @@ def loadTask(task, load_window):
 
     # Load vectors
     try:
-        vlayers, load_window.geojson_paths, load_window.loaded_feature_count = load_vectors(load_window.project_details,
-                                                                     load_window.project_type, load_window.class_maps,
-                                                                     load_window.class_groups,
-                                                                     load_window.bounds, load_window.core_token, load_window.logger)
+        vlayer, load_window.geojson_path, load_window.loaded_feature_count = load_vectors(load_window.project_details,
+                                                                                          load_window.project_type,
+                                                                                          load_window.bounds,
+                                                                                          load_window.core_token,
+                                                                                          load_window.logger)
 
     except Exception as e:
         load_window.logger(str(e), level=Qgis.Warning)
@@ -61,7 +63,7 @@ def loadTask(task, load_window):
     load_window.load_successful = True
     return {'load_window': load_window,
             'rlayer': rlayer,
-            'vlayers': vlayers,
+            'vlayer': vlayer,
             'task': task.description()}
 
 
@@ -70,10 +72,10 @@ class clipRequest(QgsTask):
     Sends clip request to the AWS lambda clip function
     """
 
-    def __init__(self, logger, project_details, geojson_paths, class_maps):
+    def __init__(self, logger, project_details, geojson_path, class_maps):
         super(clipRequest, self).__init__()
-        self.logger, self.project_details, self.geojson_paths, self.class_maps = logger, project_details, \
-            geojson_paths, class_maps
+        self.logger, self.project_details, self.geojson_path, self.class_maps = logger, project_details, \
+            geojson_path, class_maps
 
     def run(self):
         self.logger("Clip task started...")
@@ -86,7 +88,7 @@ class clipRequest(QgsTask):
             self.logger("Please add clip_boundary feature type in Terra...", level=Qgis.Warning)
             return False
         # Combine all geojsons that were split at load
-        geojson = combined_geojson(self.geojson_paths)
+        geojson = json.load(open(self.geojson_path))
         all_clip_feature_names = []
 
         for f in geojson["features"]:
@@ -121,7 +123,6 @@ class clipRequest(QgsTask):
         if not result:
             self.logger("Clip request failed...")
 
-
 def loginTask(task, login_window):
     login_window.user_email = login_window.userName.text()
     login_window.user_password = login_window.userPassword.text()
@@ -135,13 +136,19 @@ def loginTask(task, login_window):
         return {"login_window": login_window, "task": task.description()}
     else:
         login_window.logger("incorrect user email or password...", level=Qgis.Warning)
-        return None
-
+        return Nones
 
 def detectionTask(task, detection_task_input):
     project_details, geojson, models_url, user_email = detection_task_input
     try:
         detect(project_details, geojson, models_url, user_email)
+        return {"task": task.description(), "Exception": None, "success": True}
+    except Exception as e:
+        return {"task": task.description(), "Exception": e, "success": False}
+def approveTask(task, approve_task_input):
+    project_details, geojson, user_email = approve_task_input
+    try:
+        approve(project_details, geojson, user_email)
         return {"task": task.description(), "Exception": None, "success": True}
     except Exception as e:
         return {"task": task.description(), "Exception": e, "success": False}
