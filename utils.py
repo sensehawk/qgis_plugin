@@ -111,7 +111,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
                                                                        raster_bounds[2],
                                                                        raster_bounds[3])).asJson())
         extent_feature = {"type": "Feature", "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None},
-                          "geometry": extent_geometry}
+                          "geometry": extent_geometry, "workflow": {}}
         geojson["features"] += [extent_feature]
 
     # Save geojson

@@ -240,6 +240,13 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
                                                         "function": "iface.showAttributeTable(iface.activeLayer())",
                                                         "shortcut_type": "QGIS tools"})
 
+        # 'Z' key to zoom to layer
+        self.keyboard_shortcuts[90] = KeypressShortcut({"key_code": 90,
+                                                        "name": "Zoom to layer",
+                                                        "function": self.iface.actionZoomToLayer().trigger,
+                                                        "shortcut_type": "QGIS tools"})
+
+
     def key_eater(self, key_code):
         # Is connected to the keyboard and will call the relevant functions from the shortcuts_dict when a key is pressed
         shortcut = self.keyboard_shortcuts.get(key_code, None)
@@ -254,6 +261,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             geojson = json.load(open(self.load_window.geojson_path))
             if self.load_window.project_type == "terra":
                 for f in geojson["features"]:
+                    f["properties"]["workflow"] = {}
                     if not f["properties"]["class_id"]:
                         f["properties"]["class_id"] = 0
             # Upload vectors
