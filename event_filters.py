@@ -1,9 +1,10 @@
 from qgis.PyQt.QtCore import QObject, QEvent, pyqtSignal
 from qgis.utils import iface
+from qgis.gui import QgsMapToolEmitPoint
 
 
 class KeypressEmitter(QObject):
-    signal = pyqtSignal(int)
+    signal = pyqtSignal(object)
 
 class KeypressFilter(QObject):
     def __init__(self, emitter):
@@ -20,6 +21,17 @@ class KeypressFilter(QObject):
         """
         if event.type() == QEvent.KeyRelease:
             self.emitter.signal.emit(event.key())
+            return True
+        return False
+
+class MousepressFilter(QObject):
+    def __init__(self, emitter):
+        super(MousepressFilter, self).__init__()
+        self.emitter = emitter
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.MouseButtonPress:
+            self.emitter.signal.emit(event)
             return True
         return False
 

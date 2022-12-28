@@ -26,7 +26,7 @@ from ..sensehawk_apis.core_apis import core_login, save_project_geojson, get_pro
 from ..sensehawk_apis.scm_apis import get_models_list, detect
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
 from ..utils import categorize_layer
-from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
+from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from ..tasks import clipRequest, detectionTask, approveTask
 
 from ..constants import STORAGE_PRIVATE_KEY
@@ -64,6 +64,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.project_details = self.load_window.project_details
         self.class_maps = self.load_window.class_maps
         self.iface = iface
+        self.canvas = self.iface.mapCanvas()
+        self.active_layer = self.iface.activeLayer()
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.models_dict = {}
@@ -81,6 +83,12 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.keypress_filter = KeypressFilter(self.key_emitter)
         # Install key press filter to iface's map canvas
         self.iface.mapCanvas().installEventFilter(self.keypress_filter)
+
+        # Mouse press filter
+        self.mouse_emitter = KeypressEmitter()
+        self.mousepress_filter = MousepressFilter(self.mouse_emitter)
+        # Install mouse press filter to iface's map canvas
+        self.iface.mapCanvas().viewport().installEventFilter(self.mousepress_filter)
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -213,6 +221,20 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         for i in shortcuts_dict:
             self.keyboard_shortcuts[shortcuts_dict[i]["key_code"]] = KeypressShortcut(shortcuts_dict[i])
 
+    def duplicate_feature(self):
+        def copy_and_move(mouse_event):
+            mouse_button = mouse_event.button()
+            point = self.canvas.getCoordinateTransform().toMapCoordinates(mouse_event.pos())
+            x, y = point.x(), point.y()
+            if mouse_button == 1:
+                # Left button continues repeats function
+                pass
+            elif mouse_button == 2:
+                # Right button exits function by disconnecting mouse emitter signal to copy and move
+                self.mouse_emitter.signal.disconnect()
+
+        self.mouse_emitter.signal.connect(lambda mouse_event: copy_and_move(mouse_event))
+
     def create_qgis_shortcuts(self):
         # 'Enter' key saves the active layer
         self.keyboard_shortcuts[16777220] = KeypressShortcut({"key_code": 16777220,
@@ -244,6 +266,12 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.keyboard_shortcuts[90] = KeypressShortcut({"key_code": 90,
                                                         "name": "Zoom to layer",
                                                         "function": self.iface.actionZoomToLayer().trigger,
+                                                        "shortcut_type": "QGIS tools"})
+
+        # 'D' key to duplicate feature
+        self.keyboard_shortcuts[68] = KeypressShortcut({"key_code": 68,
+                                                        "name": "Duplicate feature",
+                                                        "function": self.duplicate_feature,
                                                         "shortcut_type": "QGIS tools"})
 
 
