@@ -136,7 +136,7 @@ def loginTask(task, login_window):
         return {"login_window": login_window, "task": task.description()}
     else:
         login_window.logger("incorrect user email or password...", level=Qgis.Warning)
-        return Nones
+        return None
 
 def detectionTask(task, detection_task_input):
     project_details, geojson, models_url, user_email = detection_task_input

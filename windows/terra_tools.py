@@ -32,7 +32,7 @@ from ..tasks import clipRequest, detectionTask, approveTask
 from ..constants import STORAGE_PRIVATE_KEY
 
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask
+from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
 from qgis.PyQt.QtCore import Qt
 import os
 from threading import Thread
@@ -41,7 +41,11 @@ import qgis
 
 from qgis.utils import iface
 
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QApplication
+
 import json
+import copy
 
 
 TERRA_TOOLS_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'terra_tools.ui'))
@@ -89,6 +93,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.mousepress_filter = MousepressFilter(self.mouse_emitter)
         # Install mouse press filter to iface's map canvas
         self.iface.mapCanvas().viewport().installEventFilter(self.mousepress_filter)
+
+        self.pointTool = QgsMapToolEmitPoint(self.iface.mapCanvas())
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -222,18 +228,34 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             self.keyboard_shortcuts[shortcuts_dict[i]["key_code"]] = KeypressShortcut(shortcuts_dict[i])
 
     def duplicate_feature(self):
-        def copy_and_move(mouse_event):
+        move_function = self.iface.actionMoveFeature()
+        move_function.trigger()
+        # Connect mouse event to copy in place function
+        self.mouse_emitter.signal.connect(lambda mouse_event: copy_in_place(mouse_event))
+        def copy_in_place(mouse_event):
             mouse_button = mouse_event.button()
             point = self.canvas.getCoordinateTransform().toMapCoordinates(mouse_event.pos())
             x, y = point.x(), point.y()
             if mouse_button == 1:
-                # Left button continues repeats function
-                pass
-            elif mouse_button == 2:
-                # Right button exits function by disconnecting mouse emitter signal to copy and move
-                self.mouse_emitter.signal.disconnect()
+                # If anything is selected, deselect and do nothing else
+                if self.active_layer.selectedFeatures():
+                    self.active_layer.removeSelection()
+                    return None
 
-        self.mouse_emitter.signal.connect(lambda mouse_event: copy_and_move(mouse_event))
+                # Left button repeats function if nothing is selected currently
+                feature_request = QgsFeatureRequest()
+                feature_request.setFilterRect(QgsPoint(x, y).boundingBox())
+                features = self.active_layer.getFeatures(feature_request)
+                # Sort features by area and select the least area feature for copy and move
+                features = sorted([f for f in features], key=lambda f: f.geometry().area())
+                if not features:
+                    self.active_layer.removeSelection()
+                    return False
+                selected_feature = features[0]
+                f_id = selected_feature.id()
+                self.active_layer.selectByIds([f_id])
+                self.iface.actionCopyFeatures().trigger()
+                self.iface.actionPasteFeatures().trigger()
 
     def create_qgis_shortcuts(self):
         # 'Enter' key saves the active layer
