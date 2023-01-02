@@ -91,9 +91,6 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         # Mouse press filter
         self.mouse_emitter = KeypressEmitter()
         self.mousepress_filter = MousepressFilter(self.mouse_emitter)
-        # Install mouse press filter to iface's map canvas
-        self.iface.mapCanvas().viewport().installEventFilter(self.mousepress_filter)
-
         self.pointTool = QgsMapToolEmitPoint(self.iface.mapCanvas())
 
     def logger(self, message, level=Qgis.Info):
@@ -132,6 +129,12 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         # Deselect any selected features
         layer.removeSelection()
         layer.commitChanges()
+        # In case duplicate feature was activated, disconnect copy-in-place on left mouse click
+        try:
+            self.mouse_emitter.signal.disconnect()
+            self.iface.mapCanvas().viewport().removeEventFilter(self.mousepress_filter)
+        except Exception:
+            pass
         categorize_layer(self.class_maps)
 
     def start_clip_task(self):
@@ -228,6 +231,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             self.keyboard_shortcuts[shortcuts_dict[i]["key_code"]] = KeypressShortcut(shortcuts_dict[i])
 
     def duplicate_feature(self):
+        # Install mouse press filter to iface's map canvas
+        self.iface.mapCanvas().viewport().installEventFilter(self.mousepress_filter)
         move_function = self.iface.actionMoveFeature()
         move_function.trigger()
         # Connect mouse event to copy in place function
@@ -308,7 +313,12 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
     def save_project(self):
         if self.load_window.load_successful:
             self.logger("Saving following geojson: "+str(self.load_window.geojson_path))
-            geojson = json.load(open(self.load_window.geojson_path))
+            geojson_path = self.load_window.geojson_path
+            cleaned_geojson_path = geojson_path.replace(".geojson", "_cleaned.geojson")
+            # Delete any duplicate features
+            qgis.processing.run('qgis:deleteduplicategeometries',
+                                {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
+            geojson = json.load(open(cleaned_geojson_path))
             if self.load_window.project_type == "terra":
                 for f in geojson["features"]:
                     f["properties"]["workflow"] = {}

@@ -115,7 +115,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
         geojson["features"] += [extent_feature]
 
     # Save geojson
-    geojson_path = os.path.join(tempfile.gettempdir(), "{}.json".format(project_uid))
+    geojson_path = os.path.join(tempfile.gettempdir(), "{}.geojson".format(project_uid))
     with open(geojson_path, "w") as fi:
         json.dump(geojson, fi)
 
