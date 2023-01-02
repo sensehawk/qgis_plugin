@@ -321,7 +321,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             geojson = json.load(open(cleaned_geojson_path))
             if self.load_window.project_type == "terra":
                 for f in geojson["features"]:
-                    f["properties"]["workflow"] = {}
+                    f["properties"]["workflow"] = None
                     if not f["properties"]["class_id"]:
                         f["properties"]["class_id"] = 0
             # Upload vectors
