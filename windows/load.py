@@ -30,6 +30,7 @@ from ..utils import download_file, categorize_layer, load_vectors
 from ..tasks import loadTask
 
 from ..windows.terra_tools import TerraToolsWindow
+from ..windows.therm_tools import ThermToolsWindow
 
 import os
 import json
@@ -68,6 +69,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.terra_tools_window = None
+        self.therm_tools_window = None
         self.qgis_project = QgsProject.instance()
         self.bounds = None
         self.class_maps = None
@@ -112,7 +114,12 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
             # Hide load window
             self.hide()
         elif self.project_type == "therm" and self.load_successful:
-            self.logger("Not implemented...")
+            if not self.therm_tools_window:
+                # Initialize terra tools window
+                self.tools_window = ThermToolsWindow(self, self.iface)
+                self.tools_window.show()
+            else:
+                self.therm_tools_window.show()
             # Hide load window
             self.hide()
 

@@ -1,5 +1,6 @@
 from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
 from .sensehawk_apis.terra_apis import get_terra_classmaps
+from.sensehawk_apis.therm_apis import get_therm_classmaps
 from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson
 from .sensehawk_apis.scm_apis import detect, approve
 from .utils import load_vectors, get_project_details
@@ -26,6 +27,9 @@ def loadTask(task, load_window):
     # Get the class maps for vectors from terra / therm
     if load_window.project_type == "terra":
         load_window.class_maps, load_window.class_groups = get_terra_classmaps(load_window.project_details, load_window.core_token)
+    elif load_window.project_type == "therm":
+        load_window.class_maps, class_maps_path = get_therm_classmaps()
+        load_window.logger(class_maps_path)
 
     # Get base url for ortho tiles
     base_orthotiles_url = get_ortho_tiles_url(load_window.project_uid, load_window.core_token)
