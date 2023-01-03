@@ -28,7 +28,6 @@ import qgis
 from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
 
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
-from ..tasks import clipRequest
 from ..utils import categorize_layer
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 
@@ -52,7 +51,6 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.iface = iface
         self.active_layer = self.iface.activeLayer()
         self.canvas = self.iface.mapCanvas()
-        self.clipButton.clicked.connect(self.start_clip_task)
         self.backButton.clicked.connect(self.show_load_window)
         self.saveProject.clicked.connect(self.save_project)
         self.class_maps = self.load_window.class_maps
@@ -85,10 +83,6 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.mouse_emitter = KeypressEmitter()
         self.mousepress_filter = MousepressFilter(self.mouse_emitter)
 
-
-    def start_clip_task(self):
-        clip_task = clipRequest(self.logger, self.project_details, self.load_window.geojson_path, self.class_maps)
-        QgsApplication.taskManager().addTask(clip_task)
 
     def duplicate_feature(self):
         # Install mouse press filter to iface's map canvas
@@ -147,7 +141,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
             self.logger('Saving SenseHawk project...')
             saved = save_project_geojson(geojson, self.load_window.project_uid, self.core_token, project_type=self.load_window.project_type)
             if saved:
-                self.logger("Save successful")
+                self.logger(str(saved)[:100])
             else:
                 self.logger("Save failed", Qgis.Warning)
 
@@ -223,6 +217,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         if selected_features:
             for feature in selected_features:
                 feature.setAttribute("class_name", class_name)
+                feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
                 self.active_layer.updateFeature(feature)
         else:
             features = list(self.active_layer.getFeatures())
@@ -234,6 +229,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
                 return None
             self.logger("Changing class_name of last added feature to {}".format(class_name))
             last_feature.setAttribute("class_name", class_name)
+            last_feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
             self.active_layer.updateFeature(last_feature)
         categorize_layer(self.class_maps)
 

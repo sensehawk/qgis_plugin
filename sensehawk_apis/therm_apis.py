@@ -14,4 +14,9 @@ def get_therm_classmaps():
         therm_classmaps[class_name]["key"] = str(i)
         # Color is moved into properties key
         therm_classmaps[class_name]["properties"] = {"color": therm_class["color"]}
-    return therm_classmaps, class_maps_path
+    # # Add a clip boundary class
+    # therm_classmaps["clip_boundary"] = {"name": "clip_boundary",
+    #                                     "key": "C",
+    #                                     "properties": {"color": "rgb(150, 195, 235)"},
+    #                                     "class_name": "clip_boundary"}
+    return therm_classmaps

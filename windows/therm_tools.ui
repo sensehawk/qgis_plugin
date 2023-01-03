@@ -26,23 +26,10 @@
    <string>Therm</string>
   </property>
   <widget class="QWidget" name="dockWidgetContents">
-   <widget class="QPushButton" name="clipButton">
-    <property name="geometry">
-     <rect>
-      <x>100</x>
-      <y>40</y>
-      <width>89</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Clip Raster</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="detectButton">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>150</x>
       <y>40</y>
       <width>89</width>
       <height>25</height>
@@ -55,7 +42,7 @@
    <widget class="QPushButton" name="saveProject">
     <property name="geometry">
      <rect>
-      <x>350</x>
+      <x>280</x>
       <y>40</y>
       <width>89</width>
       <height>25</height>

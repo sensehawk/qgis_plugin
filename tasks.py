@@ -28,8 +28,7 @@ def loadTask(task, load_window):
     if load_window.project_type == "terra":
         load_window.class_maps, load_window.class_groups = get_terra_classmaps(load_window.project_details, load_window.core_token)
     elif load_window.project_type == "therm":
-        load_window.class_maps, class_maps_path = get_therm_classmaps()
-        load_window.logger(class_maps_path)
+        load_window.class_maps = get_therm_classmaps()
 
     # Get base url for ortho tiles
     base_orthotiles_url = get_ortho_tiles_url(load_window.project_uid, load_window.core_token)
@@ -89,9 +88,9 @@ class clipRequest(QgsTask):
             if i[1].get("name") == "clip_boundary":
                 clip_boundary_class_name = i[0]
         if not clip_boundary_class_name:
-            self.logger("Please add clip_boundary feature type in Terra...", level=Qgis.Warning)
+            self.logger("Please add clip_boundary feature type in class maps...", level=Qgis.Warning)
             return False
-        # Combine all geojsons that were split at load
+        # Updates geojson
         geojson = json.load(open(self.geojson_path))
         all_clip_feature_names = []
 
