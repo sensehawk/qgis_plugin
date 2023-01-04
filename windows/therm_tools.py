@@ -124,26 +124,35 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         shortcut.run()
 
     def save_project(self):
-        if self.load_window.load_successful:
-            self.logger("Saving following geojson: "+str(self.load_window.geojson_path))
-            geojson_path = self.load_window.geojson_path
+        def save_task(task, save_task_input):
+            geojson_path, core_token, project_uid, project_type = save_task_input
             cleaned_geojson_path = geojson_path.replace(".geojson", "_cleaned.geojson")
             # Delete any duplicate features
             qgis.processing.run('qgis:deleteduplicategeometries',
                                 {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
             geojson = json.load(open(cleaned_geojson_path))
-            if self.load_window.project_type == "terra":
-                for f in geojson["features"]:
-                    f["properties"]["workflow"] = None
-                    if not f["properties"]["class_id"]:
-                        f["properties"]["class_id"] = 0
+            # Clear UIDs to avoid duplicate error while saving to Therm
+            for f in geojson["features"]:
+                f["properties"]["uid"] = None
             # Upload vectors
             self.logger('Saving SenseHawk project...')
-            saved = save_project_geojson(geojson, self.load_window.project_uid, self.core_token, project_type=self.load_window.project_type)
-            if saved:
-                self.logger(str(saved)[:100])
-            else:
-                self.logger("Save failed", Qgis.Warning)
+            saved = save_project_geojson(geojson, project_uid, core_token,
+                                         project_type=project_type)
+            return {'status': str(saved), 'task': task.description()}
+
+        def callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(result["status"])
+
+        if self.load_window.load_successful:
+            st = QgsTask.fromFunction("Save", save_task,
+                                      save_task_input=[self.load_window.geojson_path,
+                                                       self.core_token,
+                                                       self.load_window.project_uid,
+                                                       self.load_window.project_type])
+            QgsApplication.taskManager().addTask(st)
+            st.statusChanged.connect(lambda: callback(st, self.logger))
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
