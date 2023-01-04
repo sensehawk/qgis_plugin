@@ -70,7 +70,7 @@ def save_project_geojson(geojson, project_uid, token, project_type="terra"):
 
 
 def core_login(username, password):
-    url = "https://core-stage-server.sensehawk.com/api/v1/api-basic-auth/"  # stage URI
+    url = CORE_URL + "/api/v1/api-basic-auth/"
     payload = json.dumps({
         "username": username,
         "password": password

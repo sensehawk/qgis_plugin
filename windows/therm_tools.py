@@ -30,6 +30,7 @@ from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRe
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from ..utils import categorize_layer
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
+from ..sensehawk_apis.sid_apis import detect_solar_issues
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
@@ -53,6 +54,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.canvas = self.iface.mapCanvas()
         self.backButton.clicked.connect(self.show_load_window)
         self.saveProject.clicked.connect(self.save_project)
+        self.detectButton.clicked.connect(self.detect)
         self.class_maps = self.load_window.class_maps
         self.core_token = self.load_window.core_token
         self.project_details = self.load_window.project_details
@@ -123,6 +125,25 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.logger("Keyboard shortcut: {}".format(shortcut.name))
         shortcut.run()
 
+    def detect(self):
+        map_angle = self.canvas.rotation()
+        self.logger("Map canvas angle: {}".format(map_angle))
+        def detect_task(task, detect_task_inputs):
+            project_details, angle, core_token = detect_task_inputs
+            status = detect_solar_issues(project_details, angle, core_token)
+            return {"task": task.description(),
+                    "status": status.json()}
+        def callback(task, logger):
+            returned_values = task.returned_values
+            if returned_values:
+                status = returned_values["status"]
+                logger(str(status))
+
+        dt = QgsTask.fromFunction("Detect Solar Issues", detect_task, detect_task_inputs=[self.project_details,
+                                                                                          map_angle, self.core_token])
+        QgsApplication.taskManager().addTask(dt)
+        dt.statusChanged.connect(lambda: callback(dt, self.logger))
+
     def save_project(self):
         def save_task(task, save_task_input):
             geojson_path, core_token, project_uid, project_type = save_task_input
@@ -135,7 +156,6 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
             for f in geojson["features"]:
                 f["properties"]["uid"] = None
             # Upload vectors
-            self.logger('Saving SenseHawk project...')
             saved = save_project_geojson(geojson, project_uid, core_token,
                                          project_type=project_type)
             return {'status': str(saved), 'task': task.description()}
