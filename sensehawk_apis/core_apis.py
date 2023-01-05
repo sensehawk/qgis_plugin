@@ -3,7 +3,6 @@ import json
 import os
 from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL, STORAGE_URL, STORAGE_PRIVATE_KEY
 import jwt
-import base64
 
 
 def get_project_details(project_uid, token):
@@ -85,18 +84,3 @@ def core_login(username, password):
         print(e)
         token = None
     return token
-
-
-def get_report_url(report_object):
-    """
-    Takes the sensehawk report object and returns the project name and the object url
-    """
-    service_object = report_object.get("service", None)
-    if not service_object:
-        return None
-    data = {
-        "service": service_object,
-    }
-    private_key = base64.b64decode(STORAGE_PRIVATE_KEY).decode('utf-8')
-    payload = jwt.encode(data, private_key, algorithm='RS256')
-    return STORAGE_URL % payload

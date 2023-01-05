@@ -17,3 +17,28 @@ def get_terra_classmaps(project_details, token):
     # Group featureTypes
     class_groups = {i["name"]: [x["uid"] for x in i["featureTypes"]] for i in response.json()}
     return class_maps, class_groups
+
+def get_project_data(project_details, token):
+    project_uid = project_details.get("uid", None)
+    group_uid = project_details.get("group", {}).get("uid", None)
+    container_uid = project_details.get("container", {}).get("uid", None)
+    organization_uid = project_details.get("organization", {}).get("uid", None)
+    url = TERRA_URL + f"/container-views/{container_uid}/?organization={organization_uid}"
+    headers = {"Authorization": "Token {}".format(token)}
+    response = requests.get(url, headers=headers).json()
+
+    group = None
+    for g in response.get("groups", []):
+        if g.get("uid", None) == group_uid:
+            group = g
+            break
+    project = None
+    for p in group.get("projects", []):
+        if p.get("uid", None) == project_uid:
+            project = p
+            break
+    project_data = project.get("reports", {})
+    return project_data
+
+
+
