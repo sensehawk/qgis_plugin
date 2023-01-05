@@ -129,8 +129,8 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         map_angle = self.canvas.rotation()
         self.logger("Map canvas angle: {}".format(map_angle))
         def detect_task(task, detect_task_inputs):
-            project_details, angle, core_token = detect_task_inputs
-            status = detect_solar_issues(project_details, angle, core_token)
+            project_details, angle, core_token, user_email = detect_task_inputs
+            status = detect_solar_issues(project_details, angle, core_token, user_email)
             return {"task": task.description(),
                     "status": status.json()}
         def callback(task, logger):
@@ -140,7 +140,8 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
                 logger(str(status))
 
         dt = QgsTask.fromFunction("Detect Solar Issues", detect_task, detect_task_inputs=[self.project_details,
-                                                                                          map_angle, self.core_token])
+                                                                                          map_angle, self.core_token,
+                                                                                          self.load_window.user_email])
         QgsApplication.taskManager().addTask(dt)
         dt.statusChanged.connect(lambda: callback(dt, self.logger))
 
