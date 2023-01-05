@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL, STORAGE_URL, STORAGE_PRIVATE_KEY
+from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
 import jwt
 
 
