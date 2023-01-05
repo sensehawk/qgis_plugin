@@ -1,16 +1,16 @@
 import requests
 from ..constants import SID_URL
-from .core_apis import get_report_url
+from .therm_apis import get_project_data
 
 def detect_solar_issues(project_details, angle, core_token, user_email):
     # Make request to the SID server
     try:
-        ortho_report_object = [r for r in project_details["reports"] if r.get("report_type", None) == "ortho"][0]
-        ortho_url = get_report_url(ortho_report_object)
+        project_data = get_project_data(project_details, core_token)
+        ortho_url = project_data.get("ortho", None)
     except Exception:
         return None
     project_uid = project_details.get("uid", None)
-    if not project_uid:
+    if not project_uid or not ortho_url:
         return None
     request_body = {"details": {"projectUID": project_uid,
                                 "angle": angle,
