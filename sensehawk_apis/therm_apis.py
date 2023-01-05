@@ -28,7 +28,7 @@ def get_project_data(project_details, token):
     project_uid = project_details.get("uid", None)
     organization_uid = project_details.get("organization", {}).get("uid", None)
     url = THERM_URL + f"/projects/{project_uid}/data?organization={organization_uid}"
-    header = {"Authorization": "Token {}".format(token)}
-    project_data = requests.get(url, header=header)
+    headers = {"Authorization": "Token {}".format(token)}
+    project_data = requests.get(url, headers=headers).json()
     return project_data
 
