@@ -1,7 +1,7 @@
 import json
 import os
 import requests
-from constants import THERM_URL
+from ..constants import THERM_URL
 
 def get_therm_classmaps():
     # IDs and class names of all the classes defined in Therm
