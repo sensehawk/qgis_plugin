@@ -97,7 +97,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
 
     def load_models(self):
         # Get list of available models
-        self.models_dict = get_models_list(self.load_window.project_uid)
+        self.models_dict = get_models_list(self.load_window.project_uid, self.core_token)
         models_list = list(self.models_dict.keys())
         if models_list:
             list_items = models_list
@@ -130,7 +130,14 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         categorize_layer(self.class_maps)
 
     def start_clip_task(self):
-        clip_task = clipRequest(self.logger, self.project_details, self.load_window.geojson_path, self.class_maps)
+        def callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(str(result["message"]))
+        self.logger("Clip task starting...")
+        clip_task_inputs = self.logger, self.project_details, self.load_window.geojson_path, self.class_maps, self.core_token
+        clip_task = QgsTask.fromFunction("Clip Request", clipRequest, clip_task_input=clip_task_inputs)
+        clip_task.statusChanged.connect(lambda:callback(clip_task, self.logger))
         QgsApplication.taskManager().addTask(clip_task)
 
     def start_detect_task(self):
@@ -163,13 +170,13 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
         approve_task = QgsTask.fromFunction("Approve", approveTask,
                                             approve_task_input=[self.project_details, geojson,
-                                                                self.load_window.user_email])
+                                                                self.load_window.user_email, self.core_token])
         approve_task.statusChanged.connect(lambda:callback(approve_task, self.logger))
         QgsApplication.taskManager().addTask(approve_task)
 
     # Shortcut function
     def change_feature_type(self, class_name):
-        if not isinstance(layer, qgis._core.QgsVectorLayer):
+        if not isinstance(self.active_layer, qgis._core.QgsVectorLayer):
             self.logger("Activate a vector layer or select feature to change feature type...")
             return None
         self.active_layer.startEditing()
@@ -303,26 +310,34 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         shortcut.run()
 
     def save_project(self):
-        if self.load_window.load_successful:
-            self.logger("Saving following geojson: "+str(self.load_window.geojson_path))
-            geojson_path = self.load_window.geojson_path
+        def save_task(task, save_task_input):
+            geojson_path, core_token, project_uid, project_type = save_task_input
             cleaned_geojson_path = geojson_path.replace(".geojson", "_cleaned.geojson")
             # Delete any duplicate features
             qgis.processing.run('qgis:deleteduplicategeometries',
                                 {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
             geojson = json.load(open(cleaned_geojson_path))
-            if self.load_window.project_type == "terra":
-                for f in geojson["features"]:
-                    f["properties"]["workflow"] = None
-                    if not f["properties"]["class_id"]:
-                        f["properties"]["class_id"] = 0
+            # Clear UIDs to avoid duplicate error while saving to Therm
+            for f in geojson["features"]:
+                f["properties"]["uid"] = None
             # Upload vectors
-            self.logger('Saving SenseHawk project...')
-            saved = save_project_geojson(geojson, self.load_window.project_uid, self.core_token, project_type=self.load_window.project_type)
-            if saved:
-                self.logger("Save successful")
-            else:
-                self.logger("Save failed", Qgis.Warning)
+            saved = save_project_geojson(geojson, project_uid, core_token,
+                                         project_type=project_type)
+            return {'status': str(saved), 'task': task.description()}
+
+        def callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(result["status"])
+
+        if self.load_window.load_successful:
+            st = QgsTask.fromFunction("Save", save_task,
+                                      save_task_input=[self.load_window.geojson_path,
+                                                       self.core_token,
+                                                       self.load_window.project_uid,
+                                                       self.load_window.project_type])
+            QgsApplication.taskManager().addTask(st)
+            st.statusChanged.connect(lambda: callback(st, self.logger))
 
     def export_keyboard_shortcut_details(self):
         self.logger("Exporting key board shortcut details...")

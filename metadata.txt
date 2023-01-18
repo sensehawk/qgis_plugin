@@ -10,10 +10,11 @@ version=0.1
 author=SenseHawk
 email=kiranh@sensehawk.com
 
-about=This plugin will take in QC url from SenseHawk app and load the orthotiles and the vectors. Post quality check, you can save the changes and post directly to SenseHawk app and overwrite the saved vectors.
+about=This plugin will take in projectUID from SenseHawk app and load the orthotiles and the vectors. Post quality check, you can save the changes and post directly to SenseHawk app and overwrite the saved vectors.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://app.clickup.com/3620712/v/li/188379769
+repository=https://sensehawk.com
+
 # End of mandatory metadata
 
 # Recommended items:

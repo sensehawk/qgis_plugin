@@ -1,5 +1,5 @@
 from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
-from .sensehawk_apis.terra_apis import get_terra_classmaps
+from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
 from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson
 from .sensehawk_apis.scm_apis import detect, approve
@@ -29,6 +29,9 @@ def loadTask(task, load_window):
         load_window.class_maps, load_window.class_groups = get_terra_classmaps(load_window.project_details, load_window.core_token)
     elif load_window.project_type == "therm":
         load_window.class_maps = get_therm_classmaps()
+    # Convert all class names to lower case
+    for c in load_window.class_maps:
+        load_window.class_maps[c]["name"] = load_window.class_maps[c].get("name", "").lower()
 
     # Get base url for ortho tiles
     base_orthotiles_url = get_ortho_tiles_url(load_window.project_uid, load_window.core_token)
@@ -70,65 +73,56 @@ def loadTask(task, load_window):
             'task': task.description()}
 
 
-class clipRequest(QgsTask):
+def clipRequest(task, clip_task_input):
     """
     Sends clip request to the AWS lambda clip function
     """
 
-    def __init__(self, logger, project_details, geojson_path, class_maps):
-        super(clipRequest, self).__init__()
-        self.logger, self.project_details, self.geojson_path, self.class_maps = logger, project_details, \
-            geojson_path, class_maps
+    logger, project_details, geojson_path, class_maps, core_token = clip_task_input
 
-    def run(self):
-        self.logger("Clip task started...")
-        clip_boundary_class_name = None
-        # Get the class_name for clip_boundary
-        for i in self.class_maps.items():
-            if i[1].get("name") == "clip_boundary":
-                clip_boundary_class_name = i[0]
-        if not clip_boundary_class_name:
-            self.logger("Please add clip_boundary feature type in class maps...", level=Qgis.Warning)
-            return False
-        # Updates geojson
-        geojson = json.load(open(self.geojson_path))
-        all_clip_feature_names = []
+    clip_boundary_class_name = None
+    # Get the class_name for clip_boundary
+    for i in class_maps.items():
+        if i[1].get("name") == "clip_boundary":
+            clip_boundary_class_name = i[0]
+    if not clip_boundary_class_name:
+        return {"task": task.description(), "success": False,
+                "message": "Please add clip_boundary feature type in class maps..."}
+    # Updated geojson
+    with open(geojson_path, "r") as fi:
+        geojson = json.load(fi)
 
-        for f in geojson["features"]:
-            properties = f["properties"]
-            if properties["class_name"] == clip_boundary_class_name:
-                name = properties.get("name", None)
-                all_clip_feature_names.append(name)
-        n_clip_features = len(all_clip_feature_names)
-        n_unique_clip_names = len(list(set(all_clip_feature_names)))
+    all_clip_feature_names = []
 
-        # If there are no unique clip feature names or if any of them has None
-        if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
-            self.logger("Please provide unique name property to all clip_boundary features before clipping...",
-                   level=Qgis.Warning)
-            return False
-        try:
-            ortho_report_object = [r for r in self.project_details["reports"] if r.get("report_type", None) == "ortho"][0]
-        except Exception:
-            self.logger("No ortho found for project...", level=Qgis.Warning)
-            return False
-        ortho_url = get_report_url(ortho_report_object)
-        request_body = {"project_uid": self.project_details.get("uid", None),
-                        "raster_url": ortho_url,
-                        "geojson": geojson,
-                        "clip_boundary_class_name": clip_boundary_class_name}
+    for f in geojson["features"]:
+        properties = f["properties"]
+        if properties["class_name"] == clip_boundary_class_name:
+            name = properties.get("name", None)
+            all_clip_feature_names.append(name)
+    n_clip_features = len(all_clip_feature_names)
+    n_unique_clip_names = len(list(set(all_clip_feature_names)))
 
-        requests.post(CLIP_FUNCTION_URL, json=request_body)
-        self.logger("Clipping request sent...")
-        return True
+    # If there are no unique clip feature names or if any of them has None
+    if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
+        return {"task": task.description(), "success": False,
+                "message": "Please provide unique name property to all clip_boundary features before clipping..."}
 
-    def finished(self, result):
-        if not result:
-            self.logger("Clip request failed...")
+    ortho_url = get_project_data(project_details, core_token).get("ortho", {}).get("url", None)
+    if not ortho_url:
+        return {"task": task.description(), "success": False,
+                "message": "No ortho found for project..."}
+    request_body = {"project_uid": project_details.get("uid", None),
+                    "raster_url": ortho_url,
+                    "geojson": geojson,
+                    "clip_boundary_class_name": clip_boundary_class_name}
+
+    headers = {"Authorization": f"Token {core_token}"}
+    requests.post(CLIP_FUNCTION_URL, headers=headers, json=request_body)
+    return {"task": task.description(), "success": True, "message": "Clip request sent"}
 
 def loginTask(task, login_window):
-    login_window.user_email = login_window.userName.text()
-    login_window.user_password = login_window.userPassword.text()
+    login_window.user_email = "kiranh@sensehawk.com" #login_window.userName.text()
+    login_window.user_password = "%Fortress123&sens" #login_window.userPassword.text()
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
     if not login_window.user_email or not login_window.user_password:
         login_window.logger('User email or Password empty...', level=Qgis.Warning)
@@ -148,10 +142,11 @@ def detectionTask(task, detection_task_input):
         return {"task": task.description(), "Exception": None, "success": True}
     except Exception as e:
         return {"task": task.description(), "Exception": e, "success": False}
+
 def approveTask(task, approve_task_input):
-    project_details, geojson, user_email = approve_task_input
+    project_details, geojson, user_email, core_token = approve_task_input
     try:
-        approve(project_details, geojson, user_email)
+        approve(project_details, geojson, user_email, core_token)
         return {"task": task.description(), "Exception": None, "success": True}
     except Exception as e:
         return {"task": task.description(), "Exception": e, "success": False}

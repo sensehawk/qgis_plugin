@@ -24,7 +24,6 @@
 
 from ..sensehawk_apis.core_apis import core_login
 from ..windows.load import LoadWindow
-from ..constants import STORAGE_PRIVATE_KEY
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication

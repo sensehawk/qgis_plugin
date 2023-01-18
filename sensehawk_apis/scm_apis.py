@@ -4,10 +4,11 @@ from .core_apis import get_project_details, get_project_geojson
 from .terra_apis import get_terra_classmaps, get_project_data
 
 
-def get_models_list(project_uid):
+def get_models_list(project_uid, core_token):
     url = SCM_URL + "/list-models"
     params = {"project_uid": project_uid}
-    response = requests.request("GET", url, params=params)
+    headers = {"Authorization": f"Token {core_token}"}
+    response = requests.request("GET", url, headers=headers, params=params)
     return response.json()
 
 
@@ -21,15 +22,17 @@ def detect(project_details, geojson, models_url, user_email, core_token):
                     "details": {"project_uid": project_uid, "user_email": user_email},
                     "geojson": geojson
                     }
-    response = requests.request("POST", url, json=request_body).json()
+    headers = {"Authorization": f"Token {core_token}"}
+    response = requests.request("POST", url, json=request_body, headers=headers).json()
     return response
 
 
-def approve(project_details, geojson, user_email):
+def approve(project_details, geojson, user_email, core_token):
     url = SCM_URL + "/approve"
     request_body = {"details": {"user_email": user_email, "project_uid": project_details.get("uid", None)},
                     "geojson": geojson
                     }
-    response = requests.request("POST", url, json=request_body)
+    headers = {"Authorization": f"Token {core_token}"}
+    response = requests.request("POST", url, headers=headers, json=request_body)
     return response.json()
 
