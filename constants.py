@@ -7,7 +7,7 @@ TERRA_URL = "https://terra-server.sensehawk.com"
 THERM_URL = "https://therm-server.sensehawk.com"
 SCM_URL = "https://scm-inference.sensehawk.com"
 SID_URL = "https://sid.sensehawk.com/detect-solar-issues"
-CLIP_FUNCTION_URL = "https://848rwfqtw0.execute-api.us-west-2.amazonaws.com/default/clipRaster"
+CLIP_FUNCTION_URL = "https://bt0xyuwjxi.execute-api.us-west-2.amazonaws.com/default/clipRaster"
 
 # Staging env
 # CORE_URL = "https://core-stage-server.sensehawk.com"
