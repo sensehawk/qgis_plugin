@@ -316,7 +316,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             # Delete any duplicate features
             qgis.processing.run('qgis:deleteduplicategeometries',
                                 {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
-            geojson = json.load(open(cleaned_geojson_path))
+            with open(cleaned_geojson_path, 'r') as fi:
+                geojson = json.load(fi)
             # Clear UIDs to avoid duplicate error while saving to Therm
             for f in geojson["features"]:
                 f["properties"]["uid"] = None
