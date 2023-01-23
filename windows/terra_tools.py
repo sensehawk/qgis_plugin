@@ -61,6 +61,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.core_token = self.load_window.core_token
         self.project_details = self.load_window.project_details
         self.class_maps = self.load_window.class_maps
+        self.class_groups = self.load_window.class_groups
         self.iface = iface
         self.canvas = self.iface.mapCanvas()
         self.active_layer = self.iface.activeLayer()
@@ -102,7 +103,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.hide()
 
     def request_model(self):
-        self.ml_service_map_window = MLServiceMapWindow(self.iface, self.class_maps, self)
+        self.ml_service_map_window = MLServiceMapWindow(self.iface, self.class_groups, self)
         self.ml_service_map_window.show()
         self.hide()
 
