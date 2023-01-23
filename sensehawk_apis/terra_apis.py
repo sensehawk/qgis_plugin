@@ -13,7 +13,7 @@ def get_terra_classmaps(project_details, token):
     # Gather all featureTypes
     all_features = []
     [all_features.extend(i.get("featureTypes", [])) for i in response.json()]
-    class_maps = {i["uid"]: i for i in all_features}
+    class_maps = {i["name"]: i for i in all_features}
     # Group featureTypes
     class_groups = {i["name"]: [x["uid"] for x in i["featureTypes"]] for i in response.json()}
     return class_maps, class_groups

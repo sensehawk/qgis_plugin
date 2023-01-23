@@ -204,7 +204,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
             self.iface.mapCanvas().viewport().removeEventFilter(self.mousepress_filter)
         except Exception:
             pass
-        categorize_layer(self.class_maps)
+        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
 
     def create_feature_change_shortcuts(self):
         # Populate shortcuts dictionary for feature type change with keys
@@ -261,7 +261,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
             last_feature.setAttribute("class_name", class_name)
             last_feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
             self.active_layer.updateFeature(last_feature)
-        categorize_layer(self.class_maps)
+        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
 
     def create_qgis_shortcuts(self):
         # 'Enter' key saves the active layer

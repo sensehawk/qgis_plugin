@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MlServiceMapWidget</class>
+ <widget class="QDockWidget" name="MlServiceMapWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>568</width>
+    <height>200</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>568</width>
+    <height>200</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>ML Service Map</string>
+  </property>
+  <widget class="QWidget" name="dockWidgetContents">
+   <widget class="QPushButton" name="backButton">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>150</y>
+      <width>21</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QgsCheckableComboBox" name="detectionComboBox">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>20</y>
+      <width>160</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QgsCheckableComboBox" name="segmentationComboBox">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>60</y>
+      <width>160</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="detectionLabel">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>30</y>
+      <width>121</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Detection:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="segmentationLabel">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>60</y>
+      <width>121</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Segmentation:</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="trainButton">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>100</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Train</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>160</y>
+      <width>351</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>*NOTE: THE LISTS MUST BE MUTUALLY EXCLUSIVE</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsCheckableComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgscheckablecombobox.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

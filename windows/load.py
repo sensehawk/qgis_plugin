@@ -93,7 +93,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.qgis_project.addMapLayer(rlayer)
         self.qgis_project.addMapLayer(vlayer)
         # Apply styling
-        categorize_layer(class_maps=self.class_maps)
+        categorize_layer(project_type=self.project_type, class_maps=self.class_maps)
         # Show tools window
         self.show_tools_window()
 

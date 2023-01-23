@@ -40,10 +40,13 @@ def random_color():
         color += i
     return color
 
-def categorize_layer(class_maps=None):
+def categorize_layer(project_type=None, class_maps=None):
     layer = qgis.utils.iface.activeLayer()
     layer.startEditing()
-    fni = layer.fields().indexFromName('class_name')
+    if project_type == "therm":
+        fni = layer.fields().indexFromName('class_name')
+    else:
+        fni = layer.fields().indexFromName('class')
     features = layer.uniqueValues(fni)
 
     # color classifying based on class_name for therm / class_name and class_maps for terra
@@ -59,7 +62,7 @@ def categorize_layer(class_maps=None):
             i in class_maps}
         color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in color_code[i]) for i in color_code}
 
-    # Applying color based on feature class name
+    # Applying color based on feature 'class_name' for therm and 'class' for terra
     categories = []
     for feature in features:
         # initialize the default symbol for this geometry type
@@ -89,7 +92,11 @@ def categorize_layer(class_maps=None):
         categories.append(category)
 
     # create renderer object
-    renderer = QgsCategorizedSymbolRenderer('class_name', categories)
+    renderer = None
+    if project_type == "terra":
+        renderer = QgsCategorizedSymbolRenderer('class', categories)
+    elif project_type == "therm":
+        renderer = QgsCategorizedSymbolRenderer('class_name', categories)
 
     # assign the created renderer to the layer
     if renderer is not None:

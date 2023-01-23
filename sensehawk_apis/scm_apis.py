@@ -11,6 +11,17 @@ def get_models_list(project_uid, core_token):
     response = requests.request("GET", url, headers=headers, params=params)
     return response.json()
 
+def train(project_details, geojson, ml_service_map, core_token):
+    url = SCM_URL + "/train"
+    project_uid = project_details.get("uid", None)
+    ortho_url = get_project_data(project_details, core_token).get("ortho", {}).get("url", None)
+    if not project_uid or not ortho_url:
+        return None
+    request_body = {"data": {"ortho": ortho_url}, "train_geojson": geojson, "details": {"projectUID": project_uid}, "ml_service_map": ml_service_map}
+    headers = {"Authorization": f"Token {core_token}"}
+    response = requests.request("POST", url, json=request_body, headers=headers).json()
+    return response
+
 
 def detect(project_details, geojson, models_url, user_email, core_token):
     url = SCM_URL + "/predict"

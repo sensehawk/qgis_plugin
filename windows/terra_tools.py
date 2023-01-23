@@ -34,6 +34,8 @@ from qgis.PyQt.QtCore import Qt
 import os
 import qgis
 
+from .ml_service_map import MLServiceMapWindow
+
 from PyQt5.QtWidgets import QApplication
 
 import json
@@ -53,6 +55,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.detectButton.clicked.connect(self.start_detect_task)
         self.approveButton.clicked.connect(self.start_approve_task)
         self.clipButton.clicked.connect(self.start_clip_task)
+        self.requestModelButton.clicked.connect(self.request_model)
         self.saveProject.clicked.connect(self.save_project)
         self.load_window = load_window
         self.core_token = self.load_window.core_token
@@ -87,12 +90,20 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.mouse_emitter = KeypressEmitter()
         self.mousepress_filter = MousepressFilter(self.mouse_emitter)
 
+        # ML Service Map
+        self.ml_service_map_window = None
+
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def show_load_window(self):
         self.load_window.terra_tools_window = self
         self.load_window.show()
+        self.hide()
+
+    def request_model(self):
+        self.ml_service_map_window = MLServiceMapWindow(self.iface, self.class_maps, self)
+        self.ml_service_map_window.show()
         self.hide()
 
     def load_models(self):
@@ -127,7 +138,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             self.iface.mapCanvas().viewport().removeEventFilter(self.mousepress_filter)
         except Exception:
             pass
-        categorize_layer(self.class_maps)
+        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
 
     def start_clip_task(self):
         def callback(task, logger):
@@ -201,7 +212,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             class_id = self.class_maps.get(class_name, {}).get("id", None)
             last_feature.setAttribute("class_id", int(class_id))
             self.active_layer.updateFeature(last_feature)
-        categorize_layer(self.class_maps)
+        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
 
     def create_feature_change_shortcuts(self):
         # Populate shortcuts dictionary for feature type change with keys

@@ -82,9 +82,9 @@ def clipRequest(task, clip_task_input):
 
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
-    for i in class_maps.items():
-        if i[1].get("name") == "clip_boundary":
-            clip_boundary_class_name = i[0]
+    for i in class_maps.keys():
+        if i == "clip_boundary":
+            clip_boundary_class_name = class_maps[i]["uid"]
     if not clip_boundary_class_name:
         return {"task": task.description(), "success": False,
                 "message": "Please add clip_boundary feature type in class maps..."}
