@@ -38,7 +38,14 @@ def get_project_geojson(project_uid, token, project_type):
     if not url:
         return None
     res = requests.get(url, headers=headers)
-    return res.json()
+    geojson = res.json()
+    # Empty geojson if there is no project geojson
+    if "features" not in geojson:
+        geojson = {
+            "type": "FeatureCollection",
+            "features": []
+        }
+    return geojson
 
 
 def save_project_geojson(geojson, project_uid, token, project_type="terra"):
@@ -63,8 +70,6 @@ def save_project_geojson(geojson, project_uid, token, project_type="terra"):
     if not url:
         return False
     res = requests.post(url, json={"geojson": geojson}, headers=headers)
-    with open("/home/kiranhegde/Downloads/new_test_test.json.geojson", "w") as fi:
-        json.dump(geojson, fi)
     return res.json()
 
 

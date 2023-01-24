@@ -1,6 +1,7 @@
 import requests
 from ..constants import SID_URL
 from .therm_apis import get_project_data
+import traceback
 
 def detect_solar_issues(project_details, angle, core_token, user_email):
     # Make request to the SID server
@@ -8,10 +9,10 @@ def detect_solar_issues(project_details, angle, core_token, user_email):
         project_data = get_project_data(project_details, core_token)
         ortho_url = project_data.get("ortho", None)
     except Exception:
-        return None
+        return str(traceback.format_exc())
     project_uid = project_details.get("uid", None)
     if not project_uid or not ortho_url:
-        return None
+        return "Invalid project_uid or ortho_url"
     request_body = {"details": {"projectUID": project_uid,
                                 "angle": angle,
                                 "user_email": user_email},

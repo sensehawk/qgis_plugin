@@ -6,7 +6,8 @@ from ..constants import THERM_URL
 def get_therm_classmaps():
     # IDs and class names of all the classes defined in Therm
     class_maps_path = os.path.join(os.path.dirname(__file__), "therm_classmaps.json")
-    therm_classes = json.load(open(class_maps_path))
+    with open(class_maps_path, 'r') as fi:
+        therm_classes = json.load(fi)
     therm_classmaps = {}
     for i in range(len(therm_classes)):
         therm_class = therm_classes[i]

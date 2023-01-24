@@ -7,6 +7,7 @@ from .utils import load_vectors, get_project_details
 import requests
 from .constants import CLIP_FUNCTION_URL
 import json
+import traceback
 
 
 def loadTask(task, load_window):
@@ -29,9 +30,6 @@ def loadTask(task, load_window):
         load_window.class_maps, load_window.class_groups = get_terra_classmaps(load_window.project_details, load_window.core_token)
     elif load_window.project_type == "therm":
         load_window.class_maps = get_therm_classmaps()
-    # Convert all class names to lower case
-    for c in load_window.class_maps:
-        load_window.class_maps[c]["name"] = load_window.class_maps[c].get("name", "").lower()
 
     # Get base url for ortho tiles
     base_orthotiles_url = get_ortho_tiles_url(load_window.project_uid, load_window.core_token)
@@ -61,7 +59,7 @@ def loadTask(task, load_window):
                                                                                           load_window.logger)
 
     except Exception as e:
-        load_window.logger(str(e), level=Qgis.Warning)
+        load_window.logger(str(traceback.format_exc()), level=Qgis.Warning)
         return False
 
     # Set load_successful variable to True

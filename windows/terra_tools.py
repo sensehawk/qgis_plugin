@@ -33,6 +33,7 @@ from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRe
 from qgis.PyQt.QtCore import Qt
 import os
 import qgis
+from PyQt5.QtGui import QKeySequence
 
 from .ml_service_map import MLServiceMapWindow
 
@@ -86,6 +87,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.keypress_filter = KeypressFilter(self.key_emitter)
         # Install key press filter to iface's map canvas
         self.iface.mapCanvas().installEventFilter(self.keypress_filter)
+        self.export_keyboard_shortcut_details()
 
         # Mouse press filter
         self.mouse_emitter = KeypressEmitter()
@@ -189,6 +191,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
 
     # Shortcut function
     def change_feature_type(self, class_name):
+        # Change feature type of the selected features or the last added feature
         if not isinstance(self.active_layer, qgis._core.QgsVectorLayer):
             self.logger("Activate a vector layer or select feature to change feature type...")
             return None
@@ -197,6 +200,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         selected_features = list(self.active_layer.selectedFeatures())
         if selected_features:
             for feature in selected_features:
+                name = self.class_maps.get(class_name, {}).get("name", None)
+                feature.setAttribute("class", name)
                 feature.setAttribute("class_name", class_name)
                 class_id = self.class_maps.get(class_name, {}).get("id", None)
                 feature.setAttribute("class_id", int(class_id))
@@ -210,6 +215,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
                 self.logger("No feature selected or new feature added...")
                 return None
             self.logger("Changing class_name of last added feature to {}".format(class_name))
+            name = self.class_maps.get(class_name, {}).get("name", None)
+            last_feature.setAttribute("class", name)
             last_feature.setAttribute("class_name", class_name)
             class_id = self.class_maps.get(class_name, {}).get("id", None)
             last_feature.setAttribute("class_id", int(class_id))
@@ -217,6 +224,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
 
     def create_feature_change_shortcuts(self):
+        self.logger(str(self.class_maps))
         # Populate shortcuts dictionary for feature type change with keys
         shortcuts_dict = {self.class_maps[i]["name"]: {"key": None,
                                                        "class_name": i,
@@ -225,8 +233,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
                                                        "function": self.change_feature_type,
                                                        "function_args": [i, ],
                                                        "shortcut_type": "Feature type change"} for i in self.class_maps}
-        shortcuts_dict.get("clip_boundary", {})["key"] = "C"
-        shortcuts_dict.get("train_boundary", {})["key"] = "T"
+        shortcuts_dict.get("clip_boundary", shortcuts_dict.get("Clip_boundary", {}))["key"] = "C"
+        shortcuts_dict.get("train_boundary", shortcuts_dict.get("Train_boundary", {}))["key"] = "T"
         # We will give shortcuts to other classes starting from 1 in alphabetical order
         count = 1
         remaining_classes = sorted([i for i in shortcuts_dict if not shortcuts_dict[i]["key"]])

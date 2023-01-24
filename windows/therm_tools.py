@@ -128,6 +128,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
     def detect(self):
         map_angle = self.canvas.rotation()
         self.logger("Map canvas angle: {}".format(map_angle))
+        self.logger(str(self.project_details))
         def detect_task(task, detect_task_inputs):
             project_details, angle, core_token, user_email = detect_task_inputs
             status = detect_solar_issues(project_details, angle, core_token, user_email)
@@ -152,7 +153,8 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
             # Delete any duplicate features
             qgis.processing.run('qgis:deleteduplicategeometries',
                                 {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
-            geojson = json.load(open(cleaned_geojson_path))
+            with open(cleaned_geojson_path, 'r') as fi:
+                geojson = json.load(fi)
             # Clear UIDs to avoid duplicate error while saving to Therm
             for f in geojson["features"]:
                 f["properties"]["uid"] = None
@@ -215,7 +217,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
                                                        "function": self.change_feature_type,
                                                        "function_args": [i, ],
                                                        "shortcut_type": "Feature type change"} for i in self.class_maps}
-        shortcuts_dict.get("clip_boundary", {})["key"] = "C"
+        shortcuts_dict.get("clip_boundary", shortcuts_dict.get("Clip_boundary", {}))["key"] = "C"
         # We will give shortcuts to other classes starting from 0 in alphabetical order
         count = 0
         remaining_classes = sorted([i for i in shortcuts_dict if not shortcuts_dict[i]["key"]])
