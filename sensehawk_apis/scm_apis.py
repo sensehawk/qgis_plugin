@@ -26,13 +26,14 @@ def train(task, train_inputs):
     return {"task": task.description(), "status": response.status_code}
 
 
-def detect(project_details, geojson, models_url, user_email, core_token):
+def detect(project_details, geojson, model_details, user_email, core_token):
     url = SCM_INFERENCE_URL + "/predict"
+    model_name, models_url = model_details
     project_uid = project_details.get("uid", None)
     ortho_url = get_project_data(project_details, core_token).get("ortho", {}).get("url", None)
     if not project_uid or not ortho_url:
         return None
-    request_body = {"data": {"ortho": ortho_url, "ml_models": models_url},
+    request_body = {"data": {"ortho": ortho_url, "ml_models": models_url, "model_name": model_name},
                     "details": {"project_uid": project_uid, "user_email": user_email},
                     "geojson": geojson
                     }

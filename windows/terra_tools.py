@@ -165,10 +165,11 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             self.logger("Invalid model...")
             return None
         model_url = self.models_dict[model_name]
+        model_details = [model_name, model_url]
         self.logger("Initiating detection request task...")
         detection_task = QgsTask.fromFunction("Detect", detectionTask,
                                               detection_task_input=[self.project_details, geojson,
-                                                                    model_url, self.load_window.user_email,
+                                                                    model_details, self.load_window.user_email,
                                                                     self.core_token])
         detection_task.statusChanged.connect(lambda:callback(detection_task, self.logger))
         QgsApplication.taskManager().addTask(detection_task)
