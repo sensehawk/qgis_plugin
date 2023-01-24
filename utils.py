@@ -109,7 +109,13 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     project_uid = project_details["uid"]
 
     # Download vectors
-    geojson = get_project_geojson(project_uid, core_token, project_type=project_type)
+    try:
+        geojson = get_project_geojson(project_uid, core_token, project_type=project_type)
+    except Exception:
+        geojson = {
+            "type": "FeatureCollection",
+            "features": []
+        }
 
     if not geojson["features"]:
         # Create an extent feature if no feature exists
@@ -117,7 +123,8 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
                                                                        raster_bounds[1],
                                                                        raster_bounds[2],
                                                                        raster_bounds[3])).asJson())
-        extent_feature = {"type": "Feature", "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None},
+        extent_feature = {"type": "Feature",
+                          "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None, "class": None},
                           "geometry": extent_geometry, "workflow": {}}
         geojson["features"] += [extent_feature]
 
