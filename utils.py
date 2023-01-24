@@ -110,6 +110,8 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     # Download vectors
     geojson = get_project_geojson(project_uid, core_token, project_type=project_type)
+    if "features" not in geojson:
+        logger(str(geojson), level=Qgis.Warning)
 
     if not geojson["features"]:
         # Create an extent feature if no feature exists

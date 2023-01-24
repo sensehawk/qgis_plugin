@@ -224,7 +224,6 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
 
     def create_feature_change_shortcuts(self):
-        self.logger(str(self.class_maps))
         # Populate shortcuts dictionary for feature type change with keys
         shortcuts_dict = {self.class_maps[i]["name"]: {"key": None,
                                                        "class_name": i,

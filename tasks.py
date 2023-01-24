@@ -58,8 +58,7 @@ def loadTask(task, load_window):
                                                                                           load_window.core_token,
                                                                                           load_window.logger)
 
-    except Exception as e:
-        load_window.logger(str(traceback.format_exc()), level=Qgis.Warning)
+    except Exception:
         return False
 
     # Set load_successful variable to True
