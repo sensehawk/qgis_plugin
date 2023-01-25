@@ -383,7 +383,11 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             key, name = key.strip(), name.strip()
             key_code = eval("Qt.Key_{}".format(key))
             csv_map[name] = key_code
-        default_to_csv_map = {i: csv_map[default_map[i]] for i in default_map}
+        # If the existing keyboard shortcuts do not contain the classes from this project, do not remap
+        try:
+            default_to_csv_map = {i: csv_map[default_map[i]] for i in default_map}
+        except KeyError:
+            return None
         for i in default_to_csv_map:
             old_keycode = i
             new_keycode = default_to_csv_map[i]
