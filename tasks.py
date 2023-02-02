@@ -135,7 +135,7 @@ def loginTask(task, login_window):
 def detectionTask(task, detection_task_input):
     project_details, geojson, model_details, user_email, core_token = detection_task_input
     try:
-        detect(project_details, geojson, model_detail, user_email, core_token)
+        detect(project_details, geojson, model_details, user_email, core_token)
         return {"task": task.description(), "Exception": None, "success": True}
     except Exception as e:
         return {"task": task.description(), "Exception": e, "success": False}
