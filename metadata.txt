@@ -6,14 +6,14 @@
 name=SenseHawk QC
 qgisMinimumVersion=3.0
 description=This plugin will load and save SenseHawk projects needing quality check.
-version=0.1
+version=1.01
 author=SenseHawk
 email=kiranh@sensehawk.com
 
 about=This plugin will take in projectUID from SenseHawk app and load the orthotiles and the vectors. Post quality check, you can save the changes and post directly to SenseHawk app and overwrite the saved vectors.
 
 tracker=https://app.clickup.com/3620712/v/li/188379769
-repository=https://sensehawk.com
+repository=https://github.com/sensehawk/qgis_plugin
 
 # End of mandatory metadata
 
@@ -21,12 +21,12 @@ repository=https://sensehawk.com
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=minor bugfixes
 
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://www.sensehawk.com
+homepage=https://github.com/sensehawk/qgis_plugin
 category=Vector
 icon=icon.png
 # experimental flag
