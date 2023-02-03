@@ -98,6 +98,9 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.show_tools_window()
 
     def start_project_load(self):
+        # Reset the tools window to None in case of reload of a different project
+        self.terra_tools_window = None
+        self.therm_tools_window = None
         load_task = QgsTask.fromFunction("Load", loadTask, load_window=self)
         QgsApplication.taskManager().addTask(load_task)
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
