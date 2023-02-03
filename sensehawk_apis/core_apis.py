@@ -2,7 +2,6 @@ import requests
 import json
 import os
 from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
-import jwt
 
 
 def get_project_details(project_uid, token):
