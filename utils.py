@@ -11,12 +11,8 @@ from qgis.core import *
 import qgis.utils
 import tempfile
 import random
-import utm
 import tempfile
 
-
-def latlon_to_utm(latitude, longitude, zone_number=None):
-    return utm.from_latlon(latitude, longitude, force_zone_number=zone_number)[:2]
 
 def download_file(url, logger, output_path=None, directory_path=None):
     logger("Downloading {} to {}...".format(url, output_path))
