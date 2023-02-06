@@ -12,7 +12,7 @@ email=kiranh@sensehawk.com
 
 about=This plugin will take in projectUID from SenseHawk app and load the orthotiles and the vectors. Post quality check, you can save the changes and post directly to SenseHawk app and overwrite the saved vectors.
 
-tracker=https://app.clickup.com/3620712/v/li/188379769
+tracker=https://github.com/sensehawk/qgis_plugin/issues
 repository=https://github.com/sensehawk/qgis_plugin
 
 # End of mandatory metadata
