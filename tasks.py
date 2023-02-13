@@ -40,7 +40,7 @@ def loadTask(task, load_window):
     load_window.bounds = ortho_bounds
 
     zmax = ortho_tiles_details["maxzoom"]
-    zmin = ortho_tiles_details["center"][-1]
+    zmin = 1
 
     orthotiles_url = "type=xyz&url=" + \
                      base_orthotiles_url + "/{z}/{x}/{y}.png" + \
