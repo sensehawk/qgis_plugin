@@ -24,7 +24,8 @@ def download_file(url, logger, output_path=None, directory_path=None):
     if os.path.exists(output_path) and os.stat(output_path).st_size == urlopen(url).length:
         return output_path
     response = requests.get(url)
-    open(output_path, "wb").write(response.content)
+    with open(output_path, "wb") as fi:
+        fi.write(response.content)
     print(output_path)
     return output_path
 
