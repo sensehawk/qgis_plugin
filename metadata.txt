@@ -6,7 +6,7 @@
 name=SenseHawk QC
 qgisMinimumVersion=3.0
 description=This plugin will load and save SenseHawk projects needing quality check.
-version=1.01
+version=1.02
 author=SenseHawk
 email=kiranh@sensehawk.com
 
@@ -21,7 +21,7 @@ repository=https://github.com/sensehawk/qgis_plugin
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=minor bugfixes
+changelog=fix: re-rendering hidden categories on class change or layer save | memory leak fix on ortho tiles load
 
 # Tags are comma separated with spaces allowed
 tags=python
