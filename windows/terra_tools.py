@@ -24,7 +24,6 @@
 
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.scm_apis import get_models_list, detect
-from ..utils import categorize_layer
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from ..tasks import clipRequest, detectionTask, approveTask
 
@@ -141,7 +140,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             self.iface.mapCanvas().viewport().removeEventFilter(self.mousepress_filter)
         except Exception:
             pass
-        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
+        self.active_layer.triggerRepaint()
 
     def start_clip_task(self):
         def callback(task, logger):
@@ -221,7 +220,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             class_id = self.class_maps.get(class_name, {}).get("id", None)
             last_feature.setAttribute("class_id", int(class_id))
             self.active_layer.updateFeature(last_feature)
-        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
+        self.active_layer.triggerRepaint()
 
     def create_feature_change_shortcuts(self):
         # Populate shortcuts dictionary for feature type change with keys
@@ -250,6 +249,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
             self.keyboard_shortcuts[shortcuts_dict[i]["key_code"]] = KeypressShortcut(shortcuts_dict[i])
 
     def duplicate_feature(self):
+        # Set layer as editable
+        self.active_layer.startEditing()
         # Install mouse press filter to iface's map canvas
         self.iface.mapCanvas().viewport().installEventFilter(self.mousepress_filter)
         move_function = self.iface.actionMoveFeature()
@@ -304,8 +305,8 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
                                                         "shortcut_type": "QGIS tools"})
         # 'E' key to toggle editing of selected layer
         self.keyboard_shortcuts[69] = KeypressShortcut({"key_code": 69,
-                                                        "name": "Toggle selected layer edit",
-                                                        "function": "iface.showAttributeTable(iface.activeLayer())",
+                                                        "name": "Turn on layer edit",
+                                                        "function": self.active_layer.startEditing,
                                                         "shortcut_type": "QGIS tools"})
 
         # 'Z' key to zoom to layer

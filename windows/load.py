@@ -25,7 +25,7 @@
 from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
 
-from ..utils import download_file, categorize_layer, load_vectors
+from ..utils import download_file, load_vectors, categorize_layer
 
 from ..tasks import loadTask
 
@@ -93,7 +93,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.qgis_project.addMapLayer(rlayer)
         self.qgis_project.addMapLayer(vlayer)
         # Apply styling
-        categorize_layer(project_type=self.project_type, class_maps=self.class_maps)
+        self.categorized_renderer = categorize_layer(project_type=self.project_type, class_maps=self.class_maps)
         # Show tools window
         self.show_tools_window()
 

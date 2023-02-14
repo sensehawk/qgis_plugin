@@ -28,7 +28,6 @@ import qgis
 from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
 
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
-from ..utils import categorize_layer
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.sid_apis import detect_solar_issues
 
@@ -87,6 +86,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
 
 
     def duplicate_feature(self):
+        self.active_layer.startEditing()
         # Install mouse press filter to iface's map canvas
         self.iface.mapCanvas().viewport().installEventFilter(self.mousepress_filter)
         move_function = self.iface.actionMoveFeature()
@@ -206,7 +206,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
             self.iface.mapCanvas().viewport().removeEventFilter(self.mousepress_filter)
         except Exception:
             pass
-        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
+        self.active_layer.triggerRepaint()
 
     def create_feature_change_shortcuts(self):
         # Populate shortcuts dictionary for feature type change with keys
@@ -263,7 +263,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
             last_feature.setAttribute("class_name", class_name)
             last_feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
             self.active_layer.updateFeature(last_feature)
-        categorize_layer(project_type=self.load_window.project_type, class_maps=self.class_maps)
+        self.active_layer.triggerRepaint()
 
     def create_qgis_shortcuts(self):
         # 'Enter' key saves the active layer
@@ -288,8 +288,8 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
                                                         "shortcut_type": "QGIS tools"})
         # 'E' key to toggle editing of selected layer
         self.keyboard_shortcuts[69] = KeypressShortcut({"key_code": 69,
-                                                        "name": "Toggle selected layer edit",
-                                                        "function": "iface.showAttributeTable(iface.activeLayer())",
+                                                        "name": "Turn on layer edit",
+                                                        "function": self.active_layer.startEditing,
                                                         "shortcut_type": "QGIS tools"})
 
         # 'Z' key to zoom to layer

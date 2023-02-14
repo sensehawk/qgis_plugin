@@ -36,15 +36,15 @@ def random_color():
         color += i
     return color
 
-def categorize_layer(project_type=None, class_maps=None):
-    layer = qgis.utils.iface.activeLayer()
-    layer.startEditing()
-    if project_type == "therm":
-        fni = layer.fields().indexFromName('class_name')
-    else:
-        fni = layer.fields().indexFromName('class')
-    features = layer.uniqueValues(fni)
 
+def categorize_layer(project_type=None, class_maps=None):
+    renderer = categorized_renderer(project_type=project_type, class_maps=class_maps)
+    active_layer = iface.activeLayer()
+    active_layer.setRenderer(renderer)
+    active_layer.triggerRepaint()
+    return renderer
+
+def categorized_renderer(project_type=None, class_maps=None):
     # color classifying based on class_name for therm / class_name and class_maps for terra
     if not class_maps:
         color_code = {'hotspot': '#001c63', 'diode_failure': '#42e9de', 'module_failure': '#2ecc71',
@@ -58,11 +58,14 @@ def categorize_layer(project_type=None, class_maps=None):
             i in class_maps}
         color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in color_code[i]) for i in color_code}
 
+    # Add black color for NULL class names (any newly added feature before reclassification)
+    color_code[None] = "#000000"
     # Applying color based on feature 'class_name' for therm and 'class' for terra
     categories = []
-    for feature in features:
+    for class_name, color in color_code.items():
         # initialize the default symbol for this geometry type
-        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        # PolygonGeometry has value 2
+        symbol = QgsSymbol.defaultSymbol(2)
 
         # configure a symbol layer
         layer_style = {}
@@ -70,10 +73,7 @@ def categorize_layer(project_type=None, class_maps=None):
         layer_style['line_width'] = '0.660000'
 
         #  Applying colour to features based on class name
-        if color_code.get(feature):
-            layer_style['line_color'] = color_code.get(feature)
-        else:
-            layer_style['line_color'] = '#000000'
+        layer_style['line_color'] = color_code.get(class_name)
 
         # initialize the default symbol for this geometry type
         symbol_layer = QgsSimpleFillSymbolLayer.create(layer_style)
@@ -83,7 +83,7 @@ def categorize_layer(project_type=None, class_maps=None):
             symbol.changeSymbolLayer(0, symbol_layer)
 
         # create renderer object
-        category = QgsRendererCategory(feature, symbol, str(feature))
+        category = QgsRendererCategory(class_name, symbol, str(class_name))
         # entry for the list of category items
         categories.append(category)
 
@@ -94,11 +94,7 @@ def categorize_layer(project_type=None, class_maps=None):
     elif project_type == "therm":
         renderer = QgsCategorizedSymbolRenderer('class_name', categories)
 
-    # assign the created renderer to the layer
-    if renderer is not None:
-        layer.setRenderer(renderer)
-
-    layer.triggerRepaint()
+    return renderer
 
 
 def load_vectors(project_details, project_type, raster_bounds, core_token, logger):
