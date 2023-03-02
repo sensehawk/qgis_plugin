@@ -50,7 +50,7 @@
     - Approval:
       - Once the QC is completed over the AI detected features, clicking the `Approve` button will generate the feature count and percentage feature value for all components inside `Table` features. 
 
-5. Troubleshooting and raising issues:
+5. ### _Troubleshooting and raising issues_
    - You can enable logs using `View > Panels > Log Messages`. `SenseHawk QC` tab will show all logs from the plugin.
    - Issues can be raised on GitHub using `Plugins > Manage and Install Plugins`, searching for `SenseHawk QC` and clicking on `bug tracker`.
    ![8.png](examples%2F8.png)
