@@ -49,6 +49,9 @@ def save_project_geojson(geojson, project_uid, token, project_type="terra"):
                                                                             project_details["organization"]["uid"])
         properties_to_remove = ["element", "uid"]
         for f in geojson["features"]:
+            workflowProgress = f["properties"].get("workflowProgress")
+            if not workflowProgress:
+                f["properties"]["workflowProgress"] = {}
             for p in properties_to_remove:
                 try:
                     del f["properties"][p]
