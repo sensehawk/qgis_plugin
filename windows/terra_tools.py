@@ -242,7 +242,10 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         # Generate keycode which is communicated from keyboard
         for s in shortcuts_dict:
             key = shortcuts_dict[s]["key"]
-            key_code = eval("Qt.Key_{}".format(key.upper()))
+            try:
+                key_code = eval("Qt.Key_{}".format(key.upper()))
+            except Exception:
+                continue
             shortcuts_dict[s]["key_code"] = key_code
 
         for i in shortcuts_dict:
