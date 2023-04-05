@@ -25,7 +25,7 @@
      
         ![keyboard_shortcuts.png](examples/keyboard_shortcuts.png)
      - Terra/Therm shortcut csv files can be found by following `Settings > User Profiles > Open Active Profile Folder > python > plugins > sensehawk_qc > windows`. The `windows` folder will contain the `terra_keyboard_shortcuts.csv` and `therm_keyboard_shortcuts.csv`; and the keys can be changed by altering these csv files.
-     - Changing feature type: Feature type can be changed by selecting the feature (or features) and pressing the relevant keyboard shortcut for that particular feature type. If not feature is selected, the feature type of the feature that was last added before save will be changed.
+     - Changing feature type: Feature type can be changed by selecting the feature (or features) and pressing the relevant keyboard shortcut for that particular feature type. If no feature is selected, the feature type of the feature that was last added before save will be changed.
      - Duplicating feature: `D` is the default keyboard shortcut to activate the duplicate tool. This tool is similar to `copy and move` feature in QGIS except the feature type of the selected feature can be changed on the fly.
    
 3. ### _Therm Tools_
