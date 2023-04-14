@@ -53,7 +53,7 @@ class ThermNumberingWindow(QtWidgets.QDockWidget, AUTO_NUMBERING_UI):
         self.thermToolobj.show()
         self.hide()
 
-    def stirngNumber_config(self):
+    def stringNumber_configuration(self):
         canvas  = self.canvas
         rotation = canvas.rotation()
         Angle = 0
@@ -70,7 +70,7 @@ class ThermNumberingWindow(QtWidgets.QDockWidget, AUTO_NUMBERING_UI):
         startTime = time()
         Vlayer = self.iface.activeLayer()
         Vfeatures = Vlayer.getFeatures()
-        module_width, module_height, angle, Prefix, Suffix = self.stirngNumber_config()
+        module_width, module_height, angle, Prefix, Suffix = self.stringNumber_configuration()
         if self.basic.isChecked() or self.basicAndmodule.isChecked() or self.existingAndmodule.isChecked():
             field_constructor(Vlayer) # If not exist create stirng number field
             featureslist = [feature for feature in Vfeatures] #QgsfeatureIterator[] => Qgsfeatures
@@ -105,6 +105,7 @@ class ThermNumberingWindow(QtWidgets.QDockWidget, AUTO_NUMBERING_UI):
                             basicModule_number = f"{Prefix}-R{Trow}-T{Tcolumn}-R{Irow}-C{Icolumn}-{Suffix}"
                             featureobj.feature['string_number'] = basicModule_number.strip('-')
                             Vlayer.updateFeature(featureobj.feature)
+
 
             elif self.existingAndmodule.isChecked():
                 for featureobj in featuresobjlist:
