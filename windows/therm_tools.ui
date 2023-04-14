@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>568</width>
-    <height>155</height>
+    <width>579</width>
+    <height>162</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,7 +18,7 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>568</width>
+    <width>100</width>
     <height>155</height>
    </size>
   </property>
@@ -29,8 +29,8 @@
    <widget class="QPushButton" name="detectButton">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>40</y>
+      <x>90</x>
+      <y>100</y>
       <width>89</width>
       <height>25</height>
      </rect>
@@ -42,9 +42,9 @@
    <widget class="QPushButton" name="saveProject">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>40</y>
-      <width>89</width>
+      <x>320</x>
+      <y>100</y>
+      <width>121</width>
       <height>25</height>
      </rect>
     </property>
@@ -63,6 +63,19 @@
     </property>
     <property name="text">
      <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="StringNumberButton">
+    <property name="geometry">
+     <rect>
+      <x>190</x>
+      <y>100</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>string_number</string>
     </property>
    </widget>
   </widget>

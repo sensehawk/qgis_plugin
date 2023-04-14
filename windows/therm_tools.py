@@ -30,6 +30,7 @@ from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRe
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.sid_apis import detect_solar_issues
+from ..windows.autoNumbering import ThermNumberingWindow
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
@@ -54,10 +55,12 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.backButton.clicked.connect(self.show_load_window)
         self.saveProject.clicked.connect(self.save_project)
         self.detectButton.clicked.connect(self.detect)
+        self.StringNumberButton.clicked.connect(self.string_numbering)
         self.class_maps = self.load_window.class_maps
         self.core_token = self.load_window.core_token
         self.project_details = self.load_window.project_details
-
+        self.numbering_window = None
+        
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         ## Keyboard shortcuts
@@ -84,7 +87,12 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.mouse_emitter = KeypressEmitter()
         self.mousepress_filter = MousepressFilter(self.mouse_emitter)
 
-
+    def string_numbering(self):
+        #therm_toolsobj = self
+        self.numbering_window = ThermNumberingWindow(self, self.iface)
+        self.numbering_window.show()
+        self.hide()
+        
     def duplicate_feature(self):
         self.active_layer.startEditing()
         # Install mouse press filter to iface's map canvas
