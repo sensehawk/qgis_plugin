@@ -19,6 +19,7 @@ def loadTask(task, load_window):
         load_window.logger('Please specify project UID', level=Qgis.Warning)
         return False
 
+    
     # Get project details from core
     load_window.project_details = get_project_details(load_window.project_uid, load_window.core_token)
     if not load_window.project_details:
@@ -118,8 +119,10 @@ def clipRequest(task, clip_task_input):
     return {"task": task.description(), "success": True, "message": "Clip request sent"}
 
 def loginTask(task, login_window):
-    login_window.user_email = login_window.userName.text()
-    login_window.user_password = login_window.userPassword.text()
+    login_window.user_email = 'ganesh@sensehawk.com'
+    login_window.user_password = 'Helloworld@123'
+    #login_window.user_email = login_window.userName.text()
+    #login_window.user_password = login_window.userPassword.text()
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
     if not login_window.user_email or not login_window.user_password:
         login_window.logger('User email or Password empty...', level=Qgis.Warning)

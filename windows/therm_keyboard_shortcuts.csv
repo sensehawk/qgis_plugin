@@ -13,6 +13,6 @@ Return, Save layer changes, QGIS tools
 S, Select features, QGIS tools
 F, Add new feature, QGIS tools
 P, Show attribute table, QGIS tools
-E, Toggle selected layer edit, QGIS tools
+E, Turn on layer edit, QGIS tools
 Z, Zoom to layer, QGIS tools
 D, Duplicate feature, QGIS tools
