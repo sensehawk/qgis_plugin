@@ -75,7 +75,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>string_number</string>
+     <string>String Number</string>
     </property>
    </widget>
   </widget>
