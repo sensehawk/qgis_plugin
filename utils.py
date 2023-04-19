@@ -26,7 +26,6 @@ def download_file(url, logger, output_path=None, directory_path=None):
     response = requests.get(url)
     with open(output_path, "wb") as fi:
         fi.write(response.content)
-    print(output_path)
     return output_path
 
 def random_color():
