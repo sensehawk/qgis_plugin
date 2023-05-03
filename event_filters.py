@@ -10,16 +10,22 @@ class KeypressFilter(QObject):
     def __init__(self, emitter):
         super(KeypressFilter, self).__init__()
         self.emitter = emitter
+        self.ctrl_switch = False
 
     def eventFilter(self, obj, event):
         """
+        Key emitter will not emit keys if Ctrl is pressed
         obj : QObject whose event is intercepted
         event: QEvent received
 
         returns:
             bool
         """
-        if event.type() == QEvent.KeyRelease:
+        if event.type() == QEvent.KeyPress and event.key() == 16777249:
+            self.ctrl_switch = True
+        if event.type() == QEvent.KeyRelease and event.key() == 16777249:
+            self.ctrl_switch = False
+        if event.type() == QEvent.KeyRelease and not self.ctrl_switch:
             self.emitter.signal.emit(event.key())
             return True
         return False
