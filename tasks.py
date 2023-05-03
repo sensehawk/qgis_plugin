@@ -19,6 +19,7 @@ def loadTask(task, load_window):
         load_window.logger('Please specify project UID', level=Qgis.Warning)
         return False
 
+    
     # Get project details from core
     load_window.project_details = get_project_details(load_window.project_uid, load_window.core_token)
     if not load_window.project_details:
