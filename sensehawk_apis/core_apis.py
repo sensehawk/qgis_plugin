@@ -3,6 +3,26 @@ import json
 import os
 from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
 
+def get_project_reports(project_uid, token):
+    PROJECT_REPORT_URL = CORE_URL + "/api/v1/projects/%s/reports/"
+    REPORT_DATA_DOWNLOAD_URL = CORE_URL + "/api/v1/projects/%s/data/reports/%s/download/"
+    REPORT_DOWNLOAD_URL = CORE_URL + "/api/v1/projects/%s/reports/%s/download/"
+    HOST_TOKEN = f'Token {token}'
+
+    all_reports = {}
+    reports = requests.get(PROJECT_REPORT_URL %project_uid, headers = {'Authorization': HOST_TOKEN}).json()['results']
+
+    for report in reports:
+        if report['report_type'] == 'processed':
+            processed_reports =  requests.post(REPORT_DATA_DOWNLOAD_URL %(project_uid, report['uid']), headers = {'Authorization':HOST_TOKEN}).json()['urls']
+            for data_report in data_reports:
+                if processed_reports.get(data_report):
+                    all_reports[data_report] = processed_reports[data_report]
+        else:
+            url = requests.get(REPORT_DOWNLOAD_URL %(project_uid, report['uid']), headers = {'Authorization':HOST_TOKEN}).json()['url']
+            all_reports[report['report_type']] = url
+    return all_reports
+
 
 def get_project_details(project_uid, token):
     url = CORE_URL+"/api/v1/projects/{}/?reports=true".format(project_uid)
