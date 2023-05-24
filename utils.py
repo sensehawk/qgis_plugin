@@ -26,7 +26,6 @@ def download_file(url, logger, output_path=None, directory_path=None):
     response = requests.get(url)
     with open(output_path, "wb") as fi:
         fi.write(response.content)
-    print(output_path)
     return output_path
 
 def random_color():
@@ -128,3 +127,21 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     vlayer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
 
     return vlayer, geojson_path, len(geojson["features"])
+
+
+def file_existent(project_uid, org, token):
+    url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    project_json = requests.get(url, headers=headers)
+    if project_json.status_code == 404:
+        return project_json.status_code
+    else:
+        existing_file = ['None']
+        json = project_json.json()
+        files = list(json.keys())
+        if 'ortho' in files:
+            existing_file =  ['ortho'] + existing_file
+        if 'reflectance' in files:
+           existing_file =  ['reflectance'] + existing_file
+
+        return existing_file

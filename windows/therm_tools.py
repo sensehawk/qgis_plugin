@@ -31,6 +31,7 @@ from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, M
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.sid_apis import detect_solar_issues
 from ..windows.autoNumbering import ThermNumberingWindow
+from ..windows.ImageTagging import ThermImageTaggingWindow
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
@@ -56,11 +57,17 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.saveProject.clicked.connect(self.save_project)
         self.detectButton.clicked.connect(self.detect)
         self.StringNumberButton.clicked.connect(self.string_numbering)
+        self.imagetaggingButton.clicked.connect(self.ImageTagging)
         self.class_maps = self.load_window.class_maps
         self.core_token = self.load_window.core_token
+        self.project_uid = self.load_window.project_uid
         self.project_details = self.load_window.project_details
+        self.existing_files = self.load_window.existing_files
         self.numbering_window = None
-        
+        self.imagetagging_window = None
+
+
+
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         ## Keyboard shortcuts
@@ -88,10 +95,16 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.mousepress_filter = MousepressFilter(self.mouse_emitter)
 
     def string_numbering(self):
-        #therm_toolsobj = self
         self.numbering_window = ThermNumberingWindow(self, self.iface)
         self.numbering_window.show()
         self.hide()
+    
+
+    def ImageTagging(self):
+        self.imagetagging_window = ThermImageTaggingWindow(self, self.iface)
+        self.imagetagging_window.show()
+        self.hide()
+
         
     def duplicate_feature(self):
         self.active_layer.startEditing()
