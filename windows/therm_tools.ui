@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>579</width>
-    <height>162</height>
+    <width>522</width>
+    <height>211</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -29,9 +29,9 @@
    <widget class="QPushButton" name="detectButton">
     <property name="geometry">
      <rect>
-      <x>90</x>
-      <y>100</y>
-      <width>89</width>
+      <x>190</x>
+      <y>140</y>
+      <width>121</width>
       <height>25</height>
      </rect>
     </property>
@@ -43,7 +43,7 @@
     <property name="geometry">
      <rect>
       <x>320</x>
-      <y>100</y>
+      <y>140</y>
       <width>121</width>
       <height>25</height>
      </rect>
@@ -55,8 +55,8 @@
    <widget class="QPushButton" name="backButton">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>100</y>
+      <x>20</x>
+      <y>140</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -68,14 +68,27 @@
    <widget class="QPushButton" name="StringNumberButton">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>60</x>
+      <y>140</y>
+      <width>121</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>String Number</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="imagetaggingButton">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
       <y>100</y>
       <width>121</width>
       <height>25</height>
      </rect>
     </property>
     <property name="text">
-     <string>string_number</string>
+     <string>Tagging</string>
     </property>
    </widget>
   </widget>
