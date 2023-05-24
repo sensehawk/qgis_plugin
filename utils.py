@@ -129,15 +129,15 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     return vlayer, geojson_path, len(geojson["features"])
 
 
-def file_existent(projectUid, org, token):
-    url  = f'https://therm-server.sensehawk.com/projects/{projectUid}/data?organization={org}'
+def file_existent(project_uid, org, token):
+    url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'
     headers = {"Authorization": f"Token {token}"}
-    projetJson = requests.get(url, headers=headers)
-    if projetJson.status_code == 404:
-        return projetJson.status_code
+    project_json = requests.get(url, headers=headers)
+    if project_json.status_code == 404:
+        return project_json.status_code
     else:
         existing_file = ['None']
-        json = projetJson.json()
+        json = project_json.json()
         files = list(json.keys())
         if 'ortho' in files:
             existing_file =  ['ortho'] + existing_file
