@@ -1,7 +1,7 @@
 from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
 from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
-from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson
+from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson, get_project_reports
 from .sensehawk_apis.scm_apis import detect, approve
 from .utils import load_vectors, get_project_details
 import requests
@@ -105,7 +105,7 @@ def clipRequest(task, clip_task_input):
         return {"task": task.description(), "success": False,
                 "message": "Please provide unique name property to all clip_boundary features before clipping..."}
 
-    ortho_url = get_project_data(project_details, core_token).get("ortho", {}).get("url", None)
+    ortho_url = get_project_reports(project_details.get("uid", None), core_token).get("ortho", None)
     if not ortho_url:
         return {"task": task.description(), "success": False,
                 "message": "No ortho found for project..."}
