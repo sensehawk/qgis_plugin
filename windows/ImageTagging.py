@@ -124,10 +124,10 @@ class ThermImageTaggingWindow(QtWidgets.QDockWidget, IMAGE_TAGGING_UI):
         print("combobox changed", value)
 
     def image_tagging(self): 
-        if self.MagmaConversion.isChecked():Magma_Image = True
-        else : Magma_Image = False
-        if self.IssueCropImage.isChecked():Crop_Image = True
-        else: Crop_Image = False
+        if self.MagmaConversion.isChecked():magma_image = True
+        else : magma_image = False
+        if self.IssueCropImage.isChecked():crop_image = True
+        else: crop_image = False
         no_images = self.No_images.value()
         temp_file = self.temp_option.currentText()
 
@@ -137,27 +137,27 @@ class ThermImageTaggingWindow(QtWidgets.QDockWidget, IMAGE_TAGGING_UI):
                 self.iface.messageBar().pushMessage(self.tr('Visual Project_uid field is empty....'),Qgis.Warning)
             else:
                 json = {'projectUid': self.project_uid, 'method':2, 'VprojectUid': self.projectUid.text(), 'org':org,
-                        'Magma_Image':Magma_Image, 'Crop_Image':Crop_Image, 'No_images':no_images, 'temp_file':None}
+                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':None}
                 self.api(json)
          
         elif self.imagetaggingType.currentText() == 'Thermal Tagging':
             json = {'projectUid': self.project_uid, 'method':1, 'VprojectUid':None,'org':org,
-                    'Magma_Image':Magma_Image,'Crop_Image':Crop_Image, 'No_images':no_images, 'temp_file':temp_file}
+                    'magma_image':magma_image,'crop_image':crop_image, 'No_images':no_images, 'temp_file':temp_file}
             self.api(json)
            
         elif self.imagetaggingType.currentText() == 'ThermLite Tagging':
             json ={'projectUid': self.project_uid, 'method':2, 'VprojectUid':None,'org':org,
-                   'Magma_Image':Magma_Image, 'Crop_Image':Crop_Image,'No_images':no_images,'temp_file':temp_file}
+                   'magma_image':magma_image, 'crop_image':crop_image,'No_images':no_images,'temp_file':temp_file}
             self.api(json)
             
         elif self.imagetaggingType.currentText() == 'SiteMap Tagging':
             json ={'projectUid': self.project_uid, 'method':3, 'VprojectUid': None,'org':org,
-                   'Magma_Image':Magma_Image, 'Crop_Image':Crop_Image, 'No_images':no_images, 'temp_file':None}
+                   'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':None}
             self.api(json) 
         
         elif self.imagetaggingType.currentText() == 'Temp Extraction':
             json ={'projectUid': self.project_uid, 'method':4, 'VprojectUid': None,'org':org,
-                   'Magma_Image':Magma_Image, 'Crop_Image':Crop_Image, 'No_images':no_images, 'temp_file':temp_file}
+                   'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':temp_file}
             self.api(json) 
 
 
