@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>497</width>
-    <height>200</height>
+    <width>479</width>
+    <height>201</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -36,7 +36,7 @@
     <property name="geometry">
      <rect>
       <x>380</x>
-      <y>130</y>
+      <y>140</y>
       <width>81</width>
       <height>25</height>
      </rect>
@@ -49,7 +49,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>110</y>
+      <y>150</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -71,139 +71,106 @@
      <string>STRING NUMBERING :</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="basic">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>60</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Basic</string>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="basicAndmodule">
-    <property name="geometry">
-     <rect>
-      <x>80</x>
-      <y>30</y>
-      <width>121</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Basic+module</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_4">
-    <property name="geometry">
-     <rect>
-      <x>281</x>
-      <y>96</y>
-      <width>40</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Suffix</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="Suffix">
-    <property name="geometry">
-     <rect>
-      <x>333</x>
-      <y>96</y>
-      <width>131</width>
-      <height>25</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="Prefix">
-    <property name="geometry">
-     <rect>
-      <x>333</x>
-      <y>65</y>
-      <width>131</width>
-      <height>25</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>281</x>
-      <y>33</y>
-      <width>46</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Height</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_3">
-    <property name="geometry">
-     <rect>
-      <x>281</x>
-      <y>65</y>
-      <width>41</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Prefix</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
       <x>281</x>
       <y>1</y>
-      <width>42</width>
-      <height>17</height>
+      <width>148</width>
+      <height>60</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Width</string>
-    </property>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Width</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QgsDoubleSpinBox" name="Width">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Height</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QgsDoubleSpinBox" name="Height"/>
+     </item>
+    </layout>
    </widget>
-   <widget class="QgsDoubleSpinBox" name="Height">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
-      <x>333</x>
-      <y>33</y>
-      <width>94</width>
-      <height>26</height>
+      <x>281</x>
+      <y>65</y>
+      <width>181</width>
+      <height>58</height>
      </rect>
     </property>
+    <layout class="QFormLayout" name="formLayout_2">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Prefix</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="Prefix"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Suffix</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="Suffix"/>
+     </item>
+    </layout>
    </widget>
-   <widget class="QgsDoubleSpinBox" name="Width">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>333</x>
-      <y>1</y>
-      <width>94</width>
-      <height>26</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="existingAndmodule">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>70</y>
-      <width>139</width>
-      <height>23</height>
+      <y>30</y>
+      <width>189</width>
+      <height>54</height>
      </rect>
     </property>
-    <property name="text">
-     <string>Existing+module</string>
-    </property>
+    <layout class="QFormLayout" name="formLayout_3">
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="basic">
+       <property name="text">
+        <string>Basic</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QCheckBox" name="basicAndmodule">
+       <property name="text">
+        <string>Basic+module</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QCheckBox" name="existingAndmodule">
+       <property name="text">
+        <string>Existing+module</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
  </widget>

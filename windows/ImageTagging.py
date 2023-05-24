@@ -25,11 +25,11 @@
 from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis, QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog
-from ..windows.ImageTagging_utils import loadImageMetaData, responejsonTogeojon
+
 
 import os
 import tempfile
-import json
+import requests
 
 IMAGE_TAGGING_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ImageTagging.ui'))
 
@@ -46,41 +46,120 @@ class ThermImageTaggingWindow(QtWidgets.QDockWidget, IMAGE_TAGGING_UI):
         self.project_details = self.thermToolobj.project_details
         self.core_token = self.thermToolobj.core_token
         self.project_uid = self.thermToolobj.project_uid
-        self.awsinfo = None
-        self.camermodel = None
-
+        self.canvas =self.iface.mapCanvas()
 
         self.backButtoN.clicked.connect(self.show_thermTool_Window)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.runButton.clicked.connect(self.image_tagging)
+        self.imagetaggingType.currentTextChanged.connect(self.current_type)
+        self.MagmaConversion.setChecked(True)
 
+        self.existing_files = self.thermToolobj.existing_files
+        self.temp_option.addItems(self.existing_files)
+        self.No_images.setValue(4)
+        self.No_images.setMaximum(4)
+        self.No_images.setMinimum(1)
+        
     def show_thermTool_Window(self):
         self.thermToolobj.show()
         self.hide()
 
+    def tr(self, message):
+        return QCoreApplication.translate('SenseHawk QC', message)
+
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
-    def load_vlayer(self, load_task_status, imageMetaData ):
-        result = imageMetaData.returned_values
-        if not result:
-            self.logger("load failed ...", level=Qgis.Warning)
-            return None
-        geojsonpath = result['geojson_path']
-        Player = QgsVectorLayer(geojsonpath, geojsonpath, "ogr")
-        QgsProject.instance().addMapLayer(Player)
+    def api(self, json):
+        canvas  = self.canvas
+        rotation = canvas.rotation()
+        json['angle'] = rotation
+        print(json)
+        url = '' # Update depolyed (tagging) api url 
+        headers = {'Authorization': f'token {self.core_token}'}
+        imagetag = requests.post(url, json=json, headers=headers)
+        if imagetag.status_code == 200:
+            self.iface.messageBar().pushMessage(self.tr(f'Queued Successfully.'),Qgis.Success)
+        else:
+            self.iface.messageBar().pushMessage(self.tr(f'Failed to Queue {imagetag.status_code}'),Qgis.Warning)
 
 
-    def image_tagging(self):
-        if self.visualTagging.isChecked():
-            imageMetaData = QgsTask.fromFunction("Download", loadImageMetaData, thermliteobj=self)
-            QgsApplication.taskManager().addTask(imageMetaData)
-            imageMetaData.statusChanged.connect(lambda load_task_status: self.load_vlayer(load_task_status, imageMetaData))
+    def current_type(self, value):
+        if value == 'ThermLite Tagging' or value == 'Thermal Tagging':
+            self.MagmaConversion.setChecked(True)
+            self.IssueCropImage.setChecked(False)
+            self.projectUid.setEnabled(False)
+            self.IssueCropImage.setEnabled(False)
+            self.MagmaConversion.setEnabled(True)
+            self.temp_option.setEnabled(True)
+            self.No_images.setEnabled(True)
+            self.No_images.setValue(4)
+        elif value == 'Visual Tagging':
+            self.MagmaConversion.setChecked(False)
+            self.IssueCropImage.setChecked(False)
+            self.projectUid.setEnabled(True) 
+            self.IssueCropImage.setEnabled(False)
+            self.MagmaConversion.setEnabled(False)
+            self.temp_option.setEnabled(False)
+            self.No_images.setEnabled(True)
+            self.No_images.setValue(4)
+            self.projectUid.setText('')
+        elif value == 'SiteMap Tagging':
+            self.MagmaConversion.setChecked(True)
+            self.IssueCropImage.setChecked(True)
+            self.projectUid.setEnabled(False)
+            self.IssueCropImage.setEnabled(True)
+            self.MagmaConversion.setEnabled(True)
+            self.temp_option.setEnabled(False)
+            self.No_images.setEnabled(False)
+        elif value == 'Temp Extraction':
+            self.MagmaConversion.setChecked(False)
+            self.IssueCropImage.setChecked(False)
+            self.projectUid.setEnabled(False)
+            self.IssueCropImage.setEnabled(False)
+            self.MagmaConversion.setEnabled(False)
+            self.temp_option.setEnabled(True)
+            self.No_images.setEnabled(False)
+
+        print("combobox changed", value)
+
+    def image_tagging(self): 
+        if self.MagmaConversion.isChecked():Magam_Image = True
+        else : Magam_Image = False
+        if self.IssueCropImage.isChecked():IssueCrop_Image = True
+        else: IssueCrop_Image = False
+        no_images = self.No_images.value()
+        temp_file = self.temp_option.currentText()
+
+        org = self.project_details['organization']['uid']
+        if self.imagetaggingType.currentText() == 'Visual Tagging':
+            if not self.projectUid.text() :
+                self.iface.messageBar().pushMessage(self.tr(f'Visual Project_uid field is empty....'),Qgis.Warning)
+            else:
+                json = {'projectUid': self.project_uid, 'method':2, 'VprojectUid': self.projectUid.text(), 'org':org,
+                        'Magma_Image':Magam_Image, 'IssueCrop_image':IssueCrop_Image, 'No_images':no_images, 'temp_file':None}
+                self.api(json)
+         
+        elif self.imagetaggingType.currentText() == 'Thermal Tagging':
+            json = {'projectUid': self.project_uid, 'method':1, 'VprojectUid':None,'org':org,
+                    'Magma_Image':Magam_Image,'IssueCrop_image':IssueCrop_Image, 'No_images':no_images, 'temp_file':temp_file}
+            self.api(json)
+           
+        elif self.imagetaggingType.currentText() == 'ThermLite Tagging':
+            json ={'projectUid': self.project_uid, 'method':2, 'VprojectUid':None,'org':org,
+                   'Magma_Image':Magam_Image, 'IssueCrop_image':IssueCrop_Image,'No_images':no_images,'temp_file':temp_file}
+            self.api(json)
+            
+        elif self.imagetaggingType.currentText() == 'SiteMap Tagging':
+            json ={'projectUid': self.project_uid, 'method':3, 'VprojectUid': None,'org':org,
+                   'Magma_Image':Magam_Image, 'IssueCrop_image':IssueCrop_Image, 'No_images':no_images, 'temp_file':None}
+            self.api(json) 
         
-        elif self.thermlite_tagging.isChecked():
-            self.projectUid.insert(self.thermToolobj.project_uid)
-            reports = self.project_details['reports'] 
-            geojson_path = responejsonTogeojon(reports, thermliteobj=self)
-            Player = QgsVectorLayer(geojson_path, geojson_path, "ogr")
-            QgsProject.instance().addMapLayer(Player)
+        elif self.imagetaggingType.currentText() == 'Temp Extraction':
+            json ={'projectUid': self.project_uid, 'method':4, 'VprojectUid': None,'org':org,
+                   'Magma_Image':Magam_Image, 'IssueCrop_image':IssueCrop_Image, 'No_images':no_images, 'temp_file':temp_file}
+            self.api(json) 
+
+
+    
 

@@ -62,6 +62,7 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.core_token = self.load_window.core_token
         self.project_uid = self.load_window.project_uid
         self.project_details = self.load_window.project_details
+        self.existing_files = self.load_window.existing_files
         self.numbering_window = None
         self.imagetagging_window = None
 
