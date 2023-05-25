@@ -34,15 +34,20 @@ class MLServiceMapWindow(QtWidgets.QDockWidget, ML_SERVICE_MAP_UI):
 
     def populate_combo_boxes(self):
         items = self.class_groups.get("Components", self.class_groups.get("components", []))
-        self.detectionComboBox.addItems(items)
-        self.segmentationComboBox.addItems(items)
+        # self.detectionComboBox.addItems(items)
+        # self.segmentationComboBox.addItems(items)
+        self.classesComboBox.addItems(item)
 
     def train(self):
-        ml_service_map = {"segmentation": list(self.segmentationComboBox.checkedItems()),
-                          "detection": list(self.detectionComboBox.checkedItems())}
-        if list(set(ml_service_map["detection"]) & set(ml_service_map["segmentation"])):
-            self.logger("Detection list and Segmentation list are not mutually exclusive!", level=Qgis.Warning)
-            return None
+        # ml_service_map = {"segmentation": list(self.segmentationComboBox.checkedItems()),
+        #                   "detection": list(self.detectionComboBox.checkedItems())}
+        # Only segmentation service is enabled and all classes are modeled using UNet
+        ml_service_map = {"segmentation": list(self.classesComboBox.checkedItems()),
+                          "detection": []}
+        # if list(set(ml_service_map["detection"]) & set(ml_service_map["segmentation"])):
+        #     self.logger("Detection list and Segmentation list are not mutually exclusive!", level=Qgis.Warning)
+        #     return None
+        self.logger("ML Service map: {}".format(str(ml_service_map)))
         with open(self.tools_window.load_window.geojson_path, 'r') as fi:
             geojson = json.load(fi)
 
