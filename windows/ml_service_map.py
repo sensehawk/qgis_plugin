@@ -36,7 +36,7 @@ class MLServiceMapWindow(QtWidgets.QDockWidget, ML_SERVICE_MAP_UI):
         items = self.class_groups.get("Components", self.class_groups.get("components", []))
         # self.detectionComboBox.addItems(items)
         # self.segmentationComboBox.addItems(items)
-        self.classesComboBox.addItems(item)
+        self.classesComboBox.addItems(items)
 
     def train(self):
         # ml_service_map = {"segmentation": list(self.segmentationComboBox.checkedItems()),
