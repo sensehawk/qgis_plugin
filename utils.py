@@ -12,7 +12,26 @@ import qgis.utils
 import tempfile
 import random
 import tempfile
+from PyQt5.QtWidgets import  QCompleter
+from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtCore import Qt
 
+def combobox_modifier(combobox, wordlist):
+    """
+    args: combobox, list items
+
+    convert combobox into an line-editer with auto-word_suggestion combobox
+
+    return converted combobox with passed list as combobox drop-down items 
+    """
+    completer = QCompleter(wordlist)
+    completer.setCaseSensitivity(Qt.CaseInsensitive)
+    combobox.addItems(wordlist)
+    combobox.setEditable(True)
+    combobox.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+    combobox.setCompleter(completer)
+    combobox.completer().setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+    return combobox
 
 def download_file(url, logger, output_path=None, directory_path=None):
     logger("Downloading {} to {}...".format(url, output_path))

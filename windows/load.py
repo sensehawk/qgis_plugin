@@ -42,6 +42,8 @@ from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVector
     QgsGeometry, QgsField, QgsCategorizedSymbolRenderer, QgsApplication, QgsTask
 from qgis.PyQt.QtCore import Qt, QVariant
 from qgis.gui import QgsMessageBar
+from PyQt5.QtWidgets import QLineEdit, QCompleter
+from ..utils import combobox_modifier
 import qgis
 from qgis.utils import iface
 import time
@@ -58,6 +60,17 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.setupUi(self)
         self.loadProject.clicked.connect(self.start_project_load)
         self.toolsButton.clicked.connect(self.show_tools_window)
+        wordList = ["adani", "adidas", "arunachalam", "zeta"]
+        org_combobox = self.test1
+        self.org = combobox_modifier(org_combobox, wordList)
+        self.org.currentIndexChanged.connect(self.current_type)
+        # completer = QCompleter(wordList, self)
+        # completer.setCaseSensitivity(Qt.CaseInsensitive)
+        # self.test1.addItems(wordList)
+        # self.test1.setEditable(True)
+        # self.test1.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+        # self.test1.setCompleter(completer)
+        # self.test1.completer().setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
         self.project_type = None
         self.project_uid = None
         self.geojson_path = None
@@ -76,6 +89,10 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.class_groups = None
         self.load_successful = False
         self.loaded_feature_count = 0
+
+    def current_type(self, vlaue):
+        print('selected_org', vlaue)
+
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
