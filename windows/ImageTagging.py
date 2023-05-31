@@ -25,7 +25,7 @@
 from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis, QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog
-
+from ..constants import THERMAL_TAGGING_URL
 
 import os
 import tempfile
@@ -75,7 +75,7 @@ class ThermImageTaggingWindow(QtWidgets.QDockWidget, IMAGE_TAGGING_UI):
         rotation = canvas.rotation()
         json['angle'] = rotation
         print(json)
-        url = '' # Update depolyed (tagging) api url 
+        url =  THERMAL_TAGGING_URL + "/tag" # Update depolyed (tagging) api url
         headers = {'Authorization': f'token {self.core_token}'}
         imagetag = requests.post(url, json=json, headers=headers)
         if imagetag.status_code == 200:
