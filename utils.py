@@ -12,6 +12,7 @@ import qgis.utils
 import tempfile
 import random
 import tempfile
+from .constants import THERM_URL
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
@@ -147,9 +148,30 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     return vlayer, geojson_path, len(geojson["features"])
 
+def asset_details(org, token):
+    url = f'https://api.sensehawk.com/v1/assets/?organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    asset_details = response.json()['assets']
+    asset_list = {}
+    for asset in asset_details:
+        asset_list[asset['name']] = asset['uid']
+
+    return asset_list
+
+def organization_details(token):
+    url = 'https://api.sensehawk.com/v1/organizations/?limit=9007199254740991&page=1'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    org_details = response.json()['organizations']
+    org_list = {}
+    for org in org_details:
+        org_list[org['name']] = org['uid']
+
+    return org_list
 
 def file_existent(project_uid, org, token):
-    url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'
+    url  = f'{THERM_URL}/projects/{project_uid}/data?organization={org}'
     headers = {"Authorization": f"Token {token}"}
     project_json = requests.get(url, headers=headers)
     if project_json.status_code == 404:
