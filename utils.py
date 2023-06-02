@@ -21,9 +21,10 @@ def combobox_modifier(combobox, wordlist):
     """
     args: combobox, list items
 
-    convert combobox into an line-editer with auto-word_suggestion combobox
+    convert combobox into an line-editer with auto-word_suggestion widget and drop-down items of passed list
 
-    return converted combobox with passed list as combobox drop-down items 
+    return modified combobox widget
+    
     """
     completer = QCompleter(wordlist)
     completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -147,6 +148,17 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     vlayer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
 
     return vlayer, geojson_path, len(geojson["features"])
+
+def group_details(asset, org, token):
+    url = f'https://core-server.sensehawk.com/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=10&organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    group_details = response.json()['results']
+    group_list = {}
+    for group in group_details:
+        group_list[group['name']] = group['uid']
+    return group_list
+
 
 def asset_details(org, token):
     url = f'https://api.sensehawk.com/v1/assets/?organization={org}'
