@@ -25,7 +25,7 @@
 from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
 
-from ..utils import download_file, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details
+from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier
 
 from ..tasks import loadTask
 
@@ -42,8 +42,9 @@ from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVector
     QgsGeometry, QgsField, QgsCategorizedSymbolRenderer, QgsApplication, QgsTask
 from qgis.PyQt.QtCore import Qt, QVariant
 from qgis.gui import QgsMessageBar
-from PyQt5.QtWidgets import QLineEdit, QCompleter
+from PyQt5.QtWidgets import QLineEdit, QCompleter, QVBoxLayout, QPushButton, QComboBox
 import qgis
+from PyQt5 import QtCore
 from qgis.utils import iface
 import time
 import requests
@@ -57,11 +58,23 @@ class ProjectWindow(QtWidgets.QDockWidget, PROJECT_UI):
         """Constructor."""
         super(ProjectWindow, self).__init__()
         self.setupUi(self)
-        self.homeobj = home_obj
+        self.home_windowObj = home_obj
         self.iface = iface
+        token = self.home_windowObj.core_token
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
+        org_uid = self.home_windowObj.org_uid
+        asset_uid = self.home_windowObj.asset_uid
+        self.group_details = group_details(asset_uid, org_uid, token)
+        group_list = list(self.group_details.keys())
+        self.group_combobox = self.group
+        self.group = combobox_modifier(self.group_combobox, group_list)
         self.homebutton.clicked.connect(self.show_home_window)
+        # self.group_combobox = QComboBox(self)
+        # self.group_combobox.setGeometry(60,20,280,25)
+        # self.widget(self.group_combobox)
+        # self.setGeometry(20,10, 321, 21)
 
     def show_home_window(self):
-        self.homeobj.show()
+        self.home_windowObj.show()
         self.hide()
         

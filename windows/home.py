@@ -66,8 +66,8 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         self.asset_combobox = self.asset
         self.org = combobox_modifier(org_combobox, org_list)
         self.org.currentIndexChanged.connect(self.org_tree)
-        self.projectbutton.clicked.connect(self.show_tools_window)
-
+        self.projectbutton.clicked.connect(self.project_load_window)
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         # self.loadProject.clicked.connect(self.start_project_load)
         # self.project_type = None
         # self.project_uid = None
@@ -91,12 +91,18 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         self.asset_details = asset_details(org, self.core_token)
         asset_list = list(self.asset_details.keys())
         self.asset_combobox.setEnabled(True)
-        self.Asset = combobox_modifier(self.asset_combobox, asset_list)
+        self.asset = combobox_modifier(self.asset_combobox, asset_list)
         self.iface.messageBar().pushMessage(self.tr(f'{self.org.currentText()} assets loaded'),Qgis.Success)
-        print('selected_org', self.org.currentText())
+        self.asset.currentIndexChanged.connect(self.asset_tree)
+    
+        # print('selected_org', self.org.currentText())
+    
+    def asset_tree(self):
+        self.org_uid = self.org_details[self.org.currentText()]
+        self.asset_uid = self.asset_details.get(self.asset.currentText(), None)
+        print(self.org_uid, self.asset_uid)
 
-
-    def show_tools_window(self):
+    def project_load_window(self):
             self.tools_window = ProjectWindow(self, self.iface)
             self.tools_window.show()
             self.hide()
@@ -120,7 +126,7 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
     #     # Apply styling
     #     self.categorized_renderer = categorize_layer(project_type=self.project_type, class_maps=self.class_maps)
     #     # Show tools window
-    #     self.show_tools_window()
+    #     self.project_load_window()
 
     # def start_project_load(self):
     #     # Reset the tools window to None in case of reload of a different project

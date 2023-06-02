@@ -30,7 +30,7 @@ from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
 from qgis.PyQt.QtCore import Qt
 
 from ..tasks import loginTask
-from ..utils import organization_details
+# from ..utils import organization_details
 import os
 
 LOGIN_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'login.ui'))

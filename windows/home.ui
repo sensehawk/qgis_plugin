@@ -73,6 +73,11 @@
        <property name="editable">
         <bool>false</bool>
        </property>
+       <item>
+        <property name="text">
+         <string>Select Organization</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="1" column="0">
@@ -87,6 +92,11 @@
        <property name="enabled">
         <bool>false</bool>
        </property>
+       <item>
+        <property name="text">
+         <string>Select Asset</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>
