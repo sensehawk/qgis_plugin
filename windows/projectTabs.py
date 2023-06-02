@@ -2,15 +2,27 @@ from qgis.PyQt.QtCore import Qt
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+class Project:
+    def __init__(self, load_task_result):
+        self.project_details = load_task_result['project_details']
+        self.vlayer = load_task_result['vlayer']
+        self.rlayer = load_task_result['rlayer']
+        self.feature_counts = load_task_result['feature_counts']
+        self.class_maps = load_task_result['class_maps']
+        self.class_groups = load_task_result['class_groups']
+        self.project_tab = QtWidgets.QWidget()
+        self.project_tab_index = None
+
 
 class ProjectTabsWindow(QtWidgets.QWidget):
     def __init__(self, load_window):
         super().__init__()
         self.load_window = load_window
         self.logger = self.load_window.logger
-
-        # Save projects loaded list | index in list is the index of its tab
-        self.projects_loaded = []
+        # Save projects loaded dict mapping uid to project object
+        self.projects_loaded = {}
+        # Track index through uid list - index in list is the index of its tab
+        self.project_uids = []
         self.setupUi()
 
     def setupUi(self):
@@ -64,7 +76,8 @@ class ProjectTabsWindow(QtWidgets.QWidget):
             feature_counts_table.setItem(i, 1, feature_count_item)
         feature_counts_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
 
-    def show_project_details(self, project_details):
+    def show_project_details(self, project):
+        project_details = project.project_details
         # Create project UID label
         project_uid_label = QtWidgets.QLabel(self)
         project_uid_label.setText(f"UID: {project_details['uid']}")
@@ -73,19 +86,18 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         project_type_label = QtWidgets.QLabel(self)
         project_type_label.setText(f"Project type: {project_details['project_type']}")
         self.project_details_layout.addWidget(project_type_label)
-
-    def add_project(self, project_details, feature_counts):
-        project_uid = project_details["uid"]
-        project_name = project_details["name"]
-        # Create tab widget and add to the tabs widget
-        tab = QtWidgets.QWidget()
-        self.projects_loaded.append(project_uid)
-        self.project_tabs_widget.addTab(tab, project_name)
-        self.project_type = project_details["project_type"]
-        # Create a layout that contains project details
-        self.project_details_layout = QtWidgets.QVBoxLayout(tab)
-        # Show project details
-        self.show_project_details(project_details)
         # Create feature count table
-        self.create_feature_count_table(feature_counts)
+        self.create_feature_count_table(project.feature_counts)
+
+    def add_project(self, project):
+        # Add uid to a list to track tab index
+        self.project_uids.append(project.project_details["uid"])
+        self.projects_loaded[project.project_details["uid"]] = project
+        # Add project tab to the tabs widget
+        self.project_tabs_widget.addTab(project.project_tab, project.project_details["name"])
+        # Create a layout that contains project details
+        self.project_details_layout = QtWidgets.QVBoxLayout(project.project_tab)
+        # Show project details
+        self.show_project_details(project)
+
 

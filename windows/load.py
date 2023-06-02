@@ -31,7 +31,7 @@ from ..tasks import loadTask
 
 from ..windows.terra_tools import TerraToolsWindow
 from ..windows.therm_tools import ThermToolsWindow
-from ..windows.projectTabs import ProjectTabsWindow
+from ..windows.projectTabs import ProjectTabsWindow, Project
 
 import os
 import json
@@ -58,56 +58,42 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         super(LoadWindow, self).__init__()
         self.setupUi(self)
         self.loadProject.clicked.connect(self.start_project_load)
-        self.toolsButton.clicked.connect(self.show_project_tabs)
-        self.project_type = None
-        self.project_uid = None
-        self.geojson_path = None
+        self.projectTabsButton.clicked.connect(self.show_project_tabs)
         self.core_token = core_token
         self.user_email = user_email
-        self.project_details = None
-        self.tools_window = None
         self.iface = iface
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-        self.terra_tools_window = None
-        self.therm_tools_window = None
         self.qgis_project = QgsProject.instance()
-        self.bounds = None
-        self.class_maps = None
-        self.class_groups = None
-        self.load_successful = False
         self.project_tabs_window = ProjectTabsWindow(self)
-        self.loaded_feature_count = 0
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def load_callback(self, load_task_status, load_task):
-        new_project_index = len(self.project_tabs_window.projects_loaded)
+        new_project_index = len(self.project_tabs_window.project_uids)
         if load_task_status != 3:
             return None
         result = load_task.returned_values
         if not result:
             self.logger("Load failed...", level=Qgis.Warning)
             return None
-        rlayer = result['rlayer']
-        vlayer = result['vlayer']
-        feature_counts = result['feature_counts']
-        self.class_maps = result['class_maps']
-        self.class_groups = result['class_groups']
-        self.project_details = result['project_details']
+        # Create a project object from the callback result
+        project = Project(result)
 
         # Add project to project tab
-        self.project_tabs_window.add_project(self.project_details, feature_counts)
+        project.project_tab_index = new_project_index
+        self.project_tabs_window.add_project(project)
         self.project_tabs_window.project_tabs_widget.setCurrentIndex(new_project_index)
         self.show_project_tabs()
 
         # Add layers to the qgis project
-        self.qgis_project.addMapLayer(rlayer)
-        self.qgis_project.addMapLayer(vlayer)
+        self.qgis_project.addMapLayer(result['rlayer'])
+        self.qgis_project.addMapLayer(result['vlayer'])
 
         # Apply styling
-        self.categorized_renderer = categorize_layer(project_type=self.project_type, class_maps=self.class_maps)
+        self.categorized_renderer = categorize_layer(project_type=project.project_details["project_type"],
+                                                     class_maps=project.class_maps)
 
     def start_project_load(self):
         self.project_uid = self.projectUid.text()
@@ -135,30 +121,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.hide()
         self.project_tabs_window.show()
 
-    def show_tools_window(self):
-        # Load the correct tools window
-        if self.project_type == "terra" and self.load_successful:
-            if not self.terra_tools_window:
-                # Initialize terra tools window
-                self.tools_window = TerraToolsWindow(self, self.iface)
-                self.tools_window.show()
-            else:
-                self.terra_tools_window.show()
-            # Hide load window
-            self.hide()
-        elif self.project_type == "therm" and self.load_successful:
-            if not self.therm_tools_window:
-                # Initialize terra tools window
-                self.tools_window = ThermToolsWindow(self, self.iface)
-                self.tools_window.show()
-            else:
-                self.therm_tools_window.show()
-            # Hide load window
-            self.hide()
-
     def closeEvent(self, event):
         event.accept()
-        # Delete project geojsons
-        os.remove(self.geojson_path)
 
 
