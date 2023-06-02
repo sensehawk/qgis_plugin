@@ -114,10 +114,8 @@ def clipRequest(task, clip_task_input):
     return {"task": task.description(), "success": True, "message": "Clip request sent"}
 
 def loginTask(task, login_window):
-    # login_window.user_email = login_window.userName.text()
-    # login_window.user_password = login_window.userPassword.text()
-    login_window.user_email = "kiranh@sensehawk.com"
-    login_window.user_password = "%Castle123&sens"
+    login_window.user_email = login_window.userName.text()
+    login_window.user_password = login_window.userPassword.text()
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
     if not login_window.user_email or not login_window.user_password:
         login_window.logger('User email or Password empty...', level=Qgis.Warning)

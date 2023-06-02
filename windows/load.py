@@ -99,7 +99,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         # Load only if it is not already present in project tabs
         if project_uid in self.project_tabs_window.projects_loaded:
             self.logger("Project loaded already!")
-            project_index = self.project_tabs_window.projects_loaded.index(project_uid)
+            project_index = self.project_tabs_window.project_uids.index(project_uid)
             project = self.project_tabs_window.projects_loaded[project_uid]
             self.show_project_tabs()
             self.project_tabs_window.activate_project_layers(project)

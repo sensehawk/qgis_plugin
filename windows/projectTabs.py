@@ -16,7 +16,6 @@ class Project:
         self.project_tab_index = None
         self.project_tab = QtWidgets.QWidget()
 
-
 class ProjectTabsWindow(QtWidgets.QWidget):
     def __init__(self, load_window):
         super().__init__()
@@ -72,7 +71,7 @@ class ProjectTabsWindow(QtWidgets.QWidget):
 
         # Disable editing
         feature_counts_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.project_details_layout.addWidget(feature_counts_table)
+        self.project_tab_layout.addWidget(feature_counts_table)
 
         # Populate feature counts
         feature_counts_table.setRowCount(len(feature_counts))
@@ -84,18 +83,22 @@ class ProjectTabsWindow(QtWidgets.QWidget):
             feature_counts_table.setItem(i, 1, feature_count_item)
         feature_counts_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
 
-    def show_project_details(self, project):
+    def populate_project_tab(self, project):
         project_details = project.project_details
         # Create project UID label
         project_uid_label = QtWidgets.QLabel(self)
         project_uid_label.setText(f"UID: {project_details['uid']}")
-        self.project_details_layout.addWidget(project_uid_label)
+        self.project_tab_layout.addWidget(project_uid_label)
         # Create project type label
         project_type_label = QtWidgets.QLabel(self)
         project_type_label.setText(f"Project type: {project_details['project_type']}")
-        self.project_details_layout.addWidget(project_type_label)
+        self.project_tab_layout.addWidget(project_type_label)
         # Create feature count table
         self.create_feature_count_table(project.feature_counts)
+        # Create a tools button
+        tools_button = QtWidgets.QPushButton(self)
+        tools_button.setText(f"{project.project_details['project_type'].capitalize()} Tools")
+        self.project_tab_layout.addWidget(tools_button)
 
     def add_project(self, project):
         # Add uid to a list to track tab index
@@ -104,9 +107,9 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         # Add project tab to the tabs widget
         self.project_tabs_widget.addTab(project.project_tab, project.project_details["name"])
         # Create a layout that contains project details
-        self.project_details_layout = QtWidgets.QVBoxLayout(project.project_tab)
+        self.project_tab_layout = QtWidgets.QVBoxLayout(project.project_tab)
         # Show project details
-        self.show_project_details(project)
+        self.populate_project_tab(project)
         # Add project layers to the project
         self.qgis_project.addMapLayer(project.rlayer)
         self.qgis_project.addMapLayer(project.vlayer)
