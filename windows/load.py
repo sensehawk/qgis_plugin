@@ -31,6 +31,7 @@ from ..tasks import loadTask
 
 from ..windows.terra_tools import TerraToolsWindow
 from ..windows.therm_tools import ThermToolsWindow
+from ..windows.projectTabs import ProjectTabsWindow
 
 import os
 import json
@@ -57,7 +58,7 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         super(LoadWindow, self).__init__()
         self.setupUi(self)
         self.loadProject.clicked.connect(self.start_project_load)
-        self.toolsButton.clicked.connect(self.show_tools_window)
+        self.toolsButton.clicked.connect(self.show_project_tabs)
         self.project_type = None
         self.project_uid = None
         self.geojson_path = None
@@ -75,12 +76,14 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.class_maps = None
         self.class_groups = None
         self.load_successful = False
+        self.project_tabs_window = ProjectTabsWindow(self)
         self.loaded_feature_count = 0
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def load_callback(self, load_task_status, load_task):
+        new_project_index = len(self.project_tabs_window.projects_loaded)
         if load_task_status != 3:
             return None
         result = load_task.returned_values
@@ -89,21 +92,48 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
             return None
         rlayer = result['rlayer']
         vlayer = result['vlayer']
+        feature_counts = result['feature_counts']
+        self.class_maps = result['class_maps']
+        self.class_groups = result['class_groups']
+        self.project_details = result['project_details']
+
+        # Add project to project tab
+        self.project_tabs_window.add_project(self.project_details, feature_counts)
+        self.project_tabs_window.project_tabs_widget.setCurrentIndex(new_project_index)
+        self.show_project_tabs()
+
         # Add layers to the qgis project
         self.qgis_project.addMapLayer(rlayer)
         self.qgis_project.addMapLayer(vlayer)
+
         # Apply styling
         self.categorized_renderer = categorize_layer(project_type=self.project_type, class_maps=self.class_maps)
-        # Show tools window
-        self.show_tools_window()
 
     def start_project_load(self):
-        # Reset the tools window to None in case of reload of a different project
-        self.terra_tools_window = None
-        self.therm_tools_window = None
-        load_task = QgsTask.fromFunction("Load", loadTask, load_window=self)
+        self.project_uid = self.projectUid.text()
+        self.project_type = self.projectType.currentText().lower()
+        if not self.project_uid:
+            self.logger("No project uid given", level=Qgis.Warning)
+            return None
+        # Load only if it is not already present in project tabs
+        if self.project_uid in self.project_tabs_window.projects_loaded:
+            self.logger("Project loaded already!")
+            project_index = self.project_tabs_window.projects_loaded.index(self.project_uid)
+            self.show_project_tabs()
+            self.project_tabs_window.project_tabs_widget.setCurrentIndex(project_index)
+            return None
+
+        load_task_inputs = {"project_uid": self.project_uid,
+                            "project_type": self.project_type,
+                            "core_token": self.core_token,
+                            "logger": self.logger}
+        load_task = QgsTask.fromFunction("Load", loadTask, load_task_inputs)
         QgsApplication.taskManager().addTask(load_task)
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
+
+    def show_project_tabs(self):
+        self.hide()
+        self.project_tabs_window.show()
 
     def show_tools_window(self):
         # Load the correct tools window

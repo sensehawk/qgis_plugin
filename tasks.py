@@ -10,38 +10,29 @@ import json
 import traceback
 
 
-def loadTask(task, load_window):
-    load_window.project_type = load_window.projectType.currentText().lower()
-    load_window.logger('Loading SenseHawk {} project...'.format(load_window.project_type))
-    load_window.project_uid = load_window.projectUid.text()
-    load_window.logger('UID specified: {}'.format(load_window.project_uid))
-    if not load_window.project_uid:
-        load_window.logger('Please specify project UID', level=Qgis.Warning)
-        return False
-
-    
+def loadTask(task, load_inputs):
+    project_uid = load_inputs.get("project_uid", None)
+    project_type = load_inputs.get("project_type", None)
+    core_token = load_inputs.get("core_token", None)
+    logger = load_inputs.get("logger", None)
     # Get project details from core
-    load_window.project_details = get_project_details(load_window.project_uid, load_window.core_token)
-    if not load_window.project_details:
-        load_window.logger('Project not found', level=Qgis.Warning)
-        return False
-
+    project_details = get_project_details(project_uid, core_token)
+    project_details["project_type"] = project_type
     # Get the class maps for vectors from terra / therm
-    if load_window.project_type == "terra":
-        load_window.class_maps, load_window.class_groups = get_terra_classmaps(load_window.project_details, load_window.core_token)
-    elif load_window.project_type == "therm":
-        load_window.class_maps = get_therm_classmaps()
-        org = load_window.project_details['organization']['uid']
-        load_window.existing_files = file_existent(load_window.project_uid,org, load_window.core_token)
-
+    if project_type == "terra":
+        class_maps, class_groups = get_terra_classmaps(project_details, core_token)
+    elif project_type == "therm":
+        class_maps, class_groups = get_therm_classmaps(), None
+        org = project_details['organization']['uid']
+        existing_files = file_existent(project_uid,org,core_token)
 
     # Get base url for ortho tiles
-    base_orthotiles_url = get_ortho_tiles_url(load_window.project_uid, load_window.core_token)
+    base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
 
     # Get metadata from the base url
     ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
     ortho_bounds = ortho_tiles_details["bounds"]
-    load_window.bounds = ortho_bounds
+    bounds = ortho_bounds
 
     zmax = ortho_tiles_details["maxzoom"]
     zmin = 1
@@ -49,28 +40,29 @@ def loadTask(task, load_window):
     orthotiles_url = "type=xyz&url=" + \
                      base_orthotiles_url + "/{z}/{x}/{y}.png" + \
                      "&zmax={}&zmin={}".format(zmax, zmin)
-    load_window.logger("Ortho tiles url: {}...".format(orthotiles_url))
 
     # Load ortho tiles from url
-    rlayer = QgsRasterLayer(orthotiles_url, load_window.project_uid + "_ortho", 'wms')
+    rlayer = QgsRasterLayer(orthotiles_url, project_uid + "_ortho", 'wms')
 
     # Load vectors
     try:
-        vlayer, load_window.geojson_path, load_window.loaded_feature_count = load_vectors(load_window.project_details,
-                                                                                          load_window.project_type,
-                                                                                          load_window.bounds,
-                                                                                          load_window.core_token,
-                                                                                          load_window.logger)
+        vlayer, geojson_path, loaded_feature_counts = load_vectors(project_details,
+                                                                  project_type,
+                                                                  bounds,
+                                                                  core_token,
+                                                                  logger)
 
-    except Exception:
+    except Exception as e:
+        logger(str(e))
         return False
 
-    # Set load_successful variable to True
-    load_window.logger("Load successful...")
-    load_window.load_successful = True
-    return {'load_window': load_window,
-            'rlayer': rlayer,
+    return {'rlayer': rlayer,
             'vlayer': vlayer,
+            'feature_counts': loaded_feature_counts,
+            'project_uid': project_uid,
+            'class_maps': class_maps,
+            'class_groups': class_groups,
+            'project_details': project_details,
             'task': task.description()}
 
 

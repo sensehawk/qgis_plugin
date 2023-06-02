@@ -126,7 +126,20 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     # Load vectors
     vlayer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
 
-    return vlayer, geojson_path, len(geojson["features"])
+    # Get feature count by class_name
+    feature_count_dict = {}
+    class_name_keyword = {"terra": "class", "therm": "class_name"}[project_type]
+    for f in geojson["features"]:
+        feature_class = f["properties"].get(class_name_keyword, None)
+        if not feature_class:
+            continue
+        class_count = feature_count_dict.get(feature_class, 0)
+        class_count += 1
+        feature_count_dict[feature_class] = class_count
+
+    feature_count_list = [(k, v) for k, v in feature_count_dict.items()]
+
+    return vlayer, geojson_path, feature_count_list
 
 
 def file_existent(project_uid, org, token):
