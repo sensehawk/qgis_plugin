@@ -30,6 +30,7 @@ from ..utils import download_file, load_vectors, categorize_layer , organization
 from ..tasks import loadTask
 
 from ..windows.project import ProjectWindow
+from ..windows.projectload import SimpleLoadWindow
 from ..windows.therm_tools import ThermToolsWindow
 
 import os
@@ -103,7 +104,7 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         print(self.org_uid, self.asset_uid)
 
     def project_load_window(self):
-            self.tools_window = ProjectWindow(self, self.iface)
+            self.tools_window = SimpleLoadWindow(self, self.iface)
             self.tools_window.show()
             self.hide()
 
