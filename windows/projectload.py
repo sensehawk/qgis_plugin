@@ -19,10 +19,13 @@ class SimpleLoadWindow(QtWidgets.QWidget):
         myform = QtWidgets.QFormLayout()
         labellist = []
         combolist = []
-        val = 10    
+        val = 5   
         for i in range(val):
             labellist.append(QtWidgets.QLabel('project name'))
-            combolist.append(QtWidgets.QPushButton('P'*i))
+            button = QtWidgets.QPushButton('P'*i)
+            button.clickecd.connect(self.project)
+            combolist.append(button)
+
             myform.addRow(labellist[i],combolist[i])
         # scroll.setGeometry(70,60,301,101)
         mygroupbox.setLayout(myform)
@@ -31,7 +34,7 @@ class SimpleLoadWindow(QtWidgets.QWidget):
         group_list = list(self.group_details.keys())
         self.group_combobox = QComboBox(self) 
         self.group = combobox_modifier(self.group_combobox, group_list)
-        self.group.currentIndexChanged.connect(self.group_tree)
+        # self.group.currentIndexChanged.connect(self.group_tree)
         # group_combobox.setGeometry(70,20,300,25)
         self.back_button = QPushButton(self)
         # back_button.setGeometry(10,150,31,21)
@@ -44,15 +47,35 @@ class SimpleLoadWindow(QtWidgets.QWidget):
         scroll.setFixedHeight(200)
         # scroll.setGeometry(70,60,301,101)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(scroll)
-        layout.addWidget(self.group)
-        layout.addWidget(self.back_button)
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(scroll)
+        self.layout.addWidget(self.group)
+        self.layout.addWidget(self.back_button)
         # layout.geometry((0,0),(413*255))
-        layout.setGeometry(QRect(500, 400, 400, 200))
+        self.layout.setGeometry(QRect(500, 400, 400, 200))
+
+    def project(self):
+        pass
 
     def group_tree(self):
-        pass
+        mygroupbox = QtWidgets.QGroupBox('Project details')
+        myform = QtWidgets.QFormLayout()
+        labellist = []
+        combolist = []
+        val = 10    
+        for i in range(val):
+            labellist.append(QtWidgets.QLabel('project name'))
+            combolist.append(QtWidgets.QPushButton('P'*i))
+            myform.addRow(labellist[i],combolist[i])
+        # scroll.setGeometry(70,60,301,101)
+        mygroupbox.setLayout(myform)
+
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidget(mygroupbox)
+        scroll.setWidgetResizable(True)
+        scroll.setFixedHeight(200)
+        self.layout.addWidget(scroll)
+        # scroll.setGeometry(70,60,301,101)
 
     def back_to_home(self):
         self.home.show()
