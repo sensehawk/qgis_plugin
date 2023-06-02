@@ -64,7 +64,6 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.iface = iface
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-        self.qgis_project = QgsProject.instance()
         self.project_tabs_window = ProjectTabsWindow(self)
 
     def logger(self, message, level=Qgis.Info):
@@ -87,30 +86,28 @@ class LoadWindow(QtWidgets.QDockWidget, LOAD_UI):
         self.project_tabs_window.project_tabs_widget.setCurrentIndex(new_project_index)
         self.show_project_tabs()
 
-        # Add layers to the qgis project
-        self.qgis_project.addMapLayer(result['rlayer'])
-        self.qgis_project.addMapLayer(result['vlayer'])
-
         # Apply styling
         self.categorized_renderer = categorize_layer(project_type=project.project_details["project_type"],
                                                      class_maps=project.class_maps)
 
     def start_project_load(self):
-        self.project_uid = self.projectUid.text()
-        self.project_type = self.projectType.currentText().lower()
-        if not self.project_uid:
+        project_uid = self.projectUid.text()
+        project_type = self.projectType.currentText().lower()
+        if not project_uid:
             self.logger("No project uid given", level=Qgis.Warning)
             return None
         # Load only if it is not already present in project tabs
-        if self.project_uid in self.project_tabs_window.projects_loaded:
+        if project_uid in self.project_tabs_window.projects_loaded:
             self.logger("Project loaded already!")
-            project_index = self.project_tabs_window.projects_loaded.index(self.project_uid)
+            project_index = self.project_tabs_window.projects_loaded.index(project_uid)
+            project = self.project_tabs_window.projects_loaded[project_uid]
             self.show_project_tabs()
+            self.project_tabs_window.activate_project_layers(project)
             self.project_tabs_window.project_tabs_widget.setCurrentIndex(project_index)
             return None
 
-        load_task_inputs = {"project_uid": self.project_uid,
-                            "project_type": self.project_type,
+        load_task_inputs = {"project_uid": project_uid,
+                            "project_type": project_type,
                             "core_token": self.core_token,
                             "logger": self.logger}
         load_task = QgsTask.fromFunction("Load", loadTask, load_task_inputs)

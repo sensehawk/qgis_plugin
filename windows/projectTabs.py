@@ -1,6 +1,9 @@
 from qgis.PyQt.QtCore import Qt
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
+from qgis.core import QgsProject
+from qgis.utils import iface
+
 
 class Project:
     def __init__(self, load_task_result):
@@ -10,8 +13,8 @@ class Project:
         self.feature_counts = load_task_result['feature_counts']
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
-        self.project_tab = QtWidgets.QWidget()
         self.project_tab_index = None
+        self.project_tab = QtWidgets.QWidget()
 
 
 class ProjectTabsWindow(QtWidgets.QWidget):
@@ -24,6 +27,9 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         # Track index through uid list - index in list is the index of its tab
         self.project_uids = []
         self.setupUi()
+        self.qgis_project = QgsProject.instance()
+        self.layer_tree = self.qgis_project.layerTreeRoot()
+        self.active_project = None
 
     def setupUi(self):
 
@@ -36,6 +42,8 @@ class ProjectTabsWindow(QtWidgets.QWidget):
 
         # Create a tabs widget and add it to the group layout
         self.project_tabs_widget = QtWidgets.QTabWidget(projects_group_widget)
+        # Connect tab change event to activate project layers
+        self.project_tabs_widget.currentChanged.connect(lambda x: self.activate_project_layers(self.projects_loaded[self.project_uids[x]]))
         projects_group_layout.addWidget(self.project_tabs_widget)
 
         # Create main layout for the main widget and add the widgets group
@@ -99,5 +107,21 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         self.project_details_layout = QtWidgets.QVBoxLayout(project.project_tab)
         # Show project details
         self.show_project_details(project)
+        # Add project layers to the project
+        self.qgis_project.addMapLayer(project.rlayer)
+        self.qgis_project.addMapLayer(project.vlayer)
+        self.activate_project_layers(project)
+
+    def activate_project_layers(self, project):
+        """
+        Make only the selected project layers visible and zoom to layer
+        """
+        for layer in self.layer_tree.layerOrder():
+            if layer.id() in [project.rlayer.id(), project.vlayer.id()]:
+                self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(True)
+                if layer.id() == project.vlayer.id():
+                    iface.setActiveLayer(layer)
+            else:
+                self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
 
 
