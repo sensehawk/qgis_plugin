@@ -17,6 +17,9 @@ from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
 
+
+
+
 def combobox_modifier(combobox, wordlist):
     """
     args: combobox, list items
@@ -34,6 +37,7 @@ def combobox_modifier(combobox, wordlist):
     combobox.setCompleter(completer)
     combobox.completer().setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
     return combobox
+
 
 def download_file(url, logger, output_path=None, directory_path=None):
     logger("Downloading {} to {}...".format(url, output_path))
@@ -149,6 +153,20 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     return vlayer, geojson_path, len(geojson["features"])
 
+def project_details( group, org, token):
+    url = f'https://core-server.sensehawk.com/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    project_details = response.json()['results']
+    project_list = {}
+    for project in project_details:
+        project_list[project['name']] = project['uid']
+
+    return project_list    
+    # return {'project_list':project_list,
+    #         'task':task.description()}
+
+
 def group_details(asset, org, token):
     url = f'https://core-server.sensehawk.com/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=10&organization={org}'
     headers = {"Authorization": f"Token {token}"}
@@ -160,7 +178,7 @@ def group_details(asset, org, token):
     return group_list
 
 
-def asset_details(org, token):
+def asset_details(task ,org, token):
     url = f'https://api.sensehawk.com/v1/assets/?organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
@@ -169,7 +187,8 @@ def asset_details(org, token):
     for asset in asset_details:
         asset_list[asset['name']] = asset['uid']
 
-    return asset_list
+    return {'asset_list': asset_list,
+            'task': task.description()}
 
 def organization_details(token):
     url = 'https://api.sensehawk.com/v1/organizations/?limit=9007199254740991&page=1'

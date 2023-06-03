@@ -4,79 +4,90 @@ from qgis.core import Qgis, QgsApplication, QgsTask, QgsProject, QgsMessageLog
 from ..tasks import loadTask
 from PyQt5.QtWidgets import QLineEdit, QCompleter, QVBoxLayout, QPushButton, QComboBox
 from PyQt5.QtCore import QRect
-from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier
+from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier,  project_details
+import time 
 
-class SimpleLoadWindow(QtWidgets.QWidget):
+class ProjectForm:
+    def __init__(self, project_list, project_selection_layout, project_selection_window):
+        if project_selection_window.projects_form :
+            project_selection_layout.removeWidget(project_selection_window.projects_form.scroll_widget)
+            project_selection_window.projects_form.scroll_widget.deleteLater()
+            project_selection_window.projects_form.scroll_widget =None
+
+        project_groupbox = QtWidgets.QGroupBox('Project details')
+        myform = QtWidgets.QFormLayout()
+        for project in project_list:
+            button = QtWidgets.QPushButton(f'{project}')
+            button.clicked.connect(project_selection_window.project_info)
+            myform.addRow(button)
+
+        project_groupbox.setLayout(myform)
+
+        self.scroll_widget = QtWidgets.QScrollArea()
+        self.scroll_widget.setWidget(project_groupbox)
+        self.scroll_widget.setWidgetResizable(True)
+        self.scroll_widget.setFixedHeight(200)
+        project_selection_layout.addWidget(self.scroll_widget)
+
+
+        # load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
+        # QgsApplication.taskManager().addTask(load_asset_task)
+        # load_asset_task.statusChanged.connect(lambda load_task_status: self.asset_info(load_task_status, load_asset_task))
+
+
+class ProjectLoadWindow(QtWidgets.QWidget):
     def __init__(self, homeobj, iface):
         super().__init__()
+        self.projects_form = None
+        self.project_details = None
         self.iface = iface
         self.home = homeobj
         self.core_token = self.home.core_token
         self.asset_uid = self.home.asset_uid
         self.org_uid = self.home.org_uid
-        # self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-        mygroupbox = QtWidgets.QGroupBox('Project details')
-        myform = QtWidgets.QFormLayout()
-        labellist = []
-        combolist = []
-        val = 5   
-        for i in range(val):
-            labellist.append(QtWidgets.QLabel('project name'))
-            button = QtWidgets.QPushButton('P'*i)
-            button.clickecd.connect(self.project)
-            combolist.append(button)
-
-            myform.addRow(labellist[i],combolist[i])
-        # scroll.setGeometry(70,60,301,101)
-        mygroupbox.setLayout(myform)
-
         self.group_details = group_details(self.asset_uid, self.org_uid, self.core_token)
+
         group_list = list(self.group_details.keys())
         self.group_combobox = QComboBox(self) 
         self.group = combobox_modifier(self.group_combobox, group_list)
-        # self.group.currentIndexChanged.connect(self.group_tree)
-        # group_combobox.setGeometry(70,20,300,25)
+        self.group_uid = self.group_details[self.group.currentText()]
+        self.group.currentIndexChanged.connect(self.group_tree)
+
+        # load_project_task = QgsTask.fromFunction("load_asset_task", project_details, self.group_uid, self.org_uid, self.core_token)
+        # QgsApplication.taskManager().addTask(load_project_task)
+        # load_project_task.statusChanged.connect(lambda load_task_status: self.project_callback(load_task_status, load_project_task))
+        self.project_details = project_details(self.group_uid, self.org_uid, self.core_token)
+        project_list = list(self.project_details.keys())
+    
+
         self.back_button = QPushButton(self)
-        # back_button.setGeometry(10,150,31,21)
         self.back_button.setText('home')
         self.back_button.clicked.connect(self.back_to_home)
 
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidget(mygroupbox)
-        scroll.setWidgetResizable(True)
-        scroll.setFixedHeight(200)
-        # scroll.setGeometry(70,60,301,101)
+        self.project_selection_layout = QtWidgets.QVBoxLayout(self)
+        self.project_selection_layout.addWidget(self.group)
+        self.project_selection_layout.addWidget(self.back_button)
+        self.project_selection_layout.setGeometry(QRect(500, 400, 400, 200))
+        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(scroll)
-        self.layout.addWidget(self.group)
-        self.layout.addWidget(self.back_button)
-        # layout.geometry((0,0),(413*255))
-        self.layout.setGeometry(QRect(500, 400, 400, 200))
+    def project_callback(self, load_task_status, load_project_task):
+        result = load_project_task.returned_values
+        time.sleep(0.5) # task response bit slow in few circumstances Dont remove
+        self.project_details = result['project_list']
+        project_list = list(self.project_details.keys())
+        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+       
 
-    def project(self):
-        pass
+    def project_info(self):
+        clicked_button = self.sender()
+        print(clicked_button.text())
 
     def group_tree(self):
-        mygroupbox = QtWidgets.QGroupBox('Project details')
-        myform = QtWidgets.QFormLayout()
-        labellist = []
-        combolist = []
-        val = 10    
-        for i in range(val):
-            labellist.append(QtWidgets.QLabel('project name'))
-            combolist.append(QtWidgets.QPushButton('P'*i))
-            myform.addRow(labellist[i],combolist[i])
-        # scroll.setGeometry(70,60,301,101)
-        mygroupbox.setLayout(myform)
-
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidget(mygroupbox)
-        scroll.setWidgetResizable(True)
-        scroll.setFixedHeight(200)
-        self.layout.addWidget(scroll)
-        # scroll.setGeometry(70,60,301,101)
-
+        self.group_uid = self.group_details[self.group.currentText()]
+        self.project_details = project_details(self.group_uid, self.org_uid, self.core_token)
+        project_list = list(self.project_details.keys())
+        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+       
     def back_to_home(self):
         self.home.show()
         self.hide()

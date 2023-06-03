@@ -30,7 +30,7 @@ from ..utils import download_file, load_vectors, categorize_layer , organization
 from ..tasks import loadTask
 
 from ..windows.project import ProjectWindow
-from ..windows.projectload import SimpleLoadWindow
+from ..windows.projectload import ProjectLoadWindow
 from ..windows.therm_tools import ThermToolsWindow
 
 import os
@@ -69,34 +69,25 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         self.org.currentIndexChanged.connect(self.org_tree)
         self.projectbutton.clicked.connect(self.project_load_window)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-        # self.loadProject.clicked.connect(self.start_project_load)
-        # self.project_type = None
-        # self.project_uid = None
-        # self.geojson_path = None
-        # self.project_details = None
-        # self.tools_window = None
-        # # Add to the left docking area by default
-        # self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-        # self.terra_tools_window = None
-        # self.therm_tools_window = None
-        # self.qgis_project = QgsProject.instance()
-        # self.bounds = None
-        # self.class_maps = None
-        # self.class_groups = None
-        # self.load_successful = False
-        # self.loaded_feature_count = 0
+        self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
 
-    def org_tree(self, value):
-        self.asset_combobox.clear()
-        org = self.org_details[self.org.currentText()]
-        self.asset_details = asset_details(org, self.core_token)
+    def asset_info(self, load_asset_status ,load_asset_task):
+        result = load_asset_task.returned_values
+        time.sleep(0.5) # task response bit slow in few circumstances Dont remove
+        self.asset_details = result['asset_list']
         asset_list = list(self.asset_details.keys())
         self.asset_combobox.setEnabled(True)
-        self.asset = combobox_modifier(self.asset_combobox, asset_list)
+        self.asset_combobox.clear()
+        self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list)
         self.iface.messageBar().pushMessage(self.tr(f'{self.org.currentText()} assets loaded'),Qgis.Success)
-        self.asset.currentIndexChanged.connect(self.asset_tree)
-    
-        # print('selected_org', self.org.currentText())
+        
+
+    def org_tree(self, value):
+        org = self.org_details[self.org.currentText()]
+        load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
+        QgsApplication.taskManager().addTask(load_asset_task)
+        load_asset_task.statusChanged.connect(lambda load_task_status: self.asset_info(load_task_status, load_asset_task))
+
     
     def asset_tree(self):
         self.org_uid = self.org_details[self.org.currentText()]
@@ -104,43 +95,8 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         print(self.org_uid, self.asset_uid)
 
     def project_load_window(self):
-            self.tools_window = SimpleLoadWindow(self, self.iface)
+            self.tools_window = ProjectLoadWindow(self, self.iface)
             self.tools_window.show()
             self.hide()
 
-
-    # def logger(self, message, level=Qgis.Info):
-    #     QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
-
-    # def load_callback(self, load_task_status, load_task):
-    #     if load_task_status != 3:
-    #         return None
-    #     result = load_task.returned_values
-    #     if not result:
-    #         self.logger("Load failed...", level=Qgis.Warning)
-    #         return None
-    #     rlayer = result['rlayer']
-    #     vlayer = result['vlayer']
-    #     # Add layers to the qgis project
-    #     self.qgis_project.addMapLayer(rlayer)
-    #     self.qgis_project.addMapLayer(vlayer)
-    #     # Apply styling
-    #     self.categorized_renderer = categorize_layer(project_type=self.project_type, class_maps=self.class_maps)
-    #     # Show tools window
-    #     self.project_load_window()
-
-    # def start_project_load(self):
-    #     # Reset the tools window to None in case of reload of a different project
-    #     self.terra_tools_window = None
-    #     self.therm_tools_window = None
-    #     load_task = QgsTask.fromFunction("Load", loadTask, load_window=self)
-    #     QgsApplication.taskManager().addTask(load_task)
-    #     load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
-
-
-    # def closeEvent(self, event):
-    #     event.accept()
-    #     # Delete project geojsons
-    #     os.remove(self.geojson_path)
-
-
+    
