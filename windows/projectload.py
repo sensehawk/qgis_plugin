@@ -30,11 +30,6 @@ class ProjectForm:
         project_selection_layout.addWidget(self.scroll_widget)
 
 
-        # load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
-        # QgsApplication.taskManager().addTask(load_asset_task)
-        # load_asset_task.statusChanged.connect(lambda load_task_status: self.asset_info(load_task_status, load_asset_task))
-
-
 class ProjectLoadWindow(QtWidgets.QWidget):
     def __init__(self, homeobj, iface):
         super().__init__()
@@ -51,31 +46,42 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.group_combobox = QComboBox(self) 
         self.group = combobox_modifier(self.group_combobox, group_list)
         self.group_uid = self.group_details[self.group.currentText()]
-        self.group.currentIndexChanged.connect(self.group_tree)
+        # self.group.currentIndexChanged.connect(self.group_tree)
 
-        # load_project_task = QgsTask.fromFunction("load_asset_task", project_details, self.group_uid, self.org_uid, self.core_token)
-        # QgsApplication.taskManager().addTask(load_project_task)
-        # load_project_task.statusChanged.connect(lambda load_task_status: self.project_callback(load_task_status, load_project_task))
-        self.project_details = project_details(self.group_uid, self.org_uid, self.core_token)
-        project_list = list(self.project_details.keys())
-    
+        # self.project_details = project_details(self.group_uid, self.org_uid, self.core_token)
+        # project_list = list(self.project_details.keys())
 
-        self.back_button = QPushButton(self)
-        self.back_button.setText('home')
-        self.back_button.clicked.connect(self.back_to_home)
+        # self.back_button = QPushButton(self)
+        # self.back_button.setText('home')
+        # self.back_button.clicked.connect(self.back_to_home)
 
-        self.project_selection_layout = QtWidgets.QVBoxLayout(self)
-        self.project_selection_layout.addWidget(self.group)
-        self.project_selection_layout.addWidget(self.back_button)
-        self.project_selection_layout.setGeometry(QRect(500, 400, 400, 200))
-        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+        # self.project_selection_layout = QtWidgets.QVBoxLayout(self)
+        # self.project_selection_layout.addWidget(self.group)
+        # self.project_selection_layout.addWidget(self.back_button)
+        # self.project_selection_layout.setGeometry(QRect(500, 400, 400, 200))
+        # self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
 
-    def project_callback(self, load_task_status, load_project_task):
+        load_project_task = QgsTask.fromFunction("load_asset_task", project_details, self.group_uid, self.org_uid, self.core_token )
+        QgsApplication.taskManager().addTask(load_project_task)
+        load_project_task.statusChanged.connect(lambda load_task_status: self.project_callback(load_task_status, load_project_task, project_window=self))
+
+    def project_callback(self, load_task_status, load_project_task, project_window):
+ 
+        project_window.group.currentIndexChanged.connect(project_window.group_tree)
+        project_window.back_button = QPushButton(project_window)
+        project_window.back_button.setText('home')
+        project_window.back_button.clicked.connect(project_window.back_to_home)
+        project_window.project_selection_layout = QtWidgets.QVBoxLayout(project_window)
+        project_window.project_selection_layout.addWidget(project_window.group)
+        project_window.project_selection_layout.addWidget(project_window.back_button)
+        project_window.project_selection_layout.setGeometry(QRect(500, 400, 400, 200))
         result = load_project_task.returned_values
-        time.sleep(0.5) # task response bit slow in few circumstances Dont remove
-        self.project_details = result['project_list']
-        project_list = list(self.project_details.keys())
-        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+        try:
+            project_window.project_details = result['project_list']
+        except:
+            project_window.project_details = result['project_list']
+        project_list = list(project_window.project_details.keys())
+        project_window.projects_form = ProjectForm(project_list, project_window.project_selection_layout, project_window)
        
 
     def project_info(self):

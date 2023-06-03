@@ -153,7 +153,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     return vlayer, geojson_path, len(geojson["features"])
 
-def project_details( group, org, token):
+def project_details(task, group, org, token):
     url = f'https://core-server.sensehawk.com/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
@@ -162,9 +162,9 @@ def project_details( group, org, token):
     for project in project_details:
         project_list[project['name']] = project['uid']
 
-    return project_list    
-    # return {'project_list':project_list,
-    #         'task':task.description()}
+    # return project_list    
+    return {'project_list':project_list,
+            'task':task.description()}
 
 
 def group_details(asset, org, token):

@@ -73,8 +73,12 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
 
     def asset_info(self, load_asset_status ,load_asset_task):
         result = load_asset_task.returned_values
-        time.sleep(0.5) # task response bit slow in few circumstances Dont remove
-        self.asset_details = result['asset_list']
+        # task response bit slow in few circumstances Dont remove below peice of code 
+        try:
+            self.asset_details = result['asset_list']
+        except:
+            self.asset_details = result['asset_list']
+
         asset_list = list(self.asset_details.keys())
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
