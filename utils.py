@@ -153,7 +153,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     return vlayer, geojson_path, len(geojson["features"])
 
-def project_details(task, group, org, token):
+def project_details( group, org, token):
     url = f'https://core-server.sensehawk.com/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
@@ -162,9 +162,9 @@ def project_details(task, group, org, token):
     for project in project_details:
         project_list[project['name']] = project['uid']
 
-    # return project_list    
-    return {'project_list':project_list,
-            'task':task.description()}
+    return project_list    
+    # return {'project_list':project_list,
+            # 'task':task.description()}
 
 
 def group_details(asset, org, token):
@@ -174,11 +174,14 @@ def group_details(asset, org, token):
     group_details = response.json()['results']
     group_list = {}
     for group in group_details:
-        group_list[group['name']] = group['uid']
+        project_details = {}
+        for projects in group['projects']:
+            project_details[projects['name']] = projects['uid']
+        group_list[group['name']] = (group['uid'], project_details)
     return group_list
 
 
-def asset_details(task ,org, token):
+def asset_details(task ,org, token): # fetching asset and org_container details 
     url = f'https://api.sensehawk.com/v1/assets/?organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
@@ -186,9 +189,15 @@ def asset_details(task ,org, token):
     asset_list = {}
     for asset in asset_details:
         asset_list[asset['name']] = asset['uid']
+    
+    container_url =f'https://core-server.sensehawk.com/api/v1/containers/?groups=true&page=1&page_size=10&organization={org}'
+    container_response = requests.get(container_url, headers=headers)
+    org_contianer_details = container_response.json()['results']
 
     return {'asset_list': asset_list,
+            'org_contianer_details':org_contianer_details,
             'task': task.description()}
+
 
 def organization_details(token):
     url = 'https://api.sensehawk.com/v1/organizations/?limit=9007199254740991&page=1'

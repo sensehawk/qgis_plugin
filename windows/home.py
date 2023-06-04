@@ -29,7 +29,6 @@ from ..utils import download_file, load_vectors, categorize_layer , organization
 
 from ..tasks import loadTask
 
-from ..windows.project import ProjectWindow
 from ..windows.projectload import ProjectLoadWindow
 from ..windows.therm_tools import ThermToolsWindow
 
@@ -71,13 +70,15 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
 
-    def asset_info(self, load_asset_status ,load_asset_task):
+    def asset_info(self, load_task_status ,load_asset_task):
         result = load_asset_task.returned_values
         # task response bit slow in few circumstances Dont remove below peice of code 
         try:
             self.asset_details = result['asset_list']
+            self.org_contianer_details = result['org_contianer_details']
         except:
             self.asset_details = result['asset_list']
+            self.org_contianer_details = result['org_contianer_details']
 
         asset_list = list(self.asset_details.keys())
         self.asset_combobox.setEnabled(True)
