@@ -12,6 +12,31 @@ import qgis.utils
 import tempfile
 import random
 import tempfile
+from .constants import THERM_URL
+from PyQt5.QtWidgets import  QCompleter
+from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtCore import Qt
+
+
+
+
+def combobox_modifier(combobox, wordlist):
+    """
+    args: combobox, list items
+
+    convert combobox into an line-editer with auto-word_suggestion widget and drop-down items of passed list
+
+    return modified combobox widget
+    
+    """
+    completer = QCompleter(wordlist)
+    completer.setCaseSensitivity(Qt.CaseInsensitive)
+    combobox.addItems(wordlist)
+    combobox.setEditable(True)
+    combobox.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+    combobox.setCompleter(completer)
+    combobox.completer().setCompletionMode(QtWidgets.QCompleter.PopupCompletion)
+    return combobox
 
 
 def download_file(url, logger, output_path=None, directory_path=None):
@@ -141,9 +166,65 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     return vlayer, geojson_path, feature_count_list
 
+def project_details( group, org, token):
+    url = f'https://core-server.sensehawk.com/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    project_details = response.json()['results']
+    project_list = {}
+    for project in project_details:
+        project_list[project['name']] = project['uid']
+
+    return project_list    
+    # return {'project_list':project_list,
+            # 'task':task.description()}
+
+
+def group_details(asset, org, token):
+    url = f'https://core-server.sensehawk.com/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=10&organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    group_details = response.json()['results']
+    group_list = {}
+    for group in group_details:
+        project_details = {}
+        for projects in group['projects']:
+            project_details[projects['name']] = projects['uid']
+        group_list[group['name']] = (group['uid'], project_details)
+    return group_list
+
+
+def asset_details(task ,org, token): # fetching asset and org_container details 
+    url = f'https://api.sensehawk.com/v1/assets/?organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    asset_details = response.json()['assets']
+    asset_list = {}
+    for asset in asset_details:
+        asset_list[asset['name']] = asset['uid']
+    
+    container_url =f'https://core-server.sensehawk.com/api/v1/containers/?groups=true&page=1&page_size=10&organization={org}'
+    container_response = requests.get(container_url, headers=headers)
+    org_contianer_details = container_response.json()['results']
+
+    return {'asset_list': asset_list,
+            'org_contianer_details':org_contianer_details,
+            'task': task.description()}
+
+
+def organization_details(token):
+    url = 'https://api.sensehawk.com/v1/organizations/?limit=9007199254740991&page=1'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    org_details = response.json()['organizations']
+    org_list = {}
+    for org in org_details:
+        org_list[org['name']] = org['uid']
+
+    return org_list
 
 def file_existent(project_uid, org, token):
-    url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'
+    url  = f'{THERM_URL}/projects/{project_uid}/data?organization={org}'
     headers = {"Authorization": f"Token {token}"}
     project_json = requests.get(url, headers=headers)
     if project_json.status_code == 404:

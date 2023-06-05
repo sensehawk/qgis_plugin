@@ -23,14 +23,14 @@
 # """
 
 from ..sensehawk_apis.core_apis import core_login
-from ..windows.load import LoadWindow
+from ..windows.home import HomeWindow
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
 from qgis.PyQt.QtCore import Qt
 
 from ..tasks import loginTask
-
+# from ..utils import organization_details
 import os
 
 LOGIN_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'login.ui'))
@@ -69,6 +69,6 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
 
     def show_load_window(self):
         # Initialize load save window (next window post login)
-        self.load_window = LoadWindow(self.user_email, self.core_token, self.iface)
+        self.load_window = HomeWindow(self.user_email, self.core_token, self.org_details, self.iface)
         self.load_window.show()
         self.hide()

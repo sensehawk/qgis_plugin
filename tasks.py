@@ -3,7 +3,7 @@ from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
 from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson, get_project_reports
 from .sensehawk_apis.scm_apis import detect, approve
-from .utils import load_vectors, get_project_details, file_existent
+from .utils import load_vectors, get_project_details, file_existent, organization_details
 import requests
 from .constants import CLIP_FUNCTION_URL
 import json
@@ -114,8 +114,10 @@ def clipRequest(task, clip_task_input):
     return {"task": task.description(), "success": True, "message": "Clip request sent"}
 
 def loginTask(task, login_window):
-    login_window.user_email = login_window.userName.text()
-    login_window.user_password = login_window.userPassword.text()
+    # login_window.user_email = login_window.userName.text()
+    # login_window.user_password = login_window.userPassword.text()
+    login_window.user_email = 'ganesh@sensehawk.com'
+    login_window.user_password = 'Helloworld@123'
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
     if not login_window.user_email or not login_window.user_password:
         login_window.logger('User email or Password empty...', level=Qgis.Warning)
@@ -123,6 +125,7 @@ def loginTask(task, login_window):
     login_window.core_token = core_login(login_window.user_email, login_window.user_password)
     if login_window.core_token:
         login_window.logger("Successfully logged in...")
+        login_window.org_details = organization_details(login_window.core_token)
         return {"login_window": login_window, "task": task.description()}
     else:
         login_window.logger("incorrect user email or password...", level=Qgis.Warning)
