@@ -33,6 +33,7 @@ from qgis.PyQt.QtCore import Qt
 import os
 import qgis
 from PyQt5.QtGui import QKeySequence
+from qgis.utils import iface
 
 from .ml_service_map import MLServiceMapWindow
 
@@ -46,24 +47,24 @@ TERRA_TOOLS_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'terr
 
 class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
 
-    def __init__(self, load_window, iface):
+    def __init__(self, project):
         """Constructor."""
         super(TerraToolsWindow, self).__init__()
         self.setupUi(self)
-        self.backButton.clicked.connect(self.show_load_window)
+        self.project = project
+        self.backButton.clicked.connect(self.show_project_tabs)
         self.loadModelsButton.clicked.connect(self.load_models)
         self.detectButton.clicked.connect(self.start_detect_task)
         self.approveButton.clicked.connect(self.start_approve_task)
         self.clipButton.clicked.connect(self.start_clip_task)
         self.requestModelButton.clicked.connect(self.request_model)
         self.saveProject.clicked.connect(self.save_project)
-        self.load_window = load_window
-        self.core_token = self.load_window.core_token
-        self.project_details = self.load_window.project_details
-        self.class_maps = self.load_window.class_maps
-        self.class_groups = self.load_window.class_groups
+        self.core_token = self.project.project_tabs_window.load_window.core_token
+        self.project_details = self.project.project_details
+        self.class_maps = self.project.class_maps
+        self.class_groups = self.project.class_groups
         self.iface = iface
-        self.canvas = self.iface.mapCanvas()
+        self.canvas = iface.mapCanvas()
         self.active_layer = self.iface.activeLayer()
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
@@ -98,9 +99,9 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
-    def show_load_window(self):
-        self.load_window.terra_tools_window = self
-        self.load_window.show()
+    def show_project_tabs(self):
+        self.project.tools_window = self
+        self.project.project_tabs_window.show()
         self.hide()
 
     def request_model(self):
@@ -385,7 +386,10 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         for l in csv_lines:
             key, name, _ = l.split(",")
             key, name = key.strip(), name.strip()
-            key_code = eval("Qt.Key_{}".format(key))
+            try:
+                key_code = eval("Qt.Key_{}".format(key))
+            except Exception:
+                key_code = None
             csv_map[name] = key_code
         # If the existing keyboard shortcuts do not contain the classes from this project, do not remap
         try:

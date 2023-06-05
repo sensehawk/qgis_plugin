@@ -3,6 +3,8 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 from qgis.core import QgsProject
 from qgis.utils import iface
+from .terra_tools import TerraToolsWindow
+from .therm_tools import ThermToolsWindow
 
 
 class Project:
@@ -15,6 +17,67 @@ class Project:
         self.class_groups = load_task_result['class_groups']
         self.project_tab_index = None
         self.project_tab = QtWidgets.QWidget()
+        # Create a layout that contains project details
+        self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
+        self.tools_window = None
+        self.project_tabs_window = None
+        self.project_shortcuts = {}
+
+    def connect_tools(self):
+        if self.project_details["project_type"] == "terra":
+            # Connect terra tools
+            self.tools_window = TerraToolsWindow(self)
+        elif self.project_details["project_type"] == "therm":
+            # Connect therm tools
+            self.tools_window = ThermToolsWindow(self)
+        # Hide window for now
+        self.tools_window.hide()
+
+    def show_tools_window(self):
+        self.tools_window.show()
+        self.project_tabs_window.hide()
+
+    def create_feature_count_table(self):
+        # Create a table of feature counts
+        feature_counts_table = QtWidgets.QTableWidget(self.project_tab)
+
+        # Hide headers
+        feature_counts_table.verticalHeader().setVisible(False)
+        feature_counts_table.horizontalHeader().setVisible(False)
+
+        # Disable editing
+        feature_counts_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.project_tab_layout.addWidget(feature_counts_table)
+
+        # Populate feature counts
+        feature_counts_table.setRowCount(len(self.feature_counts))
+        feature_counts_table.setColumnCount(2)
+        for i, (feature_type, feature_count) in enumerate(self.feature_counts):
+            feature_type_item = QtWidgets.QTableWidgetItem(feature_type)
+            feature_count_item = QtWidgets.QTableWidgetItem(str(feature_count))
+            feature_counts_table.setItem(i, 0, feature_type_item)
+            feature_counts_table.setItem(i, 1, feature_count_item)
+        feature_counts_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+
+    def populate_project_tab(self):
+        project_details = self.project_details
+        # Create project UID label
+        project_uid_label = QtWidgets.QLabel(self.project_tab)
+        project_uid_label.setText(f"UID: {project_details['uid']}")
+        self.project_tab_layout.addWidget(project_uid_label)
+        # Create project type label
+        project_type_label = QtWidgets.QLabel(self.project_tab)
+        project_type_label.setText(f"Project type: {project_details['project_type'].capitalize()}")
+        self.project_tab_layout.addWidget(project_type_label)
+        # Create feature count table
+        self.create_feature_count_table()
+        # Create a tools button
+        tools_button = QtWidgets.QPushButton(self.project_tab)
+        tools_button.setText("Tools")
+        self.project_tab_layout.addWidget(tools_button)
+        # Connect this button to tools
+        tools_button.clicked.connect(self.show_tools_window)
+
 
 class ProjectTabsWindow(QtWidgets.QWidget):
     def __init__(self, load_window):
@@ -61,58 +124,24 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         self.hide()
         self.load_window.show()
 
-    def create_feature_count_table(self, feature_counts):
-        # Create a table of feature counts
-        feature_counts_table = QtWidgets.QTableWidget(self)
-
-        # Hide headers
-        feature_counts_table.verticalHeader().setVisible(False)
-        feature_counts_table.horizontalHeader().setVisible(False)
-
-        # Disable editing
-        feature_counts_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.project_tab_layout.addWidget(feature_counts_table)
-
-        # Populate feature counts
-        feature_counts_table.setRowCount(len(feature_counts))
-        feature_counts_table.setColumnCount(2)
-        for i, (feature_type, feature_count) in enumerate(feature_counts):
-            feature_type_item = QtWidgets.QTableWidgetItem(feature_type)
-            feature_count_item = QtWidgets.QTableWidgetItem(str(feature_count))
-            feature_counts_table.setItem(i, 0, feature_type_item)
-            feature_counts_table.setItem(i, 1, feature_count_item)
-        feature_counts_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-
-    def populate_project_tab(self, project):
-        project_details = project.project_details
-        # Create project UID label
-        project_uid_label = QtWidgets.QLabel(self)
-        project_uid_label.setText(f"UID: {project_details['uid']}")
-        self.project_tab_layout.addWidget(project_uid_label)
-        # Create project type label
-        project_type_label = QtWidgets.QLabel(self)
-        project_type_label.setText(f"Project type: {project_details['project_type']}")
-        self.project_tab_layout.addWidget(project_type_label)
-        # Create feature count table
-        self.create_feature_count_table(project.feature_counts)
-        # Create a tools button
-        tools_button = QtWidgets.QPushButton(self)
-        tools_button.setText(f"{project.project_details['project_type'].capitalize()} Tools")
-        self.project_tab_layout.addWidget(tools_button)
-
     def add_project(self, project):
         # Add uid to a list to track tab index
         self.project_uids.append(project.project_details["uid"])
         self.projects_loaded[project.project_details["uid"]] = project
         # Add project tab to the tabs widget
         self.project_tabs_widget.addTab(project.project_tab, project.project_details["name"])
-        # Create a layout that contains project details
-        self.project_tab_layout = QtWidgets.QVBoxLayout(project.project_tab)
-        # Show project details
-        self.populate_project_tab(project)
+        # Show all project details in the project tab
+        project.populate_project_tab()
         # Add project layers to the project
         self.qgis_project.addMapLayer(project.rlayer)
         self.qgis_project.addMapLayer(project.vlayer)
+        # Set active layer and zoom to layer
+        iface.setActiveLayer(project.vlayer)
+        iface.actionZoomToLayer().trigger()
+        project.project_tabs_window = self
+        # Connect project tools
+        project.connect_tools()
+        # Activate project
         self.activate_project_layers(project)
 
     def activate_project_layers(self, project):
@@ -124,6 +153,7 @@ class ProjectTabsWindow(QtWidgets.QWidget):
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(True)
                 if layer.id() == project.vlayer.id():
                     iface.setActiveLayer(layer)
+                    iface.actionZoomToLayer().trigger()
             else:
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
 
