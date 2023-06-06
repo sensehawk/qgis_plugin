@@ -66,7 +66,7 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         self.asset_combobox = self.asset
         self.org = combobox_modifier(org_combobox, org_list)
         self.org.currentIndexChanged.connect(self.org_tree)
-        self.projectbutton.clicked.connect(self.project_load_window)
+        self.projectbutton.clicked.connect(self.show_project_load_window)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
 
@@ -99,9 +99,9 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         self.asset_uid = self.asset_details.get(self.asset.currentText(), None)
         print(self.org_uid, self.asset_uid)
 
-    def project_load_window(self):
-            self.tools_window = ProjectLoadWindow(self, self.iface)
-            self.tools_window.show()
+    def show_project_load_window(self):
+            self.project_load_window = ProjectLoadWindow(self, self.iface)
+            self.project_load_window.show()
             self.hide()
 
     

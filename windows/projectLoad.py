@@ -70,6 +70,10 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_selection_layout.addWidget(self.project_tabs_widget)
         self.project_tabs_widget.hide()
 
+        self.dock_widget = QtWidgets.QDockWidget()
+        self.dock_widget.setWidget(self)
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
+
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
