@@ -169,7 +169,7 @@ class Project:
         self.vlayer.triggerRepaint()
 
 
-class ProjectTabsWindow(QtWidgets.QWidget):
+class ProjectTabsWidget(QtWidgets.QWidget):
     def __init__(self, load_window):
         super().__init__()
         self.load_window = load_window
@@ -250,7 +250,7 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         # Set active layer and zoom to layer
         iface.setActiveLayer(project.vlayer)
         iface.actionZoomToLayer().trigger()
-        project.project_tabs_window = self
+        project.project_tabs_widget = self
         project.logger = self.logger
         # Connect project tools
         # project.connect_tools()
@@ -258,6 +258,8 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         self.activate_project()
 
     def save_project(self):
+        if not self.active_project:
+            return None
         self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
         self.active_project.vlayer.commitChanges()
         self.active_project.last_saved = str(datetime.now())
@@ -297,6 +299,7 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         try:
             project_uid = self.project_uids[self.project_tabs_widget.currentIndex()]
         except IndexError:
+            self.active_project = None
             return None
         project = self.projects_loaded[project_uid]
         self.active_project = project
@@ -310,6 +313,8 @@ class ProjectTabsWindow(QtWidgets.QWidget):
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
 
     def close_project(self):
+        if not self.active_project:
+            return None
         # First check if the project is saved to core or not and ask for confirmation
         confirmation_widget = iface.messageBar().createMessage("Are you sure?", f"Last saved: {self.active_project.last_saved}")
         yes_button = QtWidgets.QPushButton(confirmation_widget)
@@ -339,6 +344,8 @@ class ProjectTabsWindow(QtWidgets.QWidget):
     def key_eater(self, x):
         # Connect to active projects feature shortcuts and qgis shortcuts
         key = QtGui.QKeySequence(x).toString()
+        if not self.active_project:
+            return None
         if key in self.active_project.feature_shortcuts:
             feature_change_name = self.active_project.feature_shortcuts.get(key, None)
             self.active_project.change_feature_type(feature_change_name)

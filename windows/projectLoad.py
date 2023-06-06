@@ -5,7 +5,7 @@ from ..tasks import loadTask
 from PyQt5.QtWidgets import QLineEdit, QCompleter, QVBoxLayout, QPushButton, QComboBox
 from PyQt5.QtCore import QRect
 from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier, project_details
-from .projectTabs import ProjectTabsWindow, Project
+from .projectTabs import ProjectTabsWidget, Project
 
 
 class ProjectForm:
@@ -52,7 +52,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_details = self.group_details[self.group.currentText()][1]
         project_list = list(self.project_details.keys())
 
-        self.project_tabs_window = ProjectTabsWindow(self)
+        self.project_tabs_widget = ProjectTabsWidget(self)
 
         self.back_button = QPushButton(self)
         self.back_button.setText('Home')
@@ -67,8 +67,8 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
 
         # Add project tabs widget to the layout
-        self.project_selection_layout.addWidget(self.project_tabs_window)
-        self.project_tabs_window.hide()
+        self.project_selection_layout.addWidget(self.project_tabs_widget)
+        self.project_tabs_widget.hide()
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -92,7 +92,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.start_project_load(project_uid, project_type)
 
     def load_callback(self, load_task_status, load_task):
-        new_project_index = len(self.project_tabs_window.project_uids)
+        new_project_index = len(self.project_tabs_widget.project_uids)
         if load_task_status != 3:
             return None
         result = load_task.returned_values
@@ -104,12 +104,12 @@ class ProjectLoadWindow(QtWidgets.QWidget):
 
         # Add project to project tab
         project.project_tab_index = new_project_index
-        self.project_tabs_window.add_project(project)
-        self.project_tabs_window.project_tabs_widget.setCurrentIndex(new_project_index)
+        self.project_tabs_widget.add_project(project)
+        self.project_tabs_widget.project_tabs_widget.setCurrentIndex(new_project_index)
 
         # Apply styling
         self.categorized_renderer = categorize_layer(project)
-        self.project_tabs_window.show()
+        self.project_tabs_widget.show()
 
 
     def start_project_load(self, project_uid, project_type):
@@ -117,12 +117,12 @@ class ProjectLoadWindow(QtWidgets.QWidget):
             self.logger("No project uid given", level=Qgis.Warning)
             return None
         # Load only if it is not already present in project tabs
-        if project_uid in self.project_tabs_window.projects_loaded:
+        if project_uid in self.project_tabs_widget.projects_loaded:
             self.logger("Project loaded already!")
-            project_index = self.project_tabs_window.project_uids.index(project_uid)
-            project = self.project_tabs_window.projects_loaded[project_uid]
-            self.project_tabs_window.project_tabs_widget.setCurrentIndex(project_index)
-            self.project_tabs_window.activate_project()
+            project_index = self.project_tabs_widget.project_uids.index(project_uid)
+            project = self.project_tabs_widget.projects_loaded[project_uid]
+            self.project_tabs_widget.project_tabs_widget.setCurrentIndex(project_index)
+            self.project_tabs_widget.activate_project()
             return None
 
         load_task_inputs = {"project_uid": project_uid,

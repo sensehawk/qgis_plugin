@@ -59,7 +59,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         self.clipButton.clicked.connect(self.start_clip_task)
         self.requestModelButton.clicked.connect(self.request_model)
         self.saveProject.clicked.connect(self.save_project)
-        self.core_token = self.project.project_tabs_window.load_window.core_token
+        self.core_token = self.project.project_tabs_widget.load_window.core_token
         self.project_details = self.project.project_details
         self.class_maps = self.project.class_maps
         self.class_groups = self.project.class_groups
@@ -101,7 +101,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
 
     def show_project_tabs(self):
         self.project.tools_window = self
-        self.project.project_tabs_window.show()
+        self.project.project_tabs_widget.show()
         self.hide()
 
     def request_model(self):
