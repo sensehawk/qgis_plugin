@@ -9,6 +9,8 @@ from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
 import pandas as pd
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
+import qgis
+import json
 
 
 class Project:
@@ -20,7 +22,6 @@ class Project:
         self.feature_counts = load_task_result['feature_counts']
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
-        self.project_tab_index = None
         self.project_tab = QtWidgets.QWidget()
         # Create a layout that contains project details
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
@@ -280,7 +281,6 @@ class ProjectTabsWindow(QtWidgets.QWidget):
             result = task.returned_values
             if result:
                 logger(result["status"])
-
         st = QgsTask.fromFunction("Save", save_task,
                                   save_task_input=[self.active_project.geojson_path,
                                                    self.load_window.core_token,
