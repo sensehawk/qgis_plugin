@@ -62,27 +62,15 @@ def random_color():
     return color
 
 
-def categorize_layer(project_type=None, class_maps=None):
-    renderer = categorized_renderer(project_type=project_type, class_maps=class_maps)
+def categorize_layer(project):
+    renderer = categorized_renderer(project)
     active_layer = iface.activeLayer()
     active_layer.setRenderer(renderer)
     active_layer.triggerRepaint()
     return renderer
 
-def categorized_renderer(project_type=None, class_maps=None):
-    # color classifying based on class_name for therm / class_name and class_maps for terra
-    if not class_maps:
-        color_code = {'hotspot': '#001c63', 'diode_failure': '#42e9de', 'module_failure': '#2ecc71',
-                      'string_failure': '#3ded2d', 'module_reverse_polarity': '#ff84dc',
-                      'potential_induced_degradation': '#550487', 'vegetation': '#076e0a',
-                      'tracker_malfunction': '#c50000', 'string_reverse_polarity': '#f531bd',
-                      'dirt': '#b5b0b0', 'cracked_modules': '#9b9e33', 'table': '#ffff00'}
-    else:
-        color_code = {
-            i: class_maps[i]["properties"]["color"].replace("rgb(", "").replace(")", "").replace(" ", "").split(",") for
-            i in class_maps}
-        color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in color_code[i]) for i in color_code}
-
+def categorized_renderer(project):
+    color_code = project.color_code
     # Add black color for NULL class names (any newly added feature before reclassification)
     color_code[None] = "#000000"
     # Applying color based on feature 'class_name' for therm and 'class' for terra
@@ -114,9 +102,9 @@ def categorized_renderer(project_type=None, class_maps=None):
 
     # create renderer object
     renderer = None
-    if project_type == "terra":
+    if project.project_details["project_type"] == "terra":
         renderer = QgsCategorizedSymbolRenderer('class', categories)
-    elif project_type == "therm":
+    elif project.project_details["project_type"] == "therm":
         renderer = QgsCategorizedSymbolRenderer('class_name', categories)
 
     return renderer

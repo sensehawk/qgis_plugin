@@ -52,7 +52,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         super(TerraToolsWindow, self).__init__()
         self.setupUi(self)
         self.project = project
-        self.backButton.clicked.connect(self.show_project_tabs)
+        self.backButton.clicked.connect(self.hide)
         self.loadModelsButton.clicked.connect(self.load_models)
         self.detectButton.clicked.connect(self.start_detect_task)
         self.approveButton.clicked.connect(self.start_approve_task)
@@ -86,7 +86,7 @@ class TerraToolsWindow(QtWidgets.QDockWidget, TERRA_TOOLS_UI):
         # Create keypress event filter to consume the key presses from iface and send it to key_emitter
         self.keypress_filter = KeypressFilter(self.key_emitter)
         # Install key press filter to iface's map canvas
-        self.iface.mapCanvas().installEventFilter(self.keypress_filter)
+        # self.iface.mapCanvas().installEventFilter(self.keypress_filter)
         self.export_keyboard_shortcut_details()
 
         # Mouse press filter

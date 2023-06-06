@@ -10,12 +10,7 @@ from .projectTabs import ProjectTabsWindow, Project
 
 class ProjectForm:
     def __init__(self, project_list, project_selection_layout, project_selection_window):
-        if project_selection_window.projects_form :
-            project_selection_layout.removeWidget(project_selection_window.projects_form.scroll_widget)
-            project_selection_window.projects_form.scroll_widget.deleteLater()
-            project_selection_window.projects_form.scroll_widget =None
-
-        project_groupbox = QtWidgets.QGroupBox('Project details')
+        project_groupbox = QtWidgets.QGroupBox('Projects:')
         myform = QtWidgets.QFormLayout()
         for project in project_list:
             button = QtWidgets.QPushButton(f'{project}')
@@ -28,9 +23,13 @@ class ProjectForm:
         self.scroll_widget.setWidget(project_groupbox)
         self.scroll_widget.setWidgetResizable(True)
         self.scroll_widget.setFixedHeight(200)
-        project_selection_layout.addWidget(self.scroll_widget)
+        # Replace the scroll widget if it exists
+        if project_selection_window.projects_form:
+            project_selection_layout.replaceWidget(project_selection_window.projects_form.scroll_widget, self.scroll_widget)
+        else:
+            project_selection_layout.addWidget(self.scroll_widget)
 
-    
+
 class ProjectLoadWindow(QtWidgets.QWidget):
     def __init__(self, homeobj, iface):
         super().__init__()
@@ -50,21 +49,26 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
         self.group.currentIndexChanged.connect(self.group_tree)
 
-        # self.project_details = project_details(self.group_uid, self.org_uid, self.core_token)
         self.project_details = self.group_details[self.group.currentText()][1]
         project_list = list(self.project_details.keys())
 
         self.project_tabs_window = ProjectTabsWindow(self)
 
         self.back_button = QPushButton(self)
-        self.back_button.setText('home')
+        self.back_button.setText('Home')
         self.back_button.clicked.connect(self.back_to_home)
 
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
-        self.project_selection_layout.addWidget(self.group)
+
         self.project_selection_layout.addWidget(self.back_button)
+        self.project_selection_layout.addWidget(self.group)
+
         self.project_selection_layout.setGeometry(QRect(500, 400, 400, 200))
         self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+
+        # Add project tabs widget to the layout
+        self.project_selection_layout.addWidget(self.project_tabs_window)
+        self.project_tabs_window.hide()
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -73,7 +77,6 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.group_uid = self.group_details[self.group.currentText()][0]
         self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
         
-        # self.project_details = project_details(self.group_uid, self.org_uid, self.core_token)
         self.project_details = self.group_details[self.group.currentText()][1]
         project_list = list(self.project_details.keys())
         self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
@@ -103,11 +106,11 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         project.project_tab_index = new_project_index
         self.project_tabs_window.add_project(project)
         self.project_tabs_window.project_tabs_widget.setCurrentIndex(new_project_index)
-        self.show_project_tabs()
 
         # Apply styling
-        self.categorized_renderer = categorize_layer(project_type=project.project_details["project_type"],
-                                                     class_maps=project.class_maps)
+        self.categorized_renderer = categorize_layer(project)
+        self.project_tabs_window.show()
+
 
     def start_project_load(self, project_uid, project_type):
         if not project_uid:
@@ -118,9 +121,8 @@ class ProjectLoadWindow(QtWidgets.QWidget):
             self.logger("Project loaded already!")
             project_index = self.project_tabs_window.project_uids.index(project_uid)
             project = self.project_tabs_window.projects_loaded[project_uid]
-            self.show_project_tabs()
-            self.project_tabs_window.activate_project_layers(project)
             self.project_tabs_window.project_tabs_widget.setCurrentIndex(project_index)
+            self.project_tabs_window.activate_project()
             return None
 
         load_task_inputs = {"project_uid": project_uid,
@@ -131,10 +133,6 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         QgsApplication.taskManager().addTask(load_task)
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
-    def show_project_tabs(self):
-        self.hide()
-        self.project_tabs_window.show()
-       
     def back_to_home(self):
         self.home.show()
         self.hide()

@@ -29,7 +29,7 @@ from ..utils import download_file, load_vectors, categorize_layer , organization
 
 from ..tasks import loadTask
 
-from ..windows.projectload import ProjectLoadWindow
+from ..windows.projectLoad import ProjectLoadWindow
 from ..windows.therm_tools import ThermToolsWindow
 
 import os

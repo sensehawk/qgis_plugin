@@ -66,8 +66,6 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         self.numbering_window = None
         self.imagetagging_window = None
 
-
-
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         ## Keyboard shortcuts
