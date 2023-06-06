@@ -1,18 +1,21 @@
 from qgis.PyQt.QtCore import Qt
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets
-from qgis.core import QgsProject, Qgis
+from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication
 from qgis.utils import iface
 from .terra_tools import TerraToolsWindow
 from .therm_tools import ThermToolsWindow
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
 import pandas as pd
+from datetime import datetime
+from ..sensehawk_apis.core_apis import save_project_geojson
 
 
 class Project:
     def __init__(self, load_task_result):
         self.project_details = load_task_result['project_details']
         self.vlayer = load_task_result['vlayer']
+        self.geojson_path = load_task_result['geojson_path']
         self.rlayer = load_task_result['rlayer']
         self.feature_counts = load_task_result['feature_counts']
         self.class_maps = load_task_result['class_maps']
@@ -25,6 +28,8 @@ class Project:
         self.project_tabs_window = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
+        # Time stamp of last saved
+        self.last_saved = str(datetime.now())
         # color classifying based on class_name for therm / class_name and class_maps for terra
         if not self.class_maps:
             self.color_code = {'hotspot': '#001c63', 'diode_failure': '#42e9de', 'module_failure': '#2ecc71',
@@ -221,8 +226,14 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         # Close project button
         close_project_button = QtWidgets.QPushButton(self)
         close_project_button.setText("Close Project")
-        close_project_button.clicked.connect(self.remove_project)
+        close_project_button.clicked.connect(self.close_project)
         main_layout.addWidget(close_project_button)
+
+        # Save project button
+        save_project_button = QtWidgets.QPushButton(self)
+        save_project_button.setText("Save Project")
+        save_project_button.clicked.connect(self.save_project)
+        main_layout.addWidget(save_project_button)
 
     def add_project(self, project):
         # Add uid to a list to track tab index
@@ -245,6 +256,39 @@ class ProjectTabsWindow(QtWidgets.QWidget):
         # Activate project
         self.activate_project()
 
+    def save_project(self):
+        self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
+        self.active_project.vlayer.commitChanges()
+        self.active_project.last_saved = str(datetime.now())
+
+        def save_task(task, save_task_input):
+            geojson_path, core_token, project_uid, project_type = save_task_input
+            cleaned_geojson_path = geojson_path.replace(".geojson", "_cleaned.geojson")
+            # Delete any duplicate features
+            qgis.processing.run('qgis:deleteduplicategeometries',
+                                {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
+            with open(cleaned_geojson_path, 'r') as fi:
+                geojson = json.load(fi)
+            # Clear UIDs to avoid duplicate error while saving to Therm
+            for f in geojson["features"]:
+                f["properties"]["uid"] = None
+            # Upload vectors
+            saved = save_project_geojson(geojson, project_uid, core_token,
+                                         project_type=project_type)
+            return {'status': str(saved), 'task': task.description()}
+        def callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(result["status"])
+
+        st = QgsTask.fromFunction("Save", save_task,
+                                  save_task_input=[self.active_project.geojson_path,
+                                                   self.load_window.core_token,
+                                                   self.active_project.project_details["uid"],
+                                                   self.active_project.project_details["project_type"]])
+        QgsApplication.taskManager().addTask(st)
+        st.statusChanged.connect(lambda: callback(st, self.logger))
+
     def activate_project(self):
         """
         Make only the selected project layers visible and zoom to layer
@@ -265,20 +309,30 @@ class ProjectTabsWindow(QtWidgets.QWidget):
             else:
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
 
+    def close_project(self):
+        # First check if the project is saved to core or not and ask for confirmation
+        confirmation_widget = iface.messageBar().createMessage("Are you sure?", f"Last saved: {self.active_project.last_saved}")
+        yes_button = QtWidgets.QPushButton(confirmation_widget)
+        yes_button.setText("Yes")
+        yes_button.clicked.connect(self.remove_project)
+        no_button = QtWidgets.QPushButton(confirmation_widget)
+        no_button.setText("No")
+        no_button.clicked.connect(iface.messageBar().clearWidgets)
+        confirmation_widget.layout().addWidget(yes_button)
+        confirmation_widget.layout().addWidget(no_button)
+        iface.messageBar().pushWidget(confirmation_widget, Qgis.Warning)
+
     def remove_project(self):
-        # Get current project
-        try:
-            project_uid = self.project_uids[self.project_tabs_widget.currentIndex()]
-            project = self.projects_loaded[project_uid]
-        except Exception as e:
-            return None
+        iface.messageBar().clearWidgets()
+        self.logger(f"Removing project: {self.active_project.project_details['name']}")
+        project = self.active_project
         try:
             self.qgis_project.removeMapLayers([project.rlayer.id(), project.vlayer.id()])
         except Exception as e:
             self.logger(str(e), level=Qgis.Warning)
         # Remove item from projects loaded and project uids list
-        self.project_uids.remove(project_uid)
-        del self.projects_loaded[project_uid]
+        self.project_uids.remove(self.active_project.project_details["uid"])
+        del self.projects_loaded[self.active_project.project_details["uid"]]
         # Remove project tab
         self.project_tabs_widget.removeTab(self.project_tabs_widget.currentIndex())
 

@@ -63,6 +63,7 @@ def loadTask(task, load_inputs):
             'class_maps': class_maps,
             'class_groups': class_groups,
             'project_details': project_details,
+            'geojson_path': geojson_path,
             'task': task.description()}
 
 
