@@ -20,6 +20,7 @@ class MLServiceMapWidget(QtWidgets.QWidget):
         # TODO:
         # Refresh list if checked items change
         self.trainButton.clicked.connect(self.train)
+        self.dock_size = [350, 590]
 
     def populate_combo_boxes(self):
         items = self.project.class_groups.get("Components", self.project.class_groups.get("components", []))

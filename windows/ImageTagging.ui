@@ -1,202 +1,162 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>autoNumberingWidget</class>
- <widget class="QDockWidget" name="autoNumberingWidget">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>520</width>
-    <height>202</height>
+    <width>250</width>
+    <height>250</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
-    <width>100</width>
-    <height>155</height>
+    <width>250</width>
+    <height>250</height>
    </size>
   </property>
-  <property name="toolTipDuration">
-   <number>-1</number>
-  </property>
-  <property name="whatsThis">
-   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-  </property>
   <property name="windowTitle">
-   <string/>
+   <string>Form</string>
   </property>
-  <widget class="QWidget" name="dockWidgetContents">
-   <widget class="QPushButton" name="runButton">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>140</y>
-      <width>81</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Run</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="backButtoN">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>150</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_5">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>161</width>
-      <height>17</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Tagging :</string>
-    </property>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>30</y>
-      <width>160</width>
-      <height>85</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="QComboBox" name="imagetaggingType">
-       <item>
-        <property name="text">
-         <string>ThermLite Tagging</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Thermal Tagging</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Visual Tagging</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>SiteMap Tagging</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Temp Extraction</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="MagmaConversion">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="autoFillBackground">
-        <bool>false</bool>
-       </property>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>10</y>
+     <width>160</width>
+     <height>85</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QComboBox" name="imagetaggingType">
+      <item>
        <property name="text">
-        <string>Magma conversion</string>
+        <string>ThermLite Tagging</string>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="IssueCropImage">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      </item>
+      <item>
        <property name="text">
-        <string>Issue Crop Image</string>
+        <string>Thermal Tagging</string>
        </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="">
-    <property name="geometry">
-     <rect>
-      <x>260</x>
-      <y>30</y>
-      <width>201</width>
-      <height>91</height>
-     </rect>
-    </property>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_3">
+      </item>
+      <item>
        <property name="text">
-        <string>VProj_Uid</string>
+        <string>Visual Tagging</string>
        </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="projectUid">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="mouseTracking">
-        <bool>false</bool>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="autoFillBackground">
-        <bool>true</bool>
-       </property>
-       <property name="clearButtonEnabled">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label">
+      </item>
+      <item>
        <property name="text">
-        <string>    Temp</string>
+        <string>SiteMap Tagging</string>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QComboBox" name="temp_option">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_2">
+      </item>
+      <item>
        <property name="text">
-        <string> No_img</string>
+        <string>Temp Extraction</string>
        </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QgsSpinBox" name="No_images"/>
-     </item>
-    </layout>
-   </widget>
+      </item>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="MagmaConversion">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Magma conversion</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="IssueCropImage">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Issue Crop Image</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QPushButton" name="runButton">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>200</y>
+     <width>81</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="layoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>100</y>
+     <width>201</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <layout class="QFormLayout" name="formLayout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>VProj_Uid</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="projectUid">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="mouseTracking">
+       <bool>false</bool>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <property name="clearButtonEnabled">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>    Temp</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QComboBox" name="temp_option">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string> No_img</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QgsSpinBox" name="No_images"/>
+    </item>
+   </layout>
   </widget>
  </widget>
  <customwidgets>

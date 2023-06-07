@@ -68,9 +68,14 @@ class TerraToolsWidget(QtWidgets.QWidget):
     def request_model(self):
         if not self.ml_service_map_widget:
             self.ml_service_map_widget = MLServiceMapWidget(self.project)
-            self.project.project_tab_layout.addWidget(self.ml_service_map_widget)
+        if self.project.active_tool_widget != self.ml_service_map_widget:
+            self.project.active_tool_widget.hide()
+            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.ml_service_map_widget)
+            self.project.active_tool_widget = self.ml_service_map_widget
         self.ml_service_map_widget.show()
-        self.requestModelButton.toggle()
+        # Set dock size
+        dw, dh = self.ml_service_map_widget.dock_size
+        self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
 
     def load_models(self):
         # Get list of available models

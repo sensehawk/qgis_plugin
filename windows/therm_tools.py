@@ -30,8 +30,8 @@ from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRe
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.sid_apis import detect_solar_issues
-from ..windows.autoNumbering import ThermNumberingWindow
-from ..windows.ImageTagging import ThermImageTaggingWindow
+from ..windows.autoNumbering import ThermNumberingWidget
+from ..windows.ImageTagging import ThermImageTaggingWidget
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
@@ -56,18 +56,32 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.class_maps = self.project.class_maps
         self.core_token = self.project.project_tabs_widget.load_window.core_token
         self.project_details = self.project.project_details
-        self.numbering_window = None
-        self.imagetagging_window = None
+        self.numbering_widget = None
+        self.imagetagging_widget = None
 
     def string_numbering(self):
-        self.numbering_window = ThermNumberingWindow(self, self.iface)
-        self.numbering_window.show()
-        self.hide()
+        if not self.numbering_widget:
+            self.numbering_widget = ThermNumberingWidget(self, self.iface)
+        if self.project.active_tool_widget != self.numbering_widget:
+            self.project.active_tool_widget.hide()
+            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.numbering_widget)
+            self.project.active_tool_widget = self.numbering_widget
+        self.numbering_widget.show()
+        # Set dock size
+        dw, dh = self.numbering_widget.dock_size
+        self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
 
     def ImageTagging(self):
-        self.imagetagging_window = ThermImageTaggingWindow(self, self.iface)
-        self.imagetagging_window.show()
-        self.hide()
+        if not self.imagetagging_widget:
+            self.imagetagging_widget = ThermImageTaggingWidget(self, self.iface)
+        if self.project.active_tool_widget != self.imagetagging_widget:
+            self.project.active_tool_widget.hide()
+            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.imagetagging_widget)
+            self.project.active_tool_widget = self.imagetagging_widget
+        self.imagetagging_widget.show()
+        # Set dock size
+        dw, dh = self.imagetagging_widget.dock_size
+        self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
 
     def detect(self):
         map_angle = self.canvas.rotation()

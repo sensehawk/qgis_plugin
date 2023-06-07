@@ -32,26 +32,17 @@ import os
 import numpy as np
 
 
-AUTO_NUMBERING_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'AutoNumbering.ui'))
-
-
-class ThermNumberingWindow(QtWidgets.QDockWidget, AUTO_NUMBERING_UI):
+class ThermNumberingWidget(QtWidgets.QWidget):
 
     def __init__(self, thermToolobj, iface):
         """Constructor."""
-        super(ThermNumberingWindow, self).__init__()
-        self.setupUi(self)
+        super(ThermNumberingWidget, self).__init__()
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'AutoNumbering.ui'), self)
         self.thermToolobj = thermToolobj
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
-    
-        self.backButtoN.clicked.connect(self.show_thermTool_Window)
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.approve.clicked.connect(self.string_numbering)
-
-    def show_thermTool_Window(self):
-        self.thermToolobj.show()
-        self.hide()
+        self.dock_size = [360, 700]
 
     def stringNumber_configuration(self):
         canvas  = self.canvas
@@ -123,4 +114,4 @@ class ThermNumberingWindow(QtWidgets.QDockWidget, AUTO_NUMBERING_UI):
 
         endTime = time()
         duration = int(round((endTime - startTime) * 1000))
-        self.iface.messageBar().pushMessage(self.tr(f'<b>String_numbeirng</b> done in {duration} ms.'),Qgis.Success)
+        self.iface.messageBar().pushMessage(self.tr(f'<b>String_numbeirng</b> done in {duration} s.'),Qgis.Success)

@@ -27,6 +27,9 @@ class Project:
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
         self.project_tab_layout.setContentsMargins(10, 10, 10, 10)
         self.tools_widget = None
+        # Dummy active tool widget
+        self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
+        self.active_tool_widget.dock_size = [350, 500]
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
@@ -97,6 +100,8 @@ class Project:
         line = QtGui.QFrame()
         line.setFrameShape(QtGui.QFrame.HLine)
         self.project_tab_layout.addWidget(line)
+        # Add the dummy active tool widget
+        self.project_tab_layout.addWidget(self.active_tool_widget)
 
     def setup_feature_shortcuts(self):
         # Feature types are defined at the container level in case of Terra and is fixed in case of Therm
@@ -319,6 +324,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                     iface.actionZoomToLayer().trigger()
             else:
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
+        # Set dock size based on active project's active tool widget
+        dw, dh = self.active_project.active_tool_widget.dock_size
+        self.load_window.dock_widget.setFixedSize(dw, dh)
 
     def close_project(self):
         if not self.active_project:
