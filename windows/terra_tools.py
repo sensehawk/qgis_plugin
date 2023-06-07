@@ -34,7 +34,7 @@ import qgis
 from PyQt5.QtGui import QKeySequence
 from qgis.utils import iface
 
-from .ml_service_map import MLServiceMapWindow
+from .ml_service_map import MLServiceMapWidget
 
 from PyQt5.QtWidgets import QApplication
 
@@ -61,15 +61,17 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.active_layer = self.project.vlayer
         self.models_dict = {}
         # ML Service Map
-        self.ml_service_map_window = None
+        self.ml_service_map_widget = None
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def request_model(self):
-        self.ml_service_map_window = MLServiceMapWindow(self.iface, self.class_groups, self)
-        self.ml_service_map_window.show()
-        self.hide()
+        if not self.ml_service_map_widget:
+            self.ml_service_map_widget = MLServiceMapWidget(self.project)
+            self.project.project_tab_layout.addWidget(self.ml_service_map_widget)
+        self.ml_service_map_widget.show()
+        self.requestModelButton.toggle()
 
     def load_models(self):
         # Get list of available models

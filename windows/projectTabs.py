@@ -26,7 +26,7 @@ class Project:
         # Create a layout that contains project details
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
         self.project_tab_layout.setContentsMargins(10, 10, 10, 10)
-        self.tools_window = None
+        self.tools_widget = None
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
@@ -93,6 +93,10 @@ class Project:
         self.create_features_table()
         # Add project tools
         self.add_tools()
+        # Simple line widget separator
+        line = QtGui.QFrame()
+        line.setFrameShape(QtGui.QFrame.HLine)
+        self.project_tab_layout.addWidget(line)
 
     def setup_feature_shortcuts(self):
         # Feature types are defined at the container level in case of Terra and is fixed in case of Therm
