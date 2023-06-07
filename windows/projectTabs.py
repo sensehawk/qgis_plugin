@@ -3,9 +3,9 @@ import os
 from PyQt5 import QtCore, QtGui, QtWidgets
 from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication
 from qgis.utils import iface
-from .terra_tools import TerraToolsWindow
-from .therm_tools import ThermToolsWindow
+from .terra_tools import TerraToolsWidget
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
+from .therm_tools import ThermToolsWidget
 import pandas as pd
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
@@ -25,8 +25,9 @@ class Project:
         self.project_tab = QtWidgets.QWidget()
         # Create a layout that contains project details
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
+        self.project_tab_layout.setContentsMargins(10, 10, 10, 10)
         self.tools_window = None
-        self.project_tabs_window = None
+        self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
         # Time stamp of last saved
@@ -44,18 +45,15 @@ class Project:
                 for i in self.class_maps}
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
 
-    def connect_tools(self):
+    def add_tools(self):
         if self.project_details["project_type"] == "terra":
-            # Connect terra tools
-            self.tools_window = TerraToolsWindow(self)
+            # get terra tools
+            self.tools_widget = TerraToolsWidget(self)
         elif self.project_details["project_type"] == "therm":
-            # Connect therm tools
-            self.tools_window = ThermToolsWindow(self)
-        # Hide window for now
-        self.tools_window.hide()
-
-    def show_tools_window(self):
-        self.tools_window.show()
+            # get therm tools
+            self.tools_widget = ThermToolsWidget(self)
+        self.project_tab_layout.addWidget(self.tools_widget)
+        self.tools_widget.show()
 
     def create_features_table(self):
         # Create a table of feature counts
@@ -78,7 +76,8 @@ class Project:
             feature_count_item = QtWidgets.QTableWidgetItem(str(feature_count))
             features_table.setItem(i, 0, feature_type_item)
             features_table.setItem(i, 1, feature_count_item)
-        features_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        features_table.setFixedWidth(250)
+        features_table.setFixedHeight(75)
 
     def populate_project_tab(self):
         project_details = self.project_details
@@ -92,12 +91,8 @@ class Project:
         self.project_tab_layout.addWidget(project_type_label)
         # Create features table
         self.create_features_table()
-        # Create a tools button
-        tools_button = QtWidgets.QPushButton(self.project_tab)
-        tools_button.setText("Tools")
-        self.project_tab_layout.addWidget(tools_button)
-        # Connect this button to tools
-        tools_button.clicked.connect(self.show_tools_window)
+        # Add project tools
+        self.add_tools()
 
     def setup_feature_shortcuts(self):
         # Feature types are defined at the container level in case of Terra and is fixed in case of Therm
@@ -224,6 +219,12 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(projects_group)
 
+        # Back to project load button
+        back_button = QtWidgets.QPushButton(self)
+        back_button.setText("Back to load")
+        back_button.clicked.connect(self.back_to_load)
+        main_layout.addWidget(back_button)
+
         # Close project button
         close_project_button = QtWidgets.QPushButton(self)
         close_project_button.setText("Close Project")
@@ -236,14 +237,16 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         save_project_button.clicked.connect(self.save_project)
         main_layout.addWidget(save_project_button)
 
+    def back_to_load(self):
+        self.load_window.dock_widget.setWidget(self.load_window)
+        self.load_window.dock_widget.setFixedSize(300, 400)
+
     def add_project(self, project):
         # Add uid to a list to track tab index
         self.project_uids.append(project.project_details["uid"])
         self.projects_loaded[project.project_details["uid"]] = project
         # Add project tab to the tabs widget
         self.project_tabs_widget.addTab(project.project_tab, project.project_details["name"])
-        # Show all project details in the project tab
-        project.populate_project_tab()
         # Add project layers to the project
         self.qgis_project.addMapLayer(project.rlayer)
         self.qgis_project.addMapLayer(project.vlayer)
@@ -252,8 +255,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         iface.actionZoomToLayer().trigger()
         project.project_tabs_widget = self
         project.logger = self.logger
-        # Connect project tools
-        # project.connect_tools()
+        # Show all project details in the project tab
+        project.populate_project_tab()
         # Activate project
         self.activate_project()
 

@@ -54,25 +54,31 @@ class ProjectLoadWindow(QtWidgets.QWidget):
 
         self.project_tabs_widget = ProjectTabsWidget(self)
 
-        self.back_button = QPushButton(self)
-        self.back_button.setText('Home')
-        self.back_button.clicked.connect(self.back_to_home)
+        self.home_button = QPushButton(self)
+        self.home_button.setText('Home')
+        self.home_button.clicked.connect(self.back_to_home)
 
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
 
-        self.project_selection_layout.addWidget(self.back_button)
+        self.project_selection_layout.addWidget(self.home_button)
         self.project_selection_layout.addWidget(self.group)
 
         self.project_selection_layout.setGeometry(QRect(500, 400, 400, 200))
         self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
 
-        # Add project tabs widget to the layout
-        self.project_selection_layout.addWidget(self.project_tabs_widget)
-        self.project_tabs_widget.hide()
+        projects_loaded_button = QPushButton(self)
+        projects_loaded_button.setText('Projects loaded')
+        projects_loaded_button.clicked.connect(self.show_projects_loaded)
+        self.project_selection_layout.addWidget(projects_loaded_button)
 
         self.dock_widget = QtWidgets.QDockWidget()
         self.dock_widget.setWidget(self)
+        self.dock_widget.setFixedSize(300, 400)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
+
+    def show_projects_loaded(self):
+        self.dock_widget.setWidget(self.project_tabs_widget)
+        self.dock_widget.setFixedSize(350, 600)
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -114,7 +120,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         # Apply styling
         self.categorized_renderer = categorize_layer(project)
         self.project_tabs_widget.show()
-
+        self.show_projects_loaded()
 
     def start_project_load(self, project_uid, project_type):
         if not project_uid:
@@ -127,6 +133,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
             project = self.project_tabs_widget.projects_loaded[project_uid]
             self.project_tabs_widget.project_tabs_widget.setCurrentIndex(project_index)
             self.project_tabs_widget.activate_project()
+            self.show_projects_loaded()
             return None
 
         load_task_inputs = {"project_uid": project_uid,
