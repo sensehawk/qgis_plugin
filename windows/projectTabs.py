@@ -181,6 +181,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.qgis_project = QgsProject.instance()
         self.layer_tree = self.qgis_project.layerTreeRoot()
         self.active_project = None
+        self.iface = iface
         self.setupKeyboardShortcuts()
 
     def setupKeyboardShortcuts(self):
@@ -202,7 +203,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Create keypress event filter to consume the key presses from iface and send it to key_emitter
         self.keypress_filter = KeypressFilter(self.key_emitter)
         # Install key press filter to iface's map canvas
-        iface.mapCanvas().installEventFilter(self.keypress_filter)
+        self.iface.mapCanvas().installEventFilter(self.keypress_filter)
 
     def setupUi(self):
 

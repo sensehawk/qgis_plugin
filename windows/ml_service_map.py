@@ -6,7 +6,6 @@ from qgis.PyQt.QtCore import Qt
 from ..sensehawk_apis.scm_apis import train
 import json
 
-from qgis.utils import iface
 
 class MLServiceMapWidget(QtWidgets.QWidget):
 
@@ -15,7 +14,7 @@ class MLServiceMapWidget(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'ml_service_map.ui'), self)
         self.project = project
         self.logger = self.project.tools_widget.logger
-        self.iface = iface
+        self.iface = self.project.project_tabs_widget.iface
         # Add items to the lists
         self.populate_combo_boxes()
         # TODO:

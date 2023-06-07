@@ -32,7 +32,6 @@ from qgis.PyQt.QtCore import Qt
 import os
 import qgis
 from PyQt5.QtGui import QKeySequence
-from qgis.utils import iface
 
 from .ml_service_map import MLServiceMapWidget
 
@@ -57,7 +56,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.project_details = self.project.project_details
         self.class_maps = self.project.class_maps
         self.class_groups = self.project.class_groups
-        self.iface = iface
+        self.iface = self.project.project_tabs_widget.iface
         self.active_layer = self.project.vlayer
         self.models_dict = {}
         # ML Service Map
@@ -75,7 +74,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
 
     def load_models(self):
         # Get list of available models
-        self.models_dict = get_models_list(self.load_window.project_uid, self.core_token)
+        self.models_dict = get_models_list(self.project_details["uid"], self.core_token)
         models_list = list(self.models_dict.keys())
         if models_list:
             list_items = models_list
@@ -113,7 +112,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.logger("Initiating detection request task...")
         detection_task = QgsTask.fromFunction("Detect", detectionTask,
                                               detection_task_input=[self.project_details, geojson,
-                                                                    model_details, self.load_window.user_email,
+                                                                    model_details, self.project.project_tabs_widget.load_window.home.user_email,
                                                                     self.core_token])
         detection_task.statusChanged.connect(lambda:callback(detection_task, self.logger))
         QgsApplication.taskManager().addTask(detection_task)
@@ -127,6 +126,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
         approve_task = QgsTask.fromFunction("Approve", approveTask,
                                             approve_task_input=[self.project_details, geojson,
-                                                                self.load_window.user_email, self.core_token])
+                                                                self.project.project_tabs_widget.load_window.home.user_email,
+                                                                self.core_token])
         approve_task.statusChanged.connect(lambda:callback(approve_task, self.logger))
         QgsApplication.taskManager().addTask(approve_task)

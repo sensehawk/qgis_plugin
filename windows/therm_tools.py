@@ -35,8 +35,6 @@ from ..windows.ImageTagging import ThermImageTaggingWindow
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
-from qgis.utils import iface
-
 
 import os
 import json
@@ -50,7 +48,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'therm_tools.ui'), self)
         self.project = project
         self.parent = self.project.project_tab
-        self.iface = iface
+        self.iface = self.project.project_tabs_widget.iface
         self.canvas = self.iface.mapCanvas()
         self.detectButton.clicked.connect(self.detect)
         self.StringNumberButton.clicked.connect(self.string_numbering)
