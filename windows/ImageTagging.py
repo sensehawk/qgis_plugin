@@ -57,7 +57,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.No_images.setValue(4)
         self.No_images.setMaximum(4)
         self.No_images.setMinimum(1)
-        self.dock_size = [360, 700]
+        self.dock_size = [360, 720]
 
     def tr(self, message):
         return QCoreApplication.translate('SenseHawk QC', message)

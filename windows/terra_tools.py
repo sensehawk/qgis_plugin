@@ -62,6 +62,11 @@ class TerraToolsWidget(QtWidgets.QWidget):
         # ML Service Map
         self.ml_service_map_widget = None
 
+    def uncheck_all_buttons(self):
+        for button in self.findChildren(QtWidgets.QPushButton):
+            if button.isCheckable():
+                button.setChecked(False)
+
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
@@ -76,6 +81,8 @@ class TerraToolsWidget(QtWidgets.QWidget):
         # Set dock size
         dw, dh = self.ml_service_map_widget.dock_size
         self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
+        self.uncheck_all_buttons()
+        self.requestModelButton.setChecked(True)
 
     def load_models(self):
         # Get list of available models

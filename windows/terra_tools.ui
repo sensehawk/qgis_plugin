@@ -43,6 +43,9 @@
    <property name="text">
     <string>Request Model</string>
    </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QComboBox" name="detectionModel">
    <property name="geometry">

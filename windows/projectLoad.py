@@ -79,8 +79,11 @@ class ProjectLoadWindow(QtWidgets.QWidget):
     def show_projects_loaded(self):
         self.dock_widget.setWidget(self.project_tabs_widget)
         # Get size from active tool widget (dummy widget if nothing is active)
-        dw, dh = self.project_tabs_widget.active_project.active_tool_widget.dock_size
-        self.dock_widget.setFixedSize(dw, dh)
+        try:
+            dw, dh = self.project_tabs_widget.active_project.active_tool_widget.dock_size
+            self.dock_widget.setFixedSize(dw, dh)
+        except AttributeError:
+            self.dock_widget.setFixedSize(350, 500)
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)

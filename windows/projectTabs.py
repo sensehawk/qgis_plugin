@@ -1,6 +1,6 @@
 from qgis.PyQt.QtCore import Qt
 import os
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
@@ -29,7 +29,7 @@ class Project:
         self.tools_widget = None
         # Dummy active tool widget
         self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
-        self.active_tool_widget.dock_size = [350, 500]
+        self.active_tool_widget.dock_size = [350, 520]
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
@@ -82,16 +82,20 @@ class Project:
         features_table.setFixedWidth(250)
         features_table.setFixedHeight(75)
 
+    def create_project_details_widget(self):
+        self.project_details_widget = QtWidgets.QWidget(self.project_tab)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'project_details.ui'), self.project_details_widget)
+        self.project_details_widget.project_uid.setText(f"UID: {self.project_details['uid']}")
+        self.project_details_widget.group.setText(f"Group: {self.project_details['group']['name']}")
+        self.project_details_widget.project_type.setText(
+            f"Project Type: {self.project_details['project_type'].capitalize()}")
+        self.project_details_widget.show()
+        self.project_tab_layout.addWidget(self.project_details_widget)
+
     def populate_project_tab(self):
         project_details = self.project_details
-        # Create project UID label
-        project_uid_label = QtWidgets.QLabel(self.project_tab)
-        project_uid_label.setText(f"UID: {project_details['uid']}")
-        self.project_tab_layout.addWidget(project_uid_label)
-        # Create project type label
-        project_type_label = QtWidgets.QLabel(self.project_tab)
-        project_type_label.setText(f"Project type: {project_details['project_type'].capitalize()}")
-        self.project_tab_layout.addWidget(project_type_label)
+        # Create the project details widget
+        self.create_project_details_widget()
         # Create features table
         self.create_features_table()
         # Add project tools

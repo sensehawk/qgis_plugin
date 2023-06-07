@@ -70,6 +70,8 @@ class ThermToolsWidget(QtWidgets.QWidget):
         # Set dock size
         dw, dh = self.numbering_widget.dock_size
         self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
+        self.uncheck_all_buttons()
+        self.StringNumberButton.setChecked(True)
 
     def ImageTagging(self):
         if not self.imagetagging_widget:
@@ -82,7 +84,13 @@ class ThermToolsWidget(QtWidgets.QWidget):
         # Set dock size
         dw, dh = self.imagetagging_widget.dock_size
         self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
+        self.uncheck_all_buttons()
+        self.imagetaggingButton.setChecked(True)
 
+    def uncheck_all_buttons(self):
+        for button in self.findChildren(QtWidgets.QPushButton):
+            if button.isCheckable():
+                button.setChecked(False)
     def detect(self):
         map_angle = self.canvas.rotation()
         self.logger("Map canvas angle: {}".format(map_angle))
