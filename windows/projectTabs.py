@@ -1,7 +1,7 @@
 from qgis.PyQt.QtCore import Qt
 import os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication
+from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
@@ -49,6 +49,14 @@ class Project:
                 for i in self.class_maps}
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
 
+    def import_geojson(self, geojson_path):
+        print(geojson_path)
+        if geojson_path:
+            import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
+            imported_features = [feature for feature in import_layer.getFeatures()]
+            self.vlayer.dataProvider().addFeatures(imported_features)
+            self.vlayer.triggerRepaint()
+
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
             # get terra tools
@@ -94,6 +102,7 @@ class Project:
         self.project_tab_layout.addWidget(self.project_details_widget)
         self.feature_shortcut_settings_widget = ShortcutSettings(self)
         self.project_details_widget.toolButton.clicked.connect(self.feature_shortcut_settings_widget.show)
+        self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(self.project_details_widget.importFileWidget.filePath()))
 
     def populate_project_tab(self):
         project_details = self.project_details
