@@ -11,6 +11,7 @@ from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
 import qgis
 import json
+from .keyboard_settings import ShortcutSettings
 
 
 class Project:
@@ -91,6 +92,8 @@ class Project:
             f"Project Type: {self.project_details['project_type'].capitalize()}")
         self.project_details_widget.show()
         self.project_tab_layout.addWidget(self.project_details_widget)
+        self.feature_shortcut_settings_widget = ShortcutSettings(self)
+        self.project_details_widget.toolButton.clicked.connect(self.feature_shortcut_settings_widget.show)
 
     def populate_project_tab(self):
         project_details = self.project_details
