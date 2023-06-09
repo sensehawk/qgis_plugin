@@ -1,4 +1,6 @@
 from qgis.PyQt import QtWidgets
+from PyQt5 import QtGui
+
 
 class ShortcutSettings(QtWidgets.QWidget):
     def __init__(self, project):
@@ -20,7 +22,9 @@ class ShortcutSettings(QtWidgets.QWidget):
 
         i = 0
         for k, v in self.project.feature_shortcuts.items():
-            self.shortcuts_table.setItem(i, 0, QtWidgets.QTableWidgetItem(v))
+            feature_type_item = QtWidgets.QTableWidgetItem(v)
+            feature_type_item.setBackground(QtGui.QColor(self.project.color_code[v]))
+            self.shortcuts_table.setItem(i, 0, feature_type_item)
             self.shortcuts_table.setItem(i, 1, QtWidgets.QTableWidgetItem(str(k)))
             i += 1
         self.layout.addWidget(self.shortcuts_table)
