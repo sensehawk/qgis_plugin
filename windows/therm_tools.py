@@ -32,6 +32,7 @@ from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.sid_apis import detect_solar_issues
 from ..windows.autoNumbering import ThermNumberingWidget
 from ..windows.ImageTagging import ThermImageTaggingWidget
+from ..windows.thermliteQc import ThermliteQcWindow
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
@@ -53,11 +54,13 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.detectButton.clicked.connect(self.detect)
         self.StringNumberButton.clicked.connect(self.string_numbering)
         self.imagetaggingButton.clicked.connect(self.ImageTagging)
+        self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
         self.class_maps = self.project.class_maps
         self.core_token = self.project.project_tabs_widget.load_window.core_token
         self.project_details = self.project.project_details
         self.numbering_widget = None
         self.imagetagging_widget = None
+        self.thermlite_tagging_widget = None
 
     def string_numbering(self):
         if not self.numbering_widget:
@@ -80,6 +83,16 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.imagetagging_widget.show()
         self.uncheck_all_buttons()
         self.imagetaggingButton.setChecked(True)
+
+    def ThermliteTagging(self):
+        if not self.thermlite_tagging_widget:
+            self.thermlite_tagging_widget = ThermliteQcWindow(self.project)
+        if self.project.active_tool_widget != self.thermlite_tagging_widget:
+            self.project.active_tool_widget.hide()
+            self.project.active_tool_widget = self.thermlite_tagging_widget
+        self.thermlite_tagging_widget.show()
+        self.uncheck_all_buttons()
+        self.thermlite_tagging_widget.setChecked(True)
 
     def uncheck_all_buttons(self):
         for button in self.findChildren(QtWidgets.QPushButton):
