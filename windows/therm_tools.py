@@ -67,9 +67,6 @@ class ThermToolsWidget(QtWidgets.QWidget):
             self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.numbering_widget)
             self.project.active_tool_widget = self.numbering_widget
         self.numbering_widget.show()
-        # Set dock size
-        dw, dh = self.numbering_widget.dock_size
-        self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
         self.uncheck_all_buttons()
         self.StringNumberButton.setChecked(True)
 
@@ -81,9 +78,6 @@ class ThermToolsWidget(QtWidgets.QWidget):
             self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.imagetagging_widget)
             self.project.active_tool_widget = self.imagetagging_widget
         self.imagetagging_widget.show()
-        # Set dock size
-        dw, dh = self.imagetagging_widget.dock_size
-        self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
         self.uncheck_all_buttons()
         self.imagetaggingButton.setChecked(True)
 

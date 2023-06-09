@@ -48,14 +48,11 @@ import time
 import requests
 
 
-HOME_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'home.ui'))
-
-
-class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
-    def __init__(self, user_email, core_token, org_details ,iface):
+class HomeWindow(QtWidgets.QWidget):
+    def __init__(self, dock_widget, user_email, core_token, org_details ,iface):
         """Constructor."""
         super(HomeWindow, self).__init__()
-        self.setupUi(self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'home.ui'), self)
         self.core_token = core_token
         self.user_email = user_email
         self.iface = iface
@@ -66,8 +63,9 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         self.org = combobox_modifier(org_combobox, org_list)
         self.org.currentIndexChanged.connect(self.org_tree)
         self.projectbutton.clicked.connect(self.show_project_load_window)
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
+        self.dock_widget = dock_widget
+        self.dock_widget.setWidget(self)
 
     def asset_info(self, load_task_status ,load_asset_task):
         result = load_asset_task.returned_values
@@ -99,8 +97,8 @@ class HomeWindow(QtWidgets.QDockWidget, HOME_UI):
         print(self.org_uid, self.asset_uid)
 
     def show_project_load_window(self):
-            self.project_load_window = ProjectLoadWindow(self, self.iface)
-            self.project_load_window.show()
-            self.hide()
+        self.project_load_window = ProjectLoadWindow(self, self.iface)
+        self.project_load_window.show()
+        self.hide()
 
     

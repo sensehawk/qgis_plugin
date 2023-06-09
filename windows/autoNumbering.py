@@ -42,7 +42,6 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
         self.approve.clicked.connect(self.string_numbering)
-        self.dock_size = [360, 720]
 
     def stringNumber_configuration(self):
         canvas  = self.canvas

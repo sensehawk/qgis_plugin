@@ -1,106 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>LoadSaveWidget</class>
- <widget class="QDockWidget" name="LoadSaveWidget">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>427</width>
-    <height>198</height>
+    <width>390</width>
+    <height>155</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
-    <width>224</width>
+    <width>390</width>
     <height>155</height>
    </size>
   </property>
   <property name="windowTitle">
-   <string/>
+   <string>Form</string>
   </property>
-  <widget class="QWidget" name="dockWidgetContents">
-   <widget class="QPushButton" name="projectbutton">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>150</y>
-      <width>31</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="minimumSize">
-     <size>
-      <width>0</width>
-      <height>0</height>
-     </size>
-    </property>
-    <property name="text">
-     <string>&gt;</string>
-    </property>
-   </widget>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>30</y>
-      <width>381</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>30</y>
+     <width>331</width>
+     <height>81</height>
+    </rect>
+   </property>
+   <layout class="QFormLayout" name="formLayout">
+    <item row="0" column="1">
+     <widget class="QComboBox" name="organization">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <item>
        <property name="text">
-        <string>   Org : </string>
+        <string>Select Organization</string>
        </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="organization">
-       <property name="editable">
-        <bool>false</bool>
-       </property>
-       <item>
-        <property name="text">
-         <string>Select Organization</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_3">
+      </item>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>Asset :</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QComboBox" name="asset">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <item>
        <property name="text">
-        <string>Asset :</string>
+        <string>Select Asset</string>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QComboBox" name="asset">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <item>
-        <property name="text">
-         <string>Select Asset</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-    </layout>
-   </widget>
+      </item>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>   Org : </string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QPushButton" name="projectbutton">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>110</y>
+     <width>31</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>&gt;</string>
+   </property>
   </widget>
  </widget>
  <resources/>

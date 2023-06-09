@@ -22,12 +22,12 @@ class ProjectForm:
         self.scroll_widget = QtWidgets.QScrollArea()
         self.scroll_widget.setWidget(project_groupbox)
         self.scroll_widget.setWidgetResizable(True)
-        self.scroll_widget.setFixedHeight(200)
+        self.scroll_widget.setFixedHeight(300)
         # Replace the scroll widget if it exists
         if project_selection_window.projects_form:
             project_selection_layout.replaceWidget(project_selection_window.projects_form.scroll_widget, self.scroll_widget)
         else:
-            project_selection_layout.addWidget(self.scroll_widget)
+            project_selection_layout.addWidget(self.scroll_widget, 0, Qt.AlignTop)
 
 
 class ProjectLoadWindow(QtWidgets.QWidget):
@@ -59,31 +59,29 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home_button.clicked.connect(self.back_to_home)
 
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
+        self.project_selection_layout.addWidget(self.home_button, 0, Qt.AlignTop)
 
-        self.project_selection_layout.addWidget(self.home_button)
-        self.project_selection_layout.addWidget(self.group)
-
-        self.project_selection_layout.setGeometry(QRect(500, 400, 400, 200))
+        # Simple line widget separator
+        line = QtGui.QFrame()
+        line.setFrameShape(QtGui.QFrame.HLine)
+        self.project_selection_layout.addWidget(line)
+        self.project_selection_layout.addWidget(self.group, 0)
         self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
-
+        self.project_selection_layout.addWidget(line)
         projects_loaded_button = QPushButton(self)
         projects_loaded_button.setText('Projects loaded')
         projects_loaded_button.clicked.connect(self.show_projects_loaded)
-        self.project_selection_layout.addWidget(projects_loaded_button)
+        self.project_selection_layout.addStretch()
+        self.project_selection_layout.addWidget(projects_loaded_button, 0, Qt.AlignBottom)
 
-        self.dock_widget = QtWidgets.QDockWidget()
+        self.dock_widget = homeobj.dock_widget
+        self.dock_widget.setFixedSize(360, 500)
         self.dock_widget.setWidget(self)
-        self.dock_widget.setFixedSize(300, 400)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
 
     def show_projects_loaded(self):
         self.dock_widget.setWidget(self.project_tabs_widget)
-        # Get size from active tool widget (dummy widget if nothing is active)
-        try:
-            dw, dh = self.project_tabs_widget.active_project.active_tool_widget.dock_size
-            self.dock_widget.setFixedSize(dw, dh)
-        except AttributeError:
-            self.dock_widget.setFixedSize(350, 500)
+        self.dock_widget.setFixedSize(360, 720)
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -150,7 +148,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
     def back_to_home(self):
-        self.home.show()
-        self.hide()
+        self.dock_widget.setWidget(self.home)
+        self.dock_widget.setFixedSize(390, 155)
 
 

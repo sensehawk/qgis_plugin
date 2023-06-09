@@ -78,9 +78,6 @@ class TerraToolsWidget(QtWidgets.QWidget):
             self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.ml_service_map_widget)
             self.project.active_tool_widget = self.ml_service_map_widget
         self.ml_service_map_widget.show()
-        # Set dock size
-        dw, dh = self.ml_service_map_widget.dock_size
-        self.project.project_tabs_widget.load_window.dock_widget.setFixedSize(dw, dh)
         self.uncheck_all_buttons()
         self.requestModelButton.setChecked(True)
 
