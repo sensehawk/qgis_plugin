@@ -63,7 +63,7 @@
     </sizepolicy>
    </property>
    <property name="text">
-    <string>Tagging</string>
+    <string>AutoTag</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -85,7 +85,7 @@
     </sizepolicy>
    </property>
    <property name="text">
-    <string>Detect</string>
+    <string>AutoDetect</string>
    </property>
   </widget>
   <widget class="QPushButton" name="clipButton">
@@ -112,12 +112,15 @@
     <rect>
      <x>0</x>
      <y>90</y>
-     <width>111</width>
+     <width>241</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Thermlite QC</string>
+    <string>Manual Marking</string>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>

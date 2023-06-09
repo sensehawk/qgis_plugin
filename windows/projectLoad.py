@@ -75,13 +75,12 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_selection_layout.addWidget(projects_loaded_button, 0, Qt.AlignBottom)
 
         self.dock_widget = homeobj.dock_widget
-        self.dock_widget.setFixedSize(360, 500)
+        self.dock_widget.setFixedSize(310, 830)
         self.dock_widget.setWidget(self)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
 
     def show_projects_loaded(self):
         self.dock_widget.setWidget(self.project_tabs_widget)
-        self.dock_widget.setFixedSize(360, 720)
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -149,6 +148,3 @@ class ProjectLoadWindow(QtWidgets.QWidget):
 
     def back_to_home(self):
         self.dock_widget.setWidget(self.home)
-        self.dock_widget.setFixedSize(390, 155)
-
-

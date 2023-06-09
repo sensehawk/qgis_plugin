@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>250</width>
-    <height>113</height>
+    <width>289</width>
+    <height>150</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,8 +18,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>250</width>
-    <height>113</height>
+    <width>289</width>
+    <height>150</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -29,9 +29,9 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>6</y>
+     <y>21</y>
      <width>161</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -42,9 +42,9 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>30</y>
+     <y>47</y>
      <width>201</width>
-     <height>17</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -55,7 +55,7 @@
    <property name="geometry">
     <rect>
      <x>210</x>
-     <y>10</y>
+     <y>20</y>
      <width>26</width>
      <height>24</height>
     </rect>
@@ -68,7 +68,7 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>50</y>
+     <y>70</y>
      <width>251</width>
      <height>20</height>
     </rect>
@@ -81,7 +81,7 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>80</y>
+     <y>100</y>
      <width>161</width>
      <height>27</height>
     </rect>
@@ -91,13 +91,39 @@
    <property name="geometry">
     <rect>
      <x>170</x>
-     <y>80</y>
+     <y>100</y>
      <width>71</width>
      <height>25</height>
     </rect>
    </property>
    <property name="text">
     <string>Import</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>132</y>
+     <width>241</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>241</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
    </property>
   </widget>
  </widget>

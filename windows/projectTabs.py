@@ -30,7 +30,6 @@ class Project:
         self.tools_widget = None
         # Dummy active tool widget
         self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
-        self.active_tool_widget.dock_size = [360, 720]
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()

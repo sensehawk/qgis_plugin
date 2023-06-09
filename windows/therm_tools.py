@@ -92,7 +92,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
             self.project.active_tool_widget = self.thermlite_tagging_widget
         self.thermlite_tagging_widget.show()
         self.uncheck_all_buttons()
-        self.thermlite_tagging_widget.setChecked(True)
+        self.thermliteQcButton.setChecked(True)
 
     def uncheck_all_buttons(self):
         for button in self.findChildren(QtWidgets.QPushButton):

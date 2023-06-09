@@ -25,7 +25,7 @@
 from ..sensehawk_apis.core_apis import core_login
 from ..windows.home import HomeWindow
 
-from qgis.PyQt import QtWidgets, uic
+from qgis.PyQt import QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
 from qgis.PyQt.QtCore import Qt
 
@@ -49,8 +49,14 @@ class LoginWindow(QtWidgets.QWidget):
         self.dock_widget = QtWidgets.QDockWidget()
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
+        logo_label = QtWidgets.QLabel(self)
+        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.png'))
+        logo = logo.scaledToWidth(150)
+        logo_label.setPixmap(logo)
+        logo_label.show()
+        self.layout.addWidget(logo_label)
         self.dock_widget.setWidget(self)
-        self.dock_widget.setFixedSize(390, 155)
+        self.dock_widget.setFixedSize(310, 830)
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)

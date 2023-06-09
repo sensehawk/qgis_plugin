@@ -36,7 +36,7 @@ import json
 import tempfile
 import json
 
-from qgis.PyQt import QtGui, QtWidgets, uic
+from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer, QgsRectangle, QgsFeature, \
     QgsGeometry, QgsField, QgsCategorizedSymbolRenderer, QgsApplication, QgsTask
 from qgis.PyQt.QtCore import Qt, QVariant
@@ -64,6 +64,12 @@ class HomeWindow(QtWidgets.QWidget):
         self.org.currentIndexChanged.connect(self.org_tree)
         self.projectbutton.clicked.connect(self.show_project_load_window)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
+        logo_label = QtWidgets.QLabel(self)
+        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.png'))
+        logo = logo.scaledToWidth(150)
+        logo_label.setPixmap(logo)
+        logo_label.show()
+        self.layout.addWidget(logo_label)
         self.dock_widget = dock_widget
         self.dock_widget.setWidget(self)
 
