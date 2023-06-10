@@ -28,7 +28,7 @@ import uuid
 from qgis.PyQt.QtCore import Qt , QPoint , QRectF 
 from qgis.PyQt import QtWidgets, uic
 import qgis
-from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
+from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat
 from qgis.core import QgsField
 from PyQt5.QtCore import QVariant
 
@@ -42,6 +42,7 @@ from exiftool import ExifTool
 import numpy as np
 import subprocess
 from ..utils import sort_images
+import json
 
 
 class PhotoViewer(QtWidgets.QGraphicsView):
@@ -131,6 +132,7 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         super(ThermliteQcWindow, self).__init__()
         self.setupUi(self)
         self.project = project
+        self.geojson_path = project.geojson_path
         self.iface = iface
         self.active_layer = self.project.vlayer
         self.canvas = self.iface.mapCanvas()
@@ -163,6 +165,7 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.et = ExifTool()
         self.et.start()
         self.DJI_SDK_PATH = os.path.join(os.path.dirname(__file__), "dji_thermal_sdk")
+        self.geojson = json.load(open(self.geojson_path))
 
     def toggle_temperature_fields(self, switch):
         self.temp_patch_x.setEnabled(switch)
@@ -216,13 +219,23 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.delta_temp.setText("{:.2f}".format(max_temp-min_temp))
 
     def folderpath(self):
-        required_fields = {'timestamp':QVariant.String,'temperature_difference':QVariant.Double,  'No_images':QVariant.Double,
+        required_fields = {'timestamp':QVariant.String,'temperature_difference':QVariant.Double,  'num_images_tagged':QVariant.Double,
                             'temperature_min':QVariant.Double,'temperature_max':QVariant.Double, 'temp_uid':QVariant.Double}
         
         self.fields_validator(required_fields, self.active_layer)
 
         self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
         self.sorted_images, self.sorted_timestamps = sort_images(self.images_dir)
+        # Enable num_images_tagged label
+        self.num_images_label = QgsPalLayerSettings()
+        self.num_images_label.fieldName = 'num_images_tagged'
+        self.num_images_label.enabled = True
+        self.num_images_label.setFormat(QgsTextFormat())
+        self.num_images_label.placement = QgsPalLayerSettings.Line
+        labeler = QgsVectorLayerSimpleLabeling(self.num_images_label)
+        self.active_layer.setLabelsEnabled(True)
+        self.active_layer.setLabeling(labeler)
+        self.active_layer.triggerRepaint()
 
     def pixInfo(self, switch):
         self.viewer.toggleDragMode(switch)
@@ -292,10 +305,14 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.active_layer.commitChanges()
         self.active_layer.startEditing()
 
-        *_, last = self.active_layer.getFeatures()
-        self.active_layer.select(last.id())
+        # Check if there are any selected features
+        if self.active_layer.selectedFeatures():
+            sfeature = self.active_layer.selectedFeatures()[-1]
+        else:
+            *_, sfeature = self.active_layer.getFeatures()
 
-        sfeature = self.active_layer.selectedFeatures()[-1]
+        self.active_layer.removeSelection()
+
         sx = sfeature.geometry().centroid().asPoint().x()
         sy = sfeature.geometry().centroid().asPoint().y()
         
@@ -305,14 +322,14 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
             print('adding in new issue')
             self.temp_issueUid += 1
             sfeature['temp_uid'] = self.temp_issueUid
-            sfeature['timestamp'] = str(self.sorted_images[self.image_index][1][1])
-            self.active_layer.updateFeature(sfeature)
+            sfeature['timestamp'] = str(self.sorted_timestamps[self.image_index])
             self.image_tagged_info[self.temp_issueUid] = [{self.sorted_images[self.image_index][0]:self.markerlocatoin}]
             self.issue_list.append([sx, sy])
-            print(self.image_tagged_info)
         else:
             print('adding in existing isuues')
             self.image_tagged_info[self.temp_issueUid].append({self.sorted_images[self.image_index][0]:self.markerlocatoin})
-            self.active_layer.updateFeature(sfeature)
-            print(self.image_tagged_info)
+        print(self.image_tagged_info)
+        sfeature['num_images_tagged'] = len(self.image_tagged_info[self.temp_issueUid])
+        self.active_layer.updateFeature(sfeature)
+
         
