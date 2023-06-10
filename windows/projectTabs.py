@@ -188,7 +188,7 @@ class Project:
                 last_feature.setAttribute("class_id", int(class_id))
             self.vlayer.updateFeature(last_feature)
         self.vlayer.triggerRepaint()
-        
+
 
 class ProjectTabsWidget(QtWidgets.QWidget):
     def __init__(self, load_window):
@@ -279,7 +279,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Set active layer and zoom to layer
         iface.setActiveLayer(project.vlayer)
         iface.actionZoomToLayer().trigger()
-        project.project_tabs_widget = self
+        project.project_tabs_widget = self.project_tabs_widget
+        project.core_token = self.load_window.core_token
+        project.iface = self.iface
         project.logger = self.logger
         # Show all project details in the project tab
         project.populate_project_tab()

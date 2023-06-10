@@ -127,11 +127,13 @@ THERMLITE_QC_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'the
 
 class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
 
-    def __init__(self, project):
+    def __init__(self, therm_tools, project):
         """Constructor."""
         super(ThermliteQcWindow, self).__init__()
         self.setupUi(self)
+        self.therm_tools = therm_tools
         self.project = project
+        self.project.manual_tagging_widget = self
         self.geojson_path = project.geojson_path
         self.iface = iface
         self.active_layer = self.project.vlayer
@@ -166,6 +168,11 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.et.start()
         self.DJI_SDK_PATH = os.path.join(os.path.dirname(__file__), "dji_thermal_sdk")
         self.geojson = json.load(open(self.geojson_path))
+        self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
+
+    def hide_widget(self):
+        self.hide()
+        self.therm_tools.uncheck_all_buttons()
 
     def toggle_temperature_fields(self, switch):
         self.temp_patch_x.setEnabled(switch)

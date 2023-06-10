@@ -49,14 +49,14 @@ class ThermToolsWidget(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'therm_tools.ui'), self)
         self.project = project
         self.parent = self.project.project_tab
-        self.iface = self.project.project_tabs_widget.iface
+        self.iface = self.project.iface
         self.canvas = self.iface.mapCanvas()
         self.detectButton.clicked.connect(self.detect)
         self.StringNumberButton.clicked.connect(self.string_numbering)
         self.imagetaggingButton.clicked.connect(self.ImageTagging)
         self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
         self.class_maps = self.project.class_maps
-        self.core_token = self.project.project_tabs_widget.load_window.core_token
+        self.core_token = self.project.core_token
         self.project_details = self.project.project_details
         self.numbering_widget = None
         self.imagetagging_widget = None
@@ -68,10 +68,12 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if self.project.active_tool_widget != self.numbering_widget:
             self.project.active_tool_widget.hide()
             self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.numbering_widget)
-            self.project.active_tool_widget = self.numbering_widget
+        self.project.active_tool_widget = self.numbering_widget
         self.numbering_widget.show()
         self.uncheck_all_buttons()
         self.StringNumberButton.setChecked(True)
+        if self.thermlite_tagging_widget:
+            self.thermlite_tagging_widget.hide()
 
     def ImageTagging(self):
         if not self.imagetagging_widget:
@@ -79,17 +81,17 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if self.project.active_tool_widget != self.imagetagging_widget:
             self.project.active_tool_widget.hide()
             self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.imagetagging_widget)
-            self.project.active_tool_widget = self.imagetagging_widget
+        self.project.active_tool_widget = self.imagetagging_widget
         self.imagetagging_widget.show()
         self.uncheck_all_buttons()
         self.imagetaggingButton.setChecked(True)
+        if self.thermlite_tagging_widget:
+            self.thermlite_tagging_widget.hide()
 
     def ThermliteTagging(self):
         if not self.thermlite_tagging_widget:
-            self.thermlite_tagging_widget = ThermliteQcWindow(self.project)
-        if self.project.active_tool_widget != self.thermlite_tagging_widget:
-            self.project.active_tool_widget.hide()
-            self.project.active_tool_widget = self.thermlite_tagging_widget
+            self.thermlite_tagging_widget = ThermliteQcWindow(self, self.project)
+        self.project.active_tool_widget.hide()            
         self.thermlite_tagging_widget.show()
         self.uncheck_all_buttons()
         self.thermliteQcButton.setChecked(True)
