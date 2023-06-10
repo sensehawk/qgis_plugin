@@ -332,4 +332,4 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         sfeature['num_images_tagged'] = len(self.image_tagged_info[self.temp_issueUid])
         self.active_layer.updateFeature(sfeature)
 
-        
+    

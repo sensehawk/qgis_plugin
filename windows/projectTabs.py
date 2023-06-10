@@ -188,7 +188,7 @@ class Project:
                 last_feature.setAttribute("class_id", int(class_id))
             self.vlayer.updateFeature(last_feature)
         self.vlayer.triggerRepaint()
-
+        
 
 class ProjectTabsWidget(QtWidgets.QWidget):
     def __init__(self, load_window):

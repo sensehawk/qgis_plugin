@@ -134,9 +134,9 @@
    <widget class="QPushButton" name="tag_button">
     <property name="geometry">
      <rect>
-      <x>50</x>
+      <x>40</x>
       <y>740</y>
-      <width>541</width>
+      <width>151</width>
       <height>31</height>
      </rect>
     </property>
@@ -354,6 +354,19 @@
     </property>
     <property name="readOnly">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="save_tagged_data">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>740</y>
+      <width>311</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Save tagged data</string>
     </property>
    </widget>
   </widget>
