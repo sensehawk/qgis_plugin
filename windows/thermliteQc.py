@@ -38,13 +38,17 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from datetime import datetime
 from PIL import Image
 from qgis.utils import iface
+from exiftool import ExifTool
+import numpy as np
+import subprocess
+from ..utils import sort_images
 
 
 class PhotoViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
 
-    def __init__(self, parent):
-        super(PhotoViewer, self).__init__(parent)
+    def __init__(self, thermlite_qc_window):
+        super(PhotoViewer, self).__init__()
         self._zoom = 0
         self._empty = True
         self._scene = QtWidgets.QGraphicsScene(self)
@@ -57,6 +61,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(30, 30, 30)))
         self.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.thermlite_qc_window = thermlite_qc_window
 
 
     def hasPhoto(self): 
@@ -78,13 +83,16 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
     def setPhoto(self, pixmap=None):
         self._zoom = 0
+        if self.thermlite_qc_window.pan_toggle.isChecked():
+            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+        else:
+            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+
         if pixmap and not pixmap.isNull():
             self._empty = False
-            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
             self._photo.setPixmap(pixmap)
         else:
             self._empty = True
-            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
             self._photo.setPixmap(QtGui.QPixmap())
         self.fitInView()
 
@@ -103,10 +111,10 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._zoom = 0
 
-    def toggleDragMode(self):
-        if self.dragMode() == QtWidgets.QGraphicsView.NoDrag:
+    def toggleDragMode(self, switch):
+        if switch:
             self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
-        elif not self._photo.pixmap().isNull():
+        else:
             self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
 
     def mousePressEvent(self, event):
@@ -128,79 +136,84 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.canvas = self.iface.mapCanvas()
         self.viewer = PhotoViewer(self)
         self.viewer.photoClicked.connect(self.photoClicked)
-        self.viewer.setGeometry(20,60,612,540)
+        self.image_layout.addWidget(self.viewer)
         self.image_tagged_info = {}
         self.issue_list = [[]]
         self.temp_issueUid = 100
         self.markerlocatoin = [0,0]
-
         #select folder path
-        self.folder_path = QPushButton(self)
-        self.folder_path.setText('Select Image Folder')
-        self.folder_path.setGeometry(QtCore.QRect(20,20,612,27))
         self.folder_path.clicked.connect(self.folderpath)
-        
-        #Current image and marker location info
-        self.image_txt = QLabel(self)
-        self.image_txt.setText('Image Name:')
-        self.image_txt.setGeometry(QtCore.QRect(20, 610, 100, 27))
-        self.current_loaded_img = QLineEdit(self)
-        self.current_loaded_img.setGeometry(QtCore.QRect(140, 610, 300, 27))
-        self.marker_txt = QLabel(self)
-        self.marker_txt.setText('Marker:')
-        self.marker_txt.setGeometry(QtCore.QRect(460, 610, 80, 27))
-        self.marker_info = QLineEdit(self)
-        self.marker_info.setGeometry(QtCore.QRect(530, 610, 100, 27))
-
         # # Navigation buttons
-        self.nxt_img = QPushButton(self)
-        self.nxt_img.setText('>')
         self.nxt_img.setShortcut('d')
-        self.nxt_img.setGeometry(QtCore.QRect(410, 650, 220, 27))
         self.nxt_img.clicked.connect(self.load_nxtimg)
-        self.previous_img = QPushButton(self)
-        self.previous_img.setText('<')
         self.previous_img.setShortcut('a')
-        self.previous_img.setGeometry(QtCore.QRect(20,650, 220, 27))
         self.previous_img.clicked.connect(self.load_previous)
-
         # Temperature widgets
-        self.temp_txt = QLabel(self)
-        self.temp_txt.setText('Temperature:')
-        self.temp_txt.setGeometry(QtCore.QRect(20, 710, 100, 27))
-        self.delta_temp = QLineEdit(self)
-        self.delta_temp.setReadOnly(True)
-        self.delta_temp.setGeometry(QtCore.QRect(140, 710, 100, 27))
-        self.temp_patch_txt = QLabel(self)
-        self.temp_patch_txt.setText('TempPatchSize:')
-        self.temp_patch_txt.setGeometry(QtCore.QRect(20, 750, 110, 27))
-        self.patch_x = QLabel('x:', self)
-        self.patch_x.setGeometry(QtCore.QRect(40, 790, 30, 30))
-        self.temp_patch_x = QLineEdit(self)
         self.temp_patch_x.setText('30')
-        self.temp_patch_x.setGeometry(QtCore.QRect(60, 790, 50, 27))
-        self.patch_y = QLabel('y:', self)
-        self.patch_y.setGeometry(QtCore.QRect(120, 790, 30, 30))
-        self.temp_patch_y = QLineEdit(self)
         self.temp_patch_y.setText('30')
-        self.temp_patch_y.setGeometry(QtCore.QRect(140, 790, 50, 27))
-
+        self.max_percentile.setText('95')
+        self.min_percentile.setText('10')
+        self.temperature_toggle.stateChanged.connect(lambda x: self.toggle_temperature_fields(x))
         #marker and tag button
-        self.drag_button = QPushButton(self)
-        self.drag_button.setText('Pan button')
-        self.drag_button.clicked.connect(self.pixInfo)
-        self.drag_button.setShortcut('space')
-        self.drag_button.setGeometry(QtCore.QRect(410, 710, 220, 27))
-        self.tag_button = QPushButton(self)
-        self.tag_button.setText('Tag Image')
-        self.tag_button.setGeometry(QtCore.QRect(410, 750, 220, 27))
+        self.pan_toggle.stateChanged.connect(lambda x: self.pixInfo(x))
         self.tag_button.clicked.connect(self.tag_image)
         self.image_index = 0
         self.iface.addDockWidget(Qt.RightDockWidgetArea, self)
+        self.setFixedSize(628, 798)
+        self.et = ExifTool()
+        self.et.start()
+        self.DJI_SDK_PATH = os.path.join(os.path.dirname(__file__), "dji_thermal_sdk")
 
-    def get_timestamp(self, image_path):
-        ts = Image.open(image_path)._getexif()[36867]
-        return ts
+    def toggle_temperature_fields(self, switch):
+        self.temp_patch_x.setEnabled(switch)
+        self.temp_patch_y.setEnabled(switch)
+        self.max_percentile.setEnabled(switch)
+        self.min_percentile.setEnabled(switch)
+        self.delta_temp.setEnabled(switch)
+
+    def get_temperature_map(self, image_path):
+        metadata = self.et.get_metadata(image_path)
+        camera = metadata["EXIF:Model"]
+        if "MAVIC2-ENTERPRISE-ADVANCED" in camera or "H20T" in camera or "M3T" in camera:
+            env = os.environ.copy()
+            env['LD_LIBRARY_PATH'] = self.DJI_SDK_PATH
+            subprocess.call(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp')} -s '{image_path}' -a measure -o temp.raw",
+                            shell=True, env=env)
+            degree_map = np.empty((512, 640), np.int16)
+            degree_map.data = open("temp.raw", "rb").read()
+            degree_map = degree_map / 10
+        else:
+            os.system('exiftool -RawThermalImage -b "{}" > raw.dat'.format(image_path))
+            img = cv2.imread("raw.dat", cv2.IMREAD_UNCHANGED)
+            os.remove('raw.dat')
+
+            r1 = metadata['APP1:PlanckR1']
+            r2 = metadata['APP1:PlanckR2']
+            o = metadata['APP1:PlanckO']
+            b = metadata['APP1:PlanckB']
+            f = metadata['APP1:PlanckF']
+
+            emissivity = metadata['APP1:Emissivity']
+            if not emissivity:
+                emissivity = 0.86
+            refl_temp = metadata['APP1:ReflectedApparentTemperature']
+            raw_refl = r1 / (r2 * (np.exp(b / (refl_temp + 273.15)) - f)) - o
+            raw_obj = (img - (1 - emissivity) * raw_refl) / emissivity
+            degree_map = b / np.log(r1 / (r2 * (raw_obj + o)) + f) - 273.15
+        return degree_map
+
+    def extract_temperature(self, pos, image_w=640, image_h=512):
+        x, y = int(pos.x()), int(pos.y())
+        temp_patch_x = int(self.temp_patch_x.text())
+        temp_patch_y = int(self.temp_patch_y.text())
+        min_x = max(0, int(x-temp_patch_x/2))
+        max_x = min(image_w, int(x+temp_patch_x/2))
+        min_y = max(0, int(y-temp_patch_y/2))
+        max_y = min(image_h, int(y+temp_patch_y/2))
+        temp_patch = self.temperature_map[min_y:max_y, min_x:max_x]
+        max_temp = np.percentile(temp_patch, int(self.max_percentile.text()))
+        min_temp = np.percentile(temp_patch, int(self.min_percentile.text()))
+        self.delta_temp.setText("{:.2f}".format(max_temp-min_temp))
 
     def folderpath(self):
         required_fields = {'timestamp':QVariant.String,'temperature_difference':QVariant.Double,  'No_images':QVariant.Double,
@@ -208,42 +221,35 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         
         self.fields_validator(required_fields, self.active_layer)
 
-        self.filepath = QtWidgets.QFileDialog.getExistingDirectory(self, 'Hey! Select a File')
-        self.image_list = os.listdir(self.filepath)
-        all_timestamps = []
-        for image in self.image_list:
-            if image.endswith('.jpg') or image.endswith('.JPG'):
-                ts = self.get_timestamp(os.path.join(self.filepath, image))
-                all_timestamps.append([image, [datetime.strptime(ts, '%Y:%m:%d %H:%M:%S'), ts]]) 
-            else:
-                continue
-        self.sorted_images = sorted(all_timestamps, key=lambda x: x[1]) 
+        self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
+        self.sorted_images, self.sorted_timestamps = sort_images(self.images_dir)
 
-    def pixInfo(self):
-        self.viewer.toggleDragMode()
+    def pixInfo(self, switch):
+        self.viewer.toggleDragMode(switch)
+
+    def load_image(self, image_index):
+        self.timestamp.setText(str(self.sorted_timestamps[image_index]))
+        self.image_path = self.sorted_images[self.image_index]
+        self.current_loaded_img.setText(self.sorted_images[self.image_index])
+        self.image = cv2.imread(self.image_path)
+        self.height, self.width, self.channel = self.image.shape
+        self.bytesPerLine = 3 * self.width
+        qImg = QImage(self.image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        self.current_image = QtGui.QPixmap(qImg)
+        self.viewer.setPhoto(self.current_image)
+        # Load temperature map if temperature is enabled
+        if self.temperature_toggle.isChecked():
+            self.temperature_map = self.get_temperature_map(self.image_path)
+        else:
+            self.temperature_map = None
 
     def load_nxtimg(self):
         self.image_index += 1
-        self.image_path = os.path.join(self.filepath, self.sorted_images[self.image_index][0])
-        self.current_loaded_img.setText(self.sorted_images[self.image_index][0]) 
-        self.image = cv2.imread(self.image_path)
-        self.height, self.width, self.channel = self.image.shape
-        self.bytesPerLine = 3 * self.width
-        qImg = QImage(self.image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.current_image = QtGui.QPixmap(qImg)
-        self.viewer.setPhoto(self.current_image)
-        
+        self.load_image(self.image_index)
 
     def load_previous(self):
         self.image_index -=1
-        self.image_path = os.path.join(self.filepath, self.sorted_images[self.image_index][0])
-        self.current_loaded_img.setText(self.sorted_images[self.image_index][0]) 
-        self.image = cv2.imread(self.image_path)
-        self.height, self.width, self.channel = self.image.shape
-        self.bytesPerLine = 3 * self.width
-        qImg = QImage(self.image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.current_image = QtGui.QPixmap(qImg)
-        self.viewer.setPhoto(self.current_image)
+        self.load_image(self.image_index)
 
     def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
         x1 = max(int(x-w/2), 0)
@@ -256,6 +262,7 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
     
     def photoClicked(self, pos):
         if self.viewer.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
+            print(pos.x(), pos.y())
             self.marker_info.setText('%d, %d' % (pos.x(), pos.y()))
             self.markerlocatoin = [pos.x(),pos.y()]
             x = pos.x()
@@ -266,7 +273,8 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
             qImg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
             self.current_image = QtGui.QPixmap(qImg)
             self.viewer.setPhoto(self.current_image)
-            print(pos.x(), pos.y())
+            if self.temperature_toggle.isChecked():
+                self.extract_temperature(pos)
 
     def fields_validator(self, required_fields, layer):
         fname = list(required_fields.keys())

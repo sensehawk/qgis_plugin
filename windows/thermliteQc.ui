@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>652</width>
-    <height>832</height>
+    <width>628</width>
+    <height>798</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,8 +18,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>246</width>
-    <height>169</height>
+    <width>628</width>
+    <height>798</height>
    </size>
   </property>
   <property name="windowOpacity">
@@ -31,7 +31,332 @@
   <property name="windowTitle">
    <string/>
   </property>
-  <widget class="QWidget" name="dockWidgetContents"/>
+  <widget class="QWidget" name="dockWidgetContents">
+   <widget class="QPushButton" name="folder_path">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>0</y>
+      <width>541</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Select Image Folder</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>40</y>
+      <width>541</width>
+      <height>451</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="image_layout"/>
+   </widget>
+   <widget class="QLabel" name="image_txt">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>550</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Image Path:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="current_loaded_img">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>550</y>
+      <width>441</width>
+      <height>25</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="marker_info">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>640</y>
+      <width>111</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="marker_txt">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>640</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Marker:</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="nxt_img">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>510</y>
+      <width>241</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="pan_toggle">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>680</y>
+      <width>101</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Enable Pan</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="tag_button">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>740</y>
+      <width>541</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Tag Feature</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="delta_temp">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>700</y>
+      <width>111</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="temp_txt">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>690</y>
+      <width>131</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Delta temperature:</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="temperature_toggle">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>590</y>
+      <width>161</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Enable Temperature</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="temp_patch_x">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>630</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="temp_patch_y">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>630</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="temp_patch_txt">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>630</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Patch Size  --&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="patch_x">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>630</y>
+      <width>16</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>W:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="patch_y">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>630</y>
+      <width>16</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>H:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="min_percentile">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>660</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="max_percentile">
+    <property name="geometry">
+     <rect>
+      <x>460</x>
+      <y>660</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="percentile_text">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>660</y>
+      <width>101</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Percentile  --&gt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="max_percentile_text">
+    <property name="geometry">
+     <rect>
+      <x>420</x>
+      <y>660</y>
+      <width>31</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Max:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="min_percentile_text">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>660</y>
+      <width>31</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Min:</string>
+    </property>
+   </widget>
+   <widget class="Line" name="line">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>640</y>
+      <width>20</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="previous_img">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>510</y>
+      <width>241</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="timestamp_label">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>590</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Timestamp:</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="timestamp">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>590</y>
+      <width>241</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="readOnly">
+     <bool>true</bool>
+    </property>
+   </widget>
+  </widget>
  </widget>
  <resources/>
  <connections/>

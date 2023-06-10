@@ -16,8 +16,31 @@ from .constants import THERM_URL
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
+from exiftool import ExifTool
+from datetime import datetime
+import glob
 
 
+def sort_images(images_dir, reverse=False):
+    images = glob.glob(images_dir+"/*")
+    with ExifTool() as e:
+        time_stamps = []
+        for i in images:
+            m = e.get_metadata(i)
+            m = {k.split(":")[1]: m[k] for k in m if ":" in k}
+            t = m["DateTimeOriginal"]
+            try:
+                t = datetime.strptime(t, "%Y:%m:%d  %H:%M:%S")
+            except Exception:
+                try:
+                    t = datetime.strptime(t.split(".")[0], "%Y:%m:%d  %H:%M:%S")
+                except Exception:
+                    t = datetime.strptime(t, "%H:%M:%S")
+            time_stamps.append(t)
+    sorted_tuples = sorted(zip(time_stamps, images), reverse=reverse)
+    images = [i[1] for i in sorted_tuples]
+    timestamps = [i[0] for i in sorted_tuples]
+    return images, timestamps
 
 
 def combobox_modifier(combobox, wordlist):
