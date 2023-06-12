@@ -7,33 +7,22 @@ from ..sensehawk_apis.scm_apis import train
 import json
 
 
-ML_SERVICE_MAP_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ml_service_map.ui'))
+class MLServiceMapWidget(QtWidgets.QWidget):
 
-class MLServiceMapWindow(QtWidgets.QDockWidget, ML_SERVICE_MAP_UI):
-
-    def __init__(self, iface, class_groups, tools_window):
-        super(MLServiceMapWindow, self).__init__()
-        self.setupUi(self)
-        self.class_groups = class_groups
-        self.tools_window = tools_window
-        self.logger = self.tools_window.logger
-        self.backButton.clicked.connect(self.show_tools_window)
-        self.iface = iface
-        # Add to the left docking area by default
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
+    def __init__(self, project):
+        super(MLServiceMapWidget, self).__init__()
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'ml_service_map.ui'), self)
+        self.project = project
+        self.logger = self.project.tools_widget.logger
+        self.iface = self.project.project_tabs_widget.iface
         # Add items to the lists
         self.populate_combo_boxes()
         # TODO:
         # Refresh list if checked items change
         self.trainButton.clicked.connect(self.train)
 
-    def show_tools_window(self):
-        self.tools_window.ml_service_map_window = self
-        self.tools_window.show()
-        self.hide()
-
     def populate_combo_boxes(self):
-        items = self.class_groups.get("Components", self.class_groups.get("components", []))
+        items = self.project.class_groups.get("Components", self.project.class_groups.get("components", []))
         # self.detectionComboBox.addItems(items)
         # self.segmentationComboBox.addItems(items)
         self.classesComboBox.addItems(items)
@@ -48,7 +37,7 @@ class MLServiceMapWindow(QtWidgets.QDockWidget, ML_SERVICE_MAP_UI):
         #     self.logger("Detection list and Segmentation list are not mutually exclusive!", level=Qgis.Warning)
         #     return None
         self.logger("ML Service map: {}".format(str(ml_service_map)))
-        with open(self.tools_window.load_window.geojson_path, 'r') as fi:
+        with open(self.project.geojson_path, 'r') as fi:
             geojson = json.load(fi)
 
         def callback(task, logger):
@@ -63,9 +52,9 @@ class MLServiceMapWindow(QtWidgets.QDockWidget, ML_SERVICE_MAP_UI):
             else:
                 logger(str(status))
 
-        self.logger(str(self.tools_window.class_maps))
-        train_inputs = [self.tools_window.project_details, geojson, ml_service_map, self.tools_window.class_maps,
-                        self.tools_window.load_window.user_email, self.tools_window.core_token]
+        self.logger(str(self.project.class_maps))
+        train_inputs = [self.project.project_details, geojson, ml_service_map, self.project.class_maps,
+                        self.project.project_tabs_widget.load_window.home.user_email, self.project.tools_widget.core_token]
         train_task = QgsTask.fromFunction("Train request", train, train_inputs=train_inputs)
         train_task.statusChanged.connect(lambda:callback(train_task, self.logger))
         QgsApplication.taskManager().addTask(train_task)

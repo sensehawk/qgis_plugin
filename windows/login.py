@@ -23,33 +23,40 @@
 # """
 
 from ..sensehawk_apis.core_apis import core_login
-from ..windows.load import LoadWindow
+from ..windows.home import HomeWindow
 
-from qgis.PyQt import QtWidgets, uic
+from qgis.PyQt import QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
 from qgis.PyQt.QtCore import Qt
 
 from ..tasks import loginTask
-
+# from ..utils import organization_details
 import os
 
-LOGIN_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'login.ui'))
-
-
-class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
+class LoginWindow(QtWidgets.QWidget):
 
     def __init__(self, iface):
         """Constructor."""
         super(LoginWindow, self).__init__()
-        self.setupUi(self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'login.ui'), self)
         self.loginButton.clicked.connect(self.start_login_task)
         self.user_email = None
         self.user_password = None
         self.core_token = None
         self.iface = iface
-        # Add to the left docking area by default
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
+
         self.load_window = None
+        self.dock_widget = QtWidgets.QDockWidget()
+        # Add to the left docking area by default
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
+        logo_label = QtWidgets.QLabel(self)
+        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.png'))
+        logo = logo.scaledToWidth(150)
+        logo_label.setPixmap(logo)
+        logo_label.show()
+        self.layout.addWidget(logo_label)
+        self.dock_widget.setWidget(self)
+        self.dock_widget.setFixedSize(310, 830)
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -69,6 +76,5 @@ class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
 
     def show_load_window(self):
         # Initialize load save window (next window post login)
-        self.load_window = LoadWindow(self.user_email, self.core_token, self.iface)
+        self.load_window = HomeWindow(self.dock_widget, self.user_email, self.core_token, self.org_details, self.iface)
         self.load_window.show()
-        self.hide()

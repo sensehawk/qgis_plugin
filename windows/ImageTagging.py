@@ -25,44 +25,38 @@
 from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis, QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog
-
+from ..constants import THERMAL_TAGGING_URL
 
 import os
 import tempfile
 import requests
 
-IMAGE_TAGGING_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'ImageTagging.ui'))
 
-
-class ThermImageTaggingWindow(QtWidgets.QDockWidget, IMAGE_TAGGING_UI):
+class ThermImageTaggingWidget(QtWidgets.QWidget):
 
     def __init__(self, thermtool_obj, iface):
         """Constructor."""
-        super(ThermImageTaggingWindow, self).__init__()
-        self.setupUi(self)
+        super(ThermImageTaggingWidget, self).__init__()
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'ImageTagging.ui'), self)
         self.thermToolobj = thermtool_obj
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
-        self.project_details = self.thermToolobj.project_details
-        self.core_token = self.thermToolobj.core_token
-        self.project_uid = self.thermToolobj.project_uid
+        self.project = thermtool_obj.project
+        self.project_details = self.project.project_details
+        self.core_token = self.project.core_token
+        self.project_uid = self.project.project_details["uid"]
         self.canvas =self.iface.mapCanvas()
 
-        self.backButtoN.clicked.connect(self.show_thermTool_Window)
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
         self.runButton.clicked.connect(self.image_tagging)
         self.imagetaggingType.currentTextChanged.connect(self.current_type)
         self.MagmaConversion.setChecked(True)
 
-        self.existing_files = self.thermToolobj.existing_files
-        self.temp_option.addItems(self.existing_files)
+        # self.existing_files = self.thermToolobj.existing_files
+        # self.temp_option.addItems(self.existing_files)
+        self.temp_option.addItems(["A", "B", "C"])
         self.No_images.setValue(4)
         self.No_images.setMaximum(4)
         self.No_images.setMinimum(1)
-
-    def show_thermTool_Window(self):
-        self.thermToolobj.show()
-        self.hide()
 
     def tr(self, message):
         return QCoreApplication.translate('SenseHawk QC', message)
@@ -75,7 +69,7 @@ class ThermImageTaggingWindow(QtWidgets.QDockWidget, IMAGE_TAGGING_UI):
         rotation = canvas.rotation()
         json['angle'] = rotation
         print(json)
-        url = '' # Update depolyed (tagging) api url 
+        url =  THERMAL_TAGGING_URL + "/tag" # Update depolyed (tagging) api url
         headers = {'Authorization': f'token {self.core_token}'}
         imagetag = requests.post(url, json=json, headers=headers)
         if imagetag.status_code == 200:

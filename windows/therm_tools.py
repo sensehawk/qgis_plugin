@@ -30,8 +30,9 @@ from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRe
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.sid_apis import detect_solar_issues
-from ..windows.autoNumbering import ThermNumberingWindow
-from ..windows.ImageTagging import ThermImageTaggingWindow
+from ..windows.autoNumbering import ThermNumberingWidget
+from ..windows.ImageTagging import ThermImageTaggingWidget
+from ..windows.thermliteQc import ThermliteQcWindow
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
@@ -40,112 +41,65 @@ import os
 import json
 
 
-THERM_TOOLS_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'therm_tools.ui'))
+class ThermToolsWidget(QtWidgets.QWidget):
 
-
-class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
-
-    def __init__(self, load_window, iface):
+    def __init__(self, project):
         """Constructor."""
-        super(ThermToolsWindow, self).__init__()
-        self.setupUi(self)
-        self.load_window = load_window
-        self.iface = iface
-        self.active_layer = self.iface.activeLayer()
+        super(ThermToolsWidget, self).__init__()
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'therm_tools.ui'), self)
+        self.project = project
+        self.parent = self.project.project_tab
+        self.iface = self.project.iface
         self.canvas = self.iface.mapCanvas()
-        self.backButton.clicked.connect(self.show_load_window)
-        self.saveProject.clicked.connect(self.save_project)
         self.detectButton.clicked.connect(self.detect)
         self.StringNumberButton.clicked.connect(self.string_numbering)
         self.imagetaggingButton.clicked.connect(self.ImageTagging)
-        self.class_maps = self.load_window.class_maps
-        self.core_token = self.load_window.core_token
-        self.project_uid = self.load_window.project_uid
-        self.project_details = self.load_window.project_details
-        self.existing_files = self.load_window.existing_files
-        self.numbering_window = None
-        self.imagetagging_window = None
-
-
-
-        # Add to the left docking area by default
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
-        ## Keyboard shortcuts
-        self.keyboard_shortcuts = {}
-        # Create the feature change shortcuts for this particular project using class maps
-        self.create_feature_change_shortcuts()
-        # Create QGIS tools shortcuts
-        self.create_qgis_shortcuts()
-        # If there is an existing keyboard shortcuts csv, remap shortcuts in case there are custom changes
-        self.keyboard_shortcut_details_path = os.path.join(os.path.dirname(__file__), 'therm_keyboard_shortcuts.csv')
-        if os.path.exists(self.keyboard_shortcut_details_path):
-            self.remap_keyboard_shortcuts()
-        # Create a key emitter that sends the key presses
-        self.key_emitter = KeypressEmitter()
-        # Connect the key emitter to the key eater that performs required shortcuts
-        self.key_emitter.signal.connect(lambda x: self.key_eater(x))
-        # Create keypress event filter to consume the key presses from iface and send it to key_emitter
-        self.keypress_filter = KeypressFilter(self.key_emitter)
-        # Install key press filter to iface's map canvas
-        self.iface.mapCanvas().installEventFilter(self.keypress_filter)
-        # Export the keyboard shortcuts to a csv file
-        self.export_keyboard_shortcut_details()
-        # Mouse press filter
-        self.mouse_emitter = KeypressEmitter()
-        self.mousepress_filter = MousepressFilter(self.mouse_emitter)
+        self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
+        self.class_maps = self.project.class_maps
+        self.core_token = self.project.core_token
+        self.project_details = self.project.project_details
+        self.numbering_widget = None
+        self.imagetagging_widget = None
+        self.thermlite_tagging_widget = None
 
     def string_numbering(self):
-        self.numbering_window = ThermNumberingWindow(self, self.iface)
-        self.numbering_window.show()
-        self.hide()
-    
+        if not self.numbering_widget:
+            self.numbering_widget = ThermNumberingWidget(self, self.iface)
+        if self.project.active_tool_widget != self.numbering_widget:
+            self.project.active_tool_widget.hide()
+            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.numbering_widget)
+        self.project.active_tool_widget = self.numbering_widget
+        self.numbering_widget.show()
+        self.uncheck_all_buttons()
+        self.StringNumberButton.setChecked(True)
+        if self.thermlite_tagging_widget:
+            self.thermlite_tagging_widget.hide()
 
     def ImageTagging(self):
-        self.imagetagging_window = ThermImageTaggingWindow(self, self.iface)
-        self.imagetagging_window.show()
-        self.hide()
+        if not self.imagetagging_widget:
+            self.imagetagging_widget = ThermImageTaggingWidget(self, self.iface)
+        if self.project.active_tool_widget != self.imagetagging_widget:
+            self.project.active_tool_widget.hide()
+            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.imagetagging_widget)
+        self.project.active_tool_widget = self.imagetagging_widget
+        self.imagetagging_widget.show()
+        self.uncheck_all_buttons()
+        self.imagetaggingButton.setChecked(True)
+        if self.thermlite_tagging_widget:
+            self.thermlite_tagging_widget.hide()
 
-        
-    def duplicate_feature(self):
-        self.active_layer.startEditing()
-        # Install mouse press filter to iface's map canvas
-        self.iface.mapCanvas().viewport().installEventFilter(self.mousepress_filter)
-        move_function = self.iface.actionMoveFeature()
-        move_function.trigger()
-        # Connect mouse event to copy in place function
-        self.mouse_emitter.signal.connect(lambda mouse_event: copy_in_place(mouse_event))
-        def copy_in_place(mouse_event):
-            mouse_button = mouse_event.button()
-            point = self.canvas.getCoordinateTransform().toMapCoordinates(mouse_event.pos())
-            x, y = point.x(), point.y()
-            if mouse_button == 1:
-                # If anything is selected, deselect and do nothing else
-                if self.active_layer.selectedFeatures():
-                    self.active_layer.removeSelection()
-                    return None
-                # Left button repeats function if nothing is selected currently
-                feature_request = QgsFeatureRequest()
-                feature_request.setFilterRect(QgsPoint(x, y).boundingBox())
-                features = self.active_layer.getFeatures(feature_request)
-                # Sort features by area and select the least area feature for copy and move
-                features = sorted([f for f in features], key=lambda f: f.geometry().area())
-                if not features:
-                    self.active_layer.removeSelection()
-                    return False
-                selected_feature = features[0]
-                f_id = selected_feature.id()
-                self.active_layer.selectByIds([f_id])
-                self.iface.actionCopyFeatures().trigger()
-                self.iface.actionPasteFeatures().trigger()
+    def ThermliteTagging(self):
+        if not self.thermlite_tagging_widget:
+            self.thermlite_tagging_widget = ThermliteQcWindow(self, self.project)
+        self.project.active_tool_widget.hide()            
+        self.thermlite_tagging_widget.show()
+        self.uncheck_all_buttons()
+        self.thermliteQcButton.setChecked(True)
 
-    def key_eater(self, key_code):
-        # Is connected to the keyboard and will call the relevant functions from the shortcuts_dict when a key is pressed
-        shortcut = self.keyboard_shortcuts.get(key_code, None)
-        if not shortcut:
-            return None
-        self.logger("Keyboard shortcut: {}".format(shortcut.name))
-        shortcut.run()
-
+    def uncheck_all_buttons(self):
+        for button in self.findChildren(QtWidgets.QPushButton):
+            if button.isCheckable():
+                button.setChecked(False)
     def detect(self):
         map_angle = self.canvas.rotation()
         self.logger("Map canvas angle: {}".format(map_angle))
@@ -167,196 +121,5 @@ class ThermToolsWindow(QtWidgets.QDockWidget, THERM_TOOLS_UI):
         QgsApplication.taskManager().addTask(dt)
         dt.statusChanged.connect(lambda: callback(dt, self.logger))
 
-    def save_project(self):
-        def save_task(task, save_task_input):
-            geojson_path, core_token, project_uid, project_type = save_task_input
-            cleaned_geojson_path = geojson_path.replace(".geojson", "_cleaned.geojson")
-            # Delete any duplicate features
-            qgis.processing.run('qgis:deleteduplicategeometries',
-                                {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
-            with open(cleaned_geojson_path, 'r') as fi:
-                geojson = json.load(fi)
-            # Clear UIDs to avoid duplicate error while saving to Therm
-            for f in geojson["features"]:
-                f["properties"]["uid"] = None
-            # Upload vectors
-            saved = save_project_geojson(geojson, project_uid, core_token,
-                                         project_type=project_type)
-            return {'status': str(saved), 'task': task.description()}
-
-        def callback(task, logger):
-            result = task.returned_values
-            if result:
-                logger(result["status"])
-
-        if self.load_window.load_successful:
-            st = QgsTask.fromFunction("Save", save_task,
-                                      save_task_input=[self.load_window.geojson_path,
-                                                       self.core_token,
-                                                       self.load_window.project_uid,
-                                                       self.load_window.project_type])
-            QgsApplication.taskManager().addTask(st)
-            st.statusChanged.connect(lambda: callback(st, self.logger))
-
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
-
-    def show_load_window(self):
-        self.load_window.therm_tools_window = self
-        self.load_window.show()
-        self.hide()
-
-    # Shortcut
-    def add_feature(self):
-        if not isinstance(self.active_layer, qgis._core.QgsVectorLayer):
-            self.logger("Select a vector layer to add feature...")
-            return None
-        self.active_layer.startEditing()
-        self.iface.actionAddFeature().trigger()
-
-    # Shortcut
-    def save_layer(self):
-        if not isinstance(self.active_layer, qgis._core.QgsVectorLayer):
-            return None
-        # Deselect any selected features
-        self.active_layer.removeSelection()
-        self.active_layer.commitChanges()
-        # In case duplicate feature was activated, disconnect copy-in-place on left mouse click
-        try:
-            self.mouse_emitter.signal.disconnect()
-            self.iface.mapCanvas().viewport().removeEventFilter(self.mousepress_filter)
-        except Exception:
-            pass
-        self.active_layer.triggerRepaint()
-
-    def create_feature_change_shortcuts(self):
-        # Populate shortcuts dictionary for feature type change with keys
-        shortcuts_dict = {self.class_maps[i]["name"]: {"key": self.class_maps[i].get("key", None),
-                                                       "class_name": i,
-                                                       "key_code": None,
-                                                       "name": self.class_maps[i]["name"],
-                                                       "function": self.change_feature_type,
-                                                       "function_args": [i, ],
-                                                       "shortcut_type": "Feature type change"} for i in self.class_maps}
-        shortcuts_dict.get("clip_boundary", shortcuts_dict.get("Clip_boundary", {}))["key"] = "C"
-        # We will give shortcuts to other classes starting from 0 in alphabetical order
-        count = 0
-        remaining_classes = sorted([i for i in shortcuts_dict if not shortcuts_dict[i]["key"]])
-        for c in remaining_classes:
-            shortcuts_dict[c]["key"] = str(count)
-            count += 1
-        # Generate keycode which is communicated from keyboard
-        for s in shortcuts_dict:
-            key = shortcuts_dict[s]["key"]
-            try:
-                key_code = eval("Qt.Key_{}".format(key.upper()))
-            except AttributeError:
-                key_code = None
-            shortcuts_dict[s]["key_code"] = key_code
-
-        for i in shortcuts_dict:
-            shortcut_key_code = shortcuts_dict[i]["key_code"]
-            if shortcut_key_code:
-                self.keyboard_shortcuts[shortcut_key_code] = KeypressShortcut(shortcuts_dict[i])
-
-    # Shortcut
-    def change_feature_type(self, class_name):
-        if not isinstance(self.active_layer, qgis._core.QgsVectorLayer):
-            self.logger("Activate a vector layer or select feature to change feature type...")
-            return None
-        self.active_layer.startEditing()
-        # If there are selected items, change feature type for those or else change feature type of last added feature
-        selected_features = list(self.active_layer.selectedFeatures())
-        if selected_features:
-            for feature in selected_features:
-                feature.setAttribute("class_name", class_name)
-                feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
-                self.active_layer.updateFeature(feature)
-        else:
-            features = list(self.active_layer.getFeatures())
-            last_feature_index = -1
-            try:
-                last_feature = features[last_feature_index]
-            except IndexError:
-                self.logger("No feature selected or new feature added...")
-                return None
-            self.logger("Changing class_name of last added feature to {}".format(class_name))
-            last_feature.setAttribute("class_name", class_name)
-            last_feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
-            self.active_layer.updateFeature(last_feature)
-        self.active_layer.triggerRepaint()
-
-    def create_qgis_shortcuts(self):
-        # 'Enter' key saves the active layer
-        self.keyboard_shortcuts[16777220] = KeypressShortcut({"key_code": 16777220,
-                                                              "name": "Save layer changes",
-                                                              "function": self.save_layer,
-                                                              "shortcut_type": "QGIS tools"})
-        # 'S' key for select feature
-        self.keyboard_shortcuts[83] = KeypressShortcut({"key_code": 83,
-                                                        "name": "Select features",
-                                                        "function": self.iface.actionSelect().trigger,
-                                                        "shortcut_type": "QGIS tools"})
-        # 'F' key to add new feature
-        self.keyboard_shortcuts[70] = KeypressShortcut({"key_code": 70,
-                                                        "name": "Add new feature",
-                                                        "function": self.add_feature,
-                                                        "shortcut_type": "QGIS tools"})
-        # 'P' key to change feature properties / show attributes table
-        self.keyboard_shortcuts[80] = KeypressShortcut({"key_code": 80,
-                                                        "name": "Show attribute table",
-                                                        "function": "iface.showAttributeTable(iface.activeLayer())",
-                                                        "shortcut_type": "QGIS tools"})
-        # 'E' key to toggle editing of selected layer
-        self.keyboard_shortcuts[69] = KeypressShortcut({"key_code": 69,
-                                                        "name": "Turn on layer edit",
-                                                        "function": self.active_layer.startEditing,
-                                                        "shortcut_type": "QGIS tools"})
-
-        # 'Z' key to zoom to layer
-        self.keyboard_shortcuts[90] = KeypressShortcut({"key_code": 90,
-                                                        "name": "Zoom to layer",
-                                                        "function": self.iface.actionZoomToLayer().trigger,
-                                                        "shortcut_type": "QGIS tools"})
-
-        # 'D' key to duplicate feature
-        self.keyboard_shortcuts[68] = KeypressShortcut({"key_code": 68,
-                                                        "name": "Duplicate feature",
-                                                        "function": self.duplicate_feature,
-                                                        "shortcut_type": "QGIS tools"})
-
-    def export_keyboard_shortcut_details(self):
-        self.logger("Exporting key board shortcut details...")
-        csv_lines = ["Key, Shortcut Name, Shortcut Type\n"]
-        for key_code in self.keyboard_shortcuts:
-            shortcut = self.keyboard_shortcuts[key_code]
-            name = shortcut.name
-            shortcut_type = shortcut.shortcut_type
-            key = QKeySequence(key_code).toString()
-            csv_lines.append("{}, {}, {}\n".format(key, name, shortcut_type))
-        with open(self.keyboard_shortcut_details_path, "w") as fi:
-            for l in csv_lines:
-                fi.write(l)
-
-    def remap_keyboard_shortcuts(self):
-        # Default keyboard shortcuts
-        default_map = {i: self.keyboard_shortcuts[i].name for i in self.keyboard_shortcuts}
-        # Keyboard shortcuts from csv
-        csv_map = {}
-        csv_lines = open(self.keyboard_shortcut_details_path).readlines()[1:]
-        for l in csv_lines:
-            key, name, _ = l.split(",")
-            key, name = key.strip(), name.strip()
-            key_code = eval("Qt.Key_{}".format(key))
-            csv_map[name] = key_code
-        default_to_csv_map = {i: csv_map[default_map[i]] for i in default_map}
-        for i in default_to_csv_map:
-            old_keycode = i
-            new_keycode = default_to_csv_map[i]
-            if old_keycode == new_keycode:
-                continue
-            self.keyboard_shortcuts[new_keycode] = self.keyboard_shortcuts[old_keycode]
-            del self.keyboard_shortcuts[old_keycode]
-
-
-
