@@ -1,6 +1,8 @@
 import requests
 from urllib.request import urlopen
 import os
+from concurrent import futures
+from concurrent.futures import ProcessPoolExecutor
 import math
 from .sensehawk_apis.core_apis import get_project_geojson, save_project_geojson, get_project_details
 import json
@@ -19,6 +21,10 @@ from qgis.PyQt.QtCore import Qt
 from exiftool import ExifTool
 from datetime import datetime
 import glob
+import threading
+import cv2
+import matplotlib.pyplot as plt 
+import numpy as np
 
 
 def sort_images(images_dir, reverse=False):
@@ -250,3 +256,43 @@ def file_existent(project_uid, org, token):
            existing_file =  ['reflectance'] + existing_file
 
         return existing_file
+import time
+def convert_and_upload(path, image_path, projectUid):
+    image_name = image_path.split('/')[-1]
+    dpath = os.path.join(f'{path}/', image_name)
+    image = cv2.imread(image_path, 0)
+    colormap = plt.get_cmap('inferno')
+    heatmap = (colormap(image) * 2**16)[:,:,:3].astype(np.uint16)
+    heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0/65535.0))
+    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(dpath, heatmap)
+
+    Container = 'IR_rawimage'
+    REGION = "ap-south-1"
+    BUCKET = "sensehawk-mumbai"
+
+    FILEPATH = dpath
+    UPLOADKEY = "hawkai/{}/{}/{}".format(projectUid, Container, image_name)
+  
+    # s3_client = boto3.client("s3",
+    #                             aws_access_key_id=AWS_UPLOAD_ACCESS_KEY_ID,
+    #                             aws_secret_access_key=AWS_UPLOAD_SECRET_ACCESS_KEY,
+    #                             region_name=REGION)
+    
+    # s3_client.upload_file(FILEPATH, BUCKET, UPLOADKEY, ExtraArgs={"ContentType": "image/jpeg"})
+
+def upload(task ,inputs):
+    images = inputs['imageslist']
+    image_path = inputs['img_dir']
+    projectUid = inputs['projectUid']
+    path = os.path.join(f'{image_path}/', 'inferno_scale') 
+
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    for image in images:
+        t = threading.Thread(target=convert_and_upload, args=(path, image, projectUid)).start()
+
+    return {'num_images':len(images),
+            'task': task.description()}
+
