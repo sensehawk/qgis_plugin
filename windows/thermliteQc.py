@@ -23,20 +23,15 @@
 # """
 import os
 import cv2
-import uuid 
 
-from qgis.PyQt.QtCore import Qt , QPoint , QRectF 
+from qgis.PyQt.QtCore import Qt 
 from qgis.PyQt import QtWidgets, uic
-import qgis
-from qgis.core import QgsVectorLayer, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat
-from qgis.core import QgsField, QgsProject
+from qgis.core import QgsVectorLayer, QgsApplication, QgsTask, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat
+from qgis.core import QgsField
 from PyQt5.QtCore import QVariant
 
-from PyQt5.QtWidgets import QPushButton,QLabel, QLineEdit
-from PyQt5.QtGui import QKeySequence , QFont , QPainter , QPolygon , QImage
+from PyQt5.QtGui import QImage
 from PyQt5 import QtCore, QtGui, QtWidgets 
-from datetime import datetime
-from PIL import Image
 from qgis.utils import iface
 from exiftool import ExifTool
 import numpy as np

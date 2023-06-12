@@ -43,7 +43,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.canvas =self.iface.mapCanvas()
         self.project = thermtool_obj.project
         self.project_details = self.project.project_details
-        self.core_token = self.project.project_tabs_widget.load_window.core_token
+        self.core_token = self.project.core_token
         self.project_uid = self.project.project_details["uid"]
         self.canvas =self.iface.mapCanvas()
 
