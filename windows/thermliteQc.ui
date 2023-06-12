@@ -69,16 +69,6 @@
      <string>Image Path:</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="current_loaded_img">
-    <property name="geometry">
-     <rect>
-      <x>150</x>
-      <y>550</y>
-      <width>441</width>
-      <height>25</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QLineEdit" name="marker_info">
     <property name="geometry">
      <rect>
@@ -367,6 +357,16 @@
     </property>
     <property name="text">
      <string>Save tagged data</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="current_loaded_img">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>550</y>
+      <width>441</width>
+      <height>25</height>
+     </rect>
     </property>
    </widget>
   </widget>

@@ -283,6 +283,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         project.core_token = self.load_window.core_token
         project.iface = self.iface
         project.logger = self.logger
+        project.qgis_project = self.qgis_project
         # Show all project details in the project tab
         project.populate_project_tab()
         # Activate project
@@ -378,6 +379,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         if not self.active_project:
             return None
         if key in self.active_project.feature_shortcuts:
+            self.active_project.vlayer.commitChanges()
+            self.active_project.vlayer.startEditing()
             feature_change_name = self.active_project.feature_shortcuts.get(key, None)
             self.active_project.change_feature_type(feature_change_name)
         elif key in self.qgis_shortcuts:
