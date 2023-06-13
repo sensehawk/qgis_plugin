@@ -33,7 +33,7 @@ from ..windows.projectLoad import ProjectLoadWindow
 
 import os
 import json
-import tempfile
+import time
 import json
 
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
@@ -74,15 +74,15 @@ class HomeWindow(QtWidgets.QWidget):
         self.dock_widget.setWidget(self)
 
     def asset_info(self, load_task_status ,load_asset_task):
+
         result = load_asset_task.returned_values
         # task response bit slow in few circumstances Dont remove below peice of code 
-        try:
-            self.asset_details = result['asset_list']
-            self.org_contianer_details = result['org_contianer_details']
-        except:
-            self.asset_details = result['asset_list']
-            self.org_contianer_details = result['org_contianer_details']
-
+        if not 'asset_list' in result:
+            return None
+        
+        self.asset_details = result['asset_list']
+        self.org_contianer_details = result['org_contianer_details']
+        
         asset_list = list(self.asset_details.keys())
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()

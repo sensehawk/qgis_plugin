@@ -23,6 +23,7 @@ class Project:
         self.feature_counts = load_task_result['feature_counts']
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
+        self.existing_files = load_task_result['existing_files']
         self.project_tab = QtWidgets.QWidget()
         # Create a layout that contains project details
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)

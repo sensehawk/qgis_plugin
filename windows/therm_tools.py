@@ -50,6 +50,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project = project
         self.parent = self.project.project_tab
         self.iface = self.project.iface
+        self.existing_files = self.project.existing_files
         self.canvas = self.iface.mapCanvas()
         self.detectButton.clicked.connect(self.detect)
         self.StringNumberButton.clicked.connect(self.string_numbering)

@@ -41,6 +41,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.thermToolobj = thermtool_obj
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
+        self.existing_files = self.thermToolobj.existing_files
         self.project = thermtool_obj.project
         self.project_details = self.project.project_details
         self.core_token = self.project.core_token
@@ -53,7 +54,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
 
         # self.existing_files = self.thermToolobj.existing_files
         # self.temp_option.addItems(self.existing_files)
-        self.temp_option.addItems(["A", "B", "C"])
+        self.temp_option.addItems(self.existing_files)
         self.No_images.setValue(4)
         self.No_images.setMaximum(4)
         self.No_images.setMinimum(1)
@@ -70,12 +71,12 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         json['angle'] = rotation
         print(json)
         url =  THERMAL_TAGGING_URL + "/tag" # Update depolyed (tagging) api url
-        headers = {'Authorization': f'token {self.core_token}'}
+        headers = {'Authorization': f'Token {self.core_token}'}
         imagetag = requests.post(url, json=json, headers=headers)
         if imagetag.status_code == 200:
             self.iface.messageBar().pushMessage(self.tr('Queued Successfully.'),Qgis.Success)
         else:
-            self.iface.messageBar().pushMessage(self.tr(f'Failed to Queue {imagetag.status_code}'),Qgis.Warning)
+            self.iface.messageBar().pushMessage(self.tr(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}'),Qgis.Warning)
 
 
     def current_type(self, value):

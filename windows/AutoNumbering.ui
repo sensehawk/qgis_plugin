@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>250</width>
-    <height>230</height>
+    <height>237</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,45 +25,12 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QWidget" name="layoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>0</y>
-     <width>189</width>
-     <height>54</height>
-    </rect>
-   </property>
-   <layout class="QFormLayout" name="formLayout_3">
-    <item row="0" column="0">
-     <widget class="QCheckBox" name="basic">
-      <property name="text">
-       <string>Basic</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QCheckBox" name="basicAndmodule">
-      <property name="text">
-       <string>Basic+module</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0" colspan="2">
-     <widget class="QCheckBox" name="existingAndmodule">
-      <property name="text">
-       <string>Existing+module</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
   <widget class="QWidget" name="layoutWidget_2">
    <property name="geometry">
     <rect>
      <x>30</x>
      <y>66</y>
-     <width>152</width>
+     <width>181</width>
      <height>60</height>
     </rect>
    </property>
@@ -138,6 +105,31 @@
      <widget class="QLineEdit" name="Suffix"/>
     </item>
    </layout>
+  </widget>
+  <widget class="QComboBox" name="stringnum_type">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>20</y>
+     <width>181</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>Basic</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Basic+module</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Existing+module</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <customwidgets>

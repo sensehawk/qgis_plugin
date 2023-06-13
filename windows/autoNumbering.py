@@ -42,6 +42,8 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
         self.approve.clicked.connect(self.string_numbering)
+ 
+
 
     def stringNumber_configuration(self):
         canvas  = self.canvas
@@ -61,55 +63,55 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         Vlayer = self.iface.activeLayer()
         Vfeatures = Vlayer.getFeatures()
         module_width, module_height, angle, Prefix, Suffix = self.stringNumber_configuration()
-        if self.basic.isChecked() or self.basicAndmodule.isChecked() or self.existingAndmodule.isChecked():
-            field_constructor(Vlayer) # If not exist create stirng number field
-            featureslist = [feature for feature in Vfeatures] #QgsfeatureIterator[] => Qgsfeatures
-            featuresobjlist = [Table(feature) for feature in featureslist] 
-            sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_lonlat_y, reverse=True)
-            Topmost_table = topmost_table(sorted_tables)
-            anchor_point = max(Topmost_table.raw_utm_coords, key=lambda x: x[1])
-            # Adding rotated utm_coords as a attribute to featureObj
-            update_rotated_coords(featuresobjlist, anchor_point, angle) 
-             #Adding Table_row and Table_column numbers to tableObj
-            table_numbering(featuresobjlist, Vlayer)
-            #Grouping issues falling in Parent table and updating Parent Trow and Tcolumn number to issuesObj 
-            update_issue_tRow_tColumn(featuresobjlist, Vlayer) 
-            # Updating row and column to issuesObj 
-            update_issue_Row_column(featuresobjlist, Vlayer, module_height, module_width, angle) 
+        field_constructor(Vlayer) # If not exist create stirng number field
+        featureslist = [feature for feature in Vfeatures] #QgsfeatureIterator[] => Qgsfeatures
+        featuresobjlist = [Table(feature) for feature in featureslist] 
+        sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_lonlat_y, reverse=True)
+        Topmost_table = topmost_table(sorted_tables)
+        anchor_point = max(Topmost_table.raw_utm_coords, key=lambda x: x[1])
+        # Adding rotated utm_coords as a attribute to featureObj
+        update_rotated_coords(featuresobjlist, anchor_point, angle) 
+         #Adding Table_row and Table_column numbers to tableObj
+        table_numbering(featuresobjlist, Vlayer)
+        #Grouping issues falling in Parent table and updating Parent Trow and Tcolumn number to issuesObj 
+        update_issue_tRow_tColumn(featuresobjlist, Vlayer) 
+        # Updating row and column to issuesObj 
+        update_issue_Row_column(featuresobjlist, Vlayer, module_height, module_width, angle) 
             
+     
+        """String NUmbering"""
+        if self.stringnum_type.currentText() == 'Basic' or self.stringnum_type.currentText() == 'Basic+module':
+            for featureobj in featuresobjlist:
+                if featureobj.feature['class_name'] != 'table':
+                    Trow = featureobj.feature['table_row']
+                    Tcolumn = featureobj.feature['table_column']
+                    Irow = featureobj.feature['row']
+                    Icolumn = featureobj.feature['column']
+                    if self.stringnum_type.currentText() == 'Basic':
+                        basic_number = f"{Prefix}-R{Trow}-T{Tcolumn}-{Suffix}"
+                        print(basic_number)
+                        featureobj.feature['string_number'] = basic_number.strip('-')
+                        Vlayer.updateFeature(featureobj.feature)
+                    elif self.stringnum_type.currentText() == 'Basic+module':
+                        basicModule_number = f"{Prefix}-R{Trow}-T{Tcolumn}-R{Irow}-C{Icolumn}-{Suffix}"
+                        print(basicModule_number)
+                        featureobj.feature['string_number'] = basicModule_number.strip('-')
+                        Vlayer.updateFeature(featureobj.feature)
 
-            """String NUmbering"""
-            if self.basic.isChecked() or self.basicAndmodule.isChecked():
-                for featureobj in featuresobjlist:
-                    if featureobj.feature['class_name'] != 'table':
-                        Trow = featureobj.feature['table_row']
-                        Tcolumn = featureobj.feature['table_column']
-                        Irow = featureobj.feature['row']
-                        Icolumn = featureobj.feature['column']
-                        if self.basic.isChecked():
-                            basic_number = f"{Prefix}-R{Trow}-T{Tcolumn}-{Suffix}"
-                            featureobj.feature['string_number'] = basic_number.strip('-')
-                            Vlayer.updateFeature(featureobj.feature)
-
-                        elif self.basicAndmodule.isChecked():
-                            basicModule_number = f"{Prefix}-R{Trow}-T{Tcolumn}-R{Irow}-C{Icolumn}-{Suffix}"
-                            featureobj.feature['string_number'] = basicModule_number.strip('-')
-                            Vlayer.updateFeature(featureobj.feature)
-
-
-            elif self.existingAndmodule.isChecked():
-                for featureobj in featuresobjlist:
-                    if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
-                        if not featureobj.feature['string_number']:
-                            Existing_SN = "Existing string number does not exist"
-                        else:
-                            Existing_SN = featureobj.feature['string_number']
-                        for issue_obj in featureobj.issue_obj:
-                            Irow = issue_obj.feature['row']
-                            Icolumn = issue_obj.feature['column']
-                            basicModule_number = f"{Prefix}-{Existing_SN}-R{Irow}-C{Icolumn}-{Suffix}"
-                            issue_obj.feature['string_number'] = basicModule_number.strip('-')
-                            Vlayer.updateFeature(issue_obj.feature)
+        elif self.stringnum_type.currentText() == 'Existing+module':
+            for featureobj in featuresobjlist:
+                if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
+                    if not featureobj.feature['string_number']:
+                        Existing_SN = "Existing string number does not exist"
+                    else:
+                        Existing_SN = featureobj.feature['string_number']
+                    for issue_obj in featureobj.issue_obj:
+                        Irow = issue_obj.feature['row']
+                        Icolumn = issue_obj.feature['column']
+                        basicModule_number = f"{Prefix}-{Existing_SN}-R{Irow}-C{Icolumn}-{Suffix}"
+                        print(basicModule_number)
+                        issue_obj.feature['string_number'] = basicModule_number.strip('-')
+                        Vlayer.updateFeature(issue_obj.feature)
 
         endTime = time()
         duration = int(round((endTime - startTime) * 1000))
