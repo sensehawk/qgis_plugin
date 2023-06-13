@@ -21,6 +21,7 @@ def loadTask(task, load_inputs):
     # Get the class maps for vectors from terra / therm
     if project_type == "terra":
         class_maps, class_groups = get_terra_classmaps(project_details, core_token)
+        existing_files = None
     elif project_type == "therm":
         class_maps, class_groups = get_therm_classmaps(), None
         org = project_details['organization']['uid']
@@ -64,6 +65,7 @@ def loadTask(task, load_inputs):
             'class_groups': class_groups,
             'project_details': project_details,
             'geojson_path': geojson_path,
+            'existing_files':existing_files,
             'task': task.description()}
 
 
