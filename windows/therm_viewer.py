@@ -146,6 +146,7 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         t.join()
         self.image_index = 0
         self.previous_img.setEnabled(False)
+        self.nxt_img.setEnabled(True)
         self.show_image(self.image_paths[0])
     
     def show_image(self, image_path):
