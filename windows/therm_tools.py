@@ -33,6 +33,7 @@ from ..sensehawk_apis.sid_apis import detect_solar_issues
 from ..windows.autoNumbering import ThermNumberingWidget
 from ..windows.ImageTagging import ThermImageTaggingWidget
 from ..windows.thermliteQc import ThermliteQcWindow
+from ..windows.therm_viewer import ThermViewerDockWidget
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
@@ -55,12 +56,14 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.StringNumberButton.clicked.connect(self.string_numbering)
         self.imagetaggingButton.clicked.connect(self.ImageTagging)
         self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
+        self.viewer_button.clicked.connect(self.therm_viewer)
         self.class_maps = self.project.class_maps
         self.core_token = self.project.core_token
         self.project_details = self.project.project_details
         self.numbering_widget = None
         self.imagetagging_widget = None
         self.thermlite_tagging_widget = None
+        self.therm_viewer_widget = None
 
     def string_numbering(self):
         if not self.numbering_widget:
@@ -95,6 +98,14 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.thermlite_tagging_widget.show()
         self.uncheck_all_buttons()
         self.thermliteQcButton.setChecked(True)
+    
+    def therm_viewer(self):
+        if not self.therm_viewer_widget:
+            self.therm_viewer_widget = ThermViewerDockWidget(self, self.project)
+        self.project.active_tool_widget.hide()
+        self.therm_viewer_widget.show()
+        self.uncheck_all_buttons()
+        self.viewer_button.setChecked(True)
 
     def uncheck_all_buttons(self):
         for button in self.findChildren(QtWidgets.QPushButton):
