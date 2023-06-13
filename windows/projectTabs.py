@@ -20,7 +20,6 @@ class Project:
         self.vlayer = load_task_result['vlayer']
         self.geojson_path = load_task_result['geojson_path']
         self.rlayer = load_task_result['rlayer']
-        self.feature_counts = load_task_result['feature_counts']
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
         self.existing_files = load_task_result['existing_files']
@@ -50,7 +49,6 @@ class Project:
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
 
     def import_geojson(self, geojson_path):
-        print(geojson_path)
         if geojson_path:
             import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
             imported_features = [feature for feature in import_layer.getFeatures()]
@@ -66,30 +64,44 @@ class Project:
             self.tools_widget = ThermToolsWidget(self)
         self.project_tab_layout.addWidget(self.tools_widget)
         self.tools_widget.show()
+    
+    def load_feature_count(self):
+        # Get feature count by class_name
+        feature_count_dict = {}
+        class_name_keyword = {"terra": "class", "therm": "class_name"}[self.project_details["project_type"]]
+        for f in self.vlayer.getFeatures():
+            feature_class = f[class_name_keyword]
+            class_count = feature_count_dict.get(feature_class, 0)
+            class_count += 1
+            feature_count_dict[feature_class] = class_count
 
-    def create_features_table(self):
-        # Create a table of feature counts
-        features_table = QtWidgets.QTableWidget(self.project_tab)
-
-        # Hide headers
-        features_table.verticalHeader().setVisible(False)
-        features_table.horizontalHeader().setVisible(False)
-
-        # Disable editing
-        features_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.project_tab_layout.addWidget(features_table)
-
+        self.feature_counts = [(k, v) for k, v in feature_count_dict.items()]
         # Populate feature counts
-        features_table.setRowCount(len(self.feature_counts))
-        features_table.setColumnCount(2)
+        self.features_table.setRowCount(len(self.feature_counts))
         for i, (feature_type, feature_count) in enumerate(self.feature_counts):
             feature_type_item = QtWidgets.QTableWidgetItem(feature_type)
             feature_type_item.setBackground(QtGui.QColor(self.color_code[feature_type]))
             feature_count_item = QtWidgets.QTableWidgetItem(str(feature_count))
-            features_table.setItem(i, 0, feature_type_item)
-            features_table.setItem(i, 1, feature_count_item)
-        features_table.setFixedWidth(250)
-        features_table.setFixedHeight(75)
+            self.features_table.setItem(i, 0, feature_type_item)
+            self.features_table.setItem(i, 1, feature_count_item)
+
+    def create_features_table(self):
+        # Create a table of feature counts
+        self.features_table = QtWidgets.QTableWidget(self.project_tab)
+
+        # Hide headers
+        self.features_table.verticalHeader().setVisible(False)
+        self.features_table.horizontalHeader().setVisible(False)
+
+        # 2 columns
+        self.features_table.setColumnCount(2)
+
+        # Disable editing
+        self.features_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.project_tab_layout.addWidget(self.features_table)
+
+        self.features_table.setFixedWidth(250)
+        self.features_table.setFixedHeight(75)
 
     def create_project_details_widget(self):
         self.project_details_widget = QtWidgets.QWidget(self.project_tab)
@@ -110,6 +122,7 @@ class Project:
         self.create_project_details_widget()
         # Create features table
         self.create_features_table()
+        self.load_feature_count()
         # Add project tools
         self.add_tools()
         # Simple line widget separator
@@ -189,7 +202,7 @@ class Project:
                 last_feature.setAttribute("class_id", int(class_id))
             self.vlayer.updateFeature(last_feature)
         self.vlayer.triggerRepaint()
-
+        self.load_feature_count()
 
 class ProjectTabsWidget(QtWidgets.QWidget):
     def __init__(self, load_window):

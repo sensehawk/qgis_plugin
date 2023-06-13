@@ -47,11 +47,11 @@ def loadTask(task, load_inputs):
 
     # Load vectors
     try:
-        vlayer, geojson_path, loaded_feature_counts = load_vectors(project_details,
-                                                                  project_type,
-                                                                  bounds,
-                                                                  core_token,
-                                                                  logger)
+        vlayer, geojson_path = load_vectors(project_details,
+                                            project_type,
+                                            bounds,
+                                            core_token,
+                                            logger)
 
     except Exception as e:
         logger(str(e))
@@ -59,7 +59,6 @@ def loadTask(task, load_inputs):
 
     return {'rlayer': rlayer,
             'vlayer': vlayer,
-            'feature_counts': loaded_feature_counts,
             'project_uid': project_uid,
             'class_maps': class_maps,
             'class_groups': class_groups,
