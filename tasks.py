@@ -1,9 +1,9 @@
 from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
 from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
-from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson, get_project_reports
+from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson, get_project_reports, get_project_details
 from .sensehawk_apis.scm_apis import detect, approve
-from .utils import load_vectors, get_project_details, file_existent, organization_details
+from .utils import load_vectors, file_existent, organization_details
 import requests
 from .constants import CLIP_FUNCTION_URL
 import json
@@ -54,7 +54,8 @@ def loadTask(task, load_inputs):
                                             logger)
 
     except Exception as e:
-        logger(str(e))
+        tb = traceback.format_exc()
+        logger(str(tb), level=Qgis.Warning)
         return False
 
     return {'rlayer': rlayer,

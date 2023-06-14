@@ -79,8 +79,8 @@ class Project:
         # Populate feature counts
         self.features_table.setRowCount(len(self.feature_counts))
         for i, (feature_type, feature_count) in enumerate(self.feature_counts):
-            feature_type_item = QtWidgets.QTableWidgetItem(feature_type)
-            feature_type_item.setBackground(QtGui.QColor(self.color_code[feature_type]))
+            feature_type_item = QtWidgets.QTableWidgetItem(str(feature_type))
+            feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
             feature_count_item = QtWidgets.QTableWidgetItem(str(feature_count))
             self.features_table.setItem(i, 0, feature_type_item)
             self.features_table.setItem(i, 1, feature_count_item)
@@ -294,6 +294,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         iface.setActiveLayer(project.vlayer)
         iface.actionZoomToLayer().trigger()
         project.project_tabs_widget = self.project_tabs_widget
+        project.project_tabs_window = self
         project.core_token = self.load_window.core_token
         project.iface = self.iface
         project.logger = self.logger

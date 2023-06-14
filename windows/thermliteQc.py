@@ -36,7 +36,7 @@ from qgis.utils import iface
 from exiftool import ExifTool
 import numpy as np
 import subprocess
-from ..utils import sort_images, upload, combobox_modifier, categorized_renderer
+from ..utils import sort_images, upload, combobox_modifier, categorized_renderer, get_presigned_post_urls
 import json
 
 
@@ -372,8 +372,10 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
             raw_image = []
             Image_num = 0
             for img in imgs_info:
-                self.upload_image_list.append(next(iter(img.keys())))
-                image = next(iter(img.keys())).split('/')[-1]
+                next_image = next(iter(img.keys()))
+                if next_image not in self.upload_image_list:
+                    self.upload_image_list.append(next_image)
+                image = next_image.split('/')[-1]
                 markerlocation = next(iter(img.values()))
                 image_type = 'Thermal Raw Image'
                 aws_image = {"location": markerlocation,
@@ -405,8 +407,6 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.active_layer.commitChanges()
         
         self.project.qgis_project.removeMapLayers([self.active_layer.id()])
-
-        # thermliteqc_json = jsonpath.replace('.geojson','tqc.geojson')
         
         with open(self.project.geojson_path, 'w') as f:
             json.dump(geojson, f)
@@ -416,14 +416,37 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         qclayer.setRenderer(renderer)
         qclayer.triggerRepaint()
         self.project.vlayer = qclayer
-     
-        upload_task_inputs = {'imageslist':self.upload_image_list,
-                              'projectUid':self.projectUid,
-                              'img_dir': self.images_dir}
-        upload_task = QgsTask.fromFunction("Load", upload, upload_task_inputs)
-        QgsApplication.taskManager().addTask(upload_task)
-        upload_task.statusChanged.connect(lambda upload_task_status: self.load_callback(upload_task_status, upload_task))
+        self.initiate_upload_process()
 
-    def load_callback(self, upload_task_status, upload_task):
+    def upload_callback(self, upload_task_status, upload_task):
+        if upload_task_status != 3:
+            return None
         result = upload_task.returned_values
         print(f"{result['num_images']} uploaded")
+        self.project.project_tabs_window.save_project()
+        self.project.project_tabs_window.logger("Project geojson saved in SenseHawk App")
+    
+    def upload_task(self, get_urls_task_status, get_urls_task):
+        if get_urls_task_status != 3:
+            return None
+        post_urls_data = get_urls_task.returned_values["response"]
+        upload_task_inputs = {'imageslist':self.upload_image_list,
+                              'projectUid':self.projectUid,
+                              'img_dir': self.images_dir,
+                              'post_urls_data': post_urls_data}
+        upload_task = QgsTask.fromFunction("Upload", upload, upload_task_inputs)
+        QgsApplication.taskManager().addTask(upload_task)
+        upload_task.statusChanged.connect(lambda upload_task_status: self.upload_callback(upload_task_status, upload_task))
+
+
+    def initiate_upload_process(self):
+        task_inputs = {'imageslist':self.upload_image_list,
+                       'projectUid':self.projectUid,
+                       'core_token': self.project.core_token,
+                       'orgUid': self.project.project_details["organization"]["uid"]}
+        get_urls_task = QgsTask.fromFunction("Get post URLs", get_presigned_post_urls, task_inputs)
+        QgsApplication.taskManager().addTask(get_urls_task)
+        get_urls_task.statusChanged.connect(lambda task_status: self.upload_task(task_status, get_urls_task))
+
+        
+

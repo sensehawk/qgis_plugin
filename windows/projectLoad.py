@@ -4,7 +4,7 @@ from qgis.core import Qgis, QgsApplication, QgsTask, QgsProject, QgsMessageLog
 from ..tasks import loadTask
 from PyQt5.QtWidgets import QLineEdit, QCompleter, QVBoxLayout, QPushButton, QComboBox
 from PyQt5.QtCore import QRect
-from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier, project_details
+from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier
 from .projectTabs import ProjectTabsWidget, Project
 
 
@@ -132,7 +132,6 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         if project_uid in self.project_tabs_widget.projects_loaded:
             self.logger("Project loaded already!")
             project_index = self.project_tabs_widget.project_uids.index(project_uid)
-            project = self.project_tabs_widget.projects_loaded[project_uid]
             self.project_tabs_widget.project_tabs_widget.setCurrentIndex(project_index)
             self.project_tabs_widget.activate_project()
             self.show_projects_loaded()

@@ -1,20 +1,15 @@
 import requests
 from urllib.request import urlopen
 import os
-from concurrent import futures
-from concurrent.futures import ProcessPoolExecutor
-import math
-from .sensehawk_apis.core_apis import get_project_geojson, save_project_geojson, get_project_details
+from .sensehawk_apis.core_apis import get_project_geojson
 import json
-from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsMapLayer, QgsRasterLayer, QgsVectorLayer
-import qgis
+from qgis.core import Qgis, QgsVectorLayer
 from qgis.utils import iface
 from qgis.core import *
-import qgis.utils
 import tempfile
 import random
 import tempfile
-from .constants import THERM_URL
+from .constants import THERM_URL, THERMAL_TAGGING_URL
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
@@ -243,9 +238,10 @@ def file_existent(project_uid, org, token):
            existing_file =  ['reflectance'] + existing_file
 
         return existing_file
-import time
-def convert_and_upload(path, image_path, projectUid):
+
+def convert_and_upload(path, image_path, projectUid, post_urls_data):
     image_name = image_path.split('/')[-1]
+    image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
     dpath = os.path.join(f'{path}/', image_name)
     image = cv2.imread(image_path, 0)
     colormap = plt.get_cmap('inferno')
@@ -253,33 +249,36 @@ def convert_and_upload(path, image_path, projectUid):
     heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0/65535.0))
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
     cv2.imwrite(dpath, heatmap)
-
-    Container = 'IR_rawimage'
-    REGION = "ap-south-1"
-    BUCKET = "sensehawk-mumbai"
-
-    FILEPATH = dpath
-    UPLOADKEY = "hawkai/{}/{}/{}".format(projectUid, Container, image_name)
-  
-    # s3_client = boto3.client("s3",
-    #                             aws_access_key_id=AWS_UPLOAD_ACCESS_KEY_ID,
-    #                             aws_secret_access_key=AWS_UPLOAD_SECRET_ACCESS_KEY,
-    #                             region_name=REGION)
-    
-    # s3_client.upload_file(FILEPATH, BUCKET, UPLOADKEY, ExtraArgs={"ContentType": "image/jpeg"})
+    post_url = post_urls_data[image_key]["url"]
+    post_data = post_urls_data[image_key]["fields"]
+    files = {'file': open(image_path, 'rb')}
+    requests.post(post_url, data=post_data, files=files)
 
 def upload(task ,inputs):
     images = inputs['imageslist']
     image_path = inputs['img_dir']
     projectUid = inputs['projectUid']
+    post_urls_data = inputs['post_urls_data']
     path = os.path.join(f'{image_path}/', 'inferno_scale') 
 
     if not os.path.exists(path):
         os.mkdir(path)
 
     for image in images:
-        t = threading.Thread(target=convert_and_upload, args=(path, image, projectUid)).start()
+        threading.Thread(target=convert_and_upload, args=(path, image, projectUid, post_urls_data)).start()
 
     return {'num_images':len(images),
             'task': task.description()}
 
+def get_presigned_post_urls(task, inputs):
+    upload_image_list = inputs["imageslist"]
+    org_uid = inputs["orgUid"]
+    project_uid = inputs["projectUid"]
+    core_token = inputs["core_token"]
+    upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{i.split('/')[-1]}" for i in upload_image_list]
+    data = {"project_uid": project_uid, "organization": org_uid, "object_keys": upload_keys}
+    url = THERMAL_TAGGING_URL + "/presigned_post_urls"
+    headers = {"Authorization": f"Token {core_token}"}
+    response = requests.get(url, json=data, headers=headers).json()
+    return {'task': task.description(),
+            'response': response}
