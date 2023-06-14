@@ -7,11 +7,11 @@ from qgis.PyQt.QtCore import Qt
 from PyQt5.QtGui import QImage
 from PyQt5 import QtCore, QtGui, QtWidgets 
 import os
+import cv2
 import tempfile
 from urllib import request
 import threading
 from .thermliteQc import PhotoViewer
-
 
 THERM_VIEWER, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'therm_viewer.ui'))
 
@@ -85,8 +85,9 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.setupUi(self)
         self.therm_tools = therm_tools
         self.project = project
+        self.active_layer = self.project.vlayer
         self.generate_service_objects()
-        self.get_image_urls()
+        # self.get_image_urls()
         iface.addDockWidget(Qt.RightDockWidgetArea, self)
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
         self.project.vlayer.selectionChanged.connect(lambda x: self.show_raw_images(x))
@@ -100,20 +101,20 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
 
     def generate_service_objects(self):
         self.uid_map = {}
-        self.service_objects = []
+        # self.service_objects = {}
         g = json.load(open(self.project.geojson_path))
         for f in g["features"]:
             raw_images = f["properties"].get("raw_images")
             uid = f["properties"].get("uid")
-            if not raw_images or not uid:
+            if not raw_images and not uid:
                 continue
             self.uid_map[uid] = raw_images
-            self.service_objects += [r["service"] for r in raw_images] 
+            # self.service_objects[uid] =  [r["service"] for r in raw_images] 
 
-    def get_image_urls(self):
+    def get_image_urls(self, service_objects):
         data = {"project_uid": self.project.project_details["uid"], 
                 "organization": self.project.project_details.get("organization", {}).get("uid", None),
-                "service_objects": self.service_objects}
+                "service_objects": service_objects}
         self.image_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", headers={"Authorization": f"Token {self.project.core_token}"}, json=data).json()
     
     def hide_widget(self):
@@ -124,19 +125,39 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         if not os.path.exists(savepath):
             request.urlretrieve(url, savepath)
     
+
     def show_raw_images(self, selected_features):
         if not selected_features:
             return None
         feature = self.project.vlayer.getFeature(selected_features[-1])
-        uid = feature["uid"]
-        if uid not in self.uid_map:
+        self.uid = feature["uid"]
+        
+        if not self.active_layer.fields().indexFromName('uid') == -1:  self.uid_name.setText(feature['uid']) 
+        else: self.uid_name.setText("N/A") 
+        if not self.active_layer.fields().indexFromName('timestamp') == -1: self.timestamp.setText(feature['timestamp'])
+        else: self.timestamp.setText("N/A")
+        if not self.active_layer.fields().indexFromName('string_number') == -1:  self.string_number.setText(feature['string_number'])
+        else: self.string_number.setText("N/A")
+        if not self.active_layer.fields().indexFromName('tempereature_min') == -1:  self.min_temp.setText(str(feature['temperature_min']))
+        else: self.min_temp.setText("N/A")
+        if not self.active_layer.fields().indexFromName('tempereature_max') == -1:   self.max_temp.setTexts(str(feature['temperature_max']))
+        else: self.max_temp.setText("N/A")
+        if not self.active_layer.fields().indexFromName('temperature_difference') == -1:  self.delta_temp.setText(str(feature['temperature_difference']))
+        else: self.delta_temp.setText('N/A')
+
+        if self.uid not in self.uid_map:
             print("No raw images for this feature")
             return None
-        raw_images = self.uid_map[uid]
+        raw_images = self.uid_map[self.uid]
         self.image_paths = []
+        self.marker_location = []
         # Download images
+        service_objects = [r["service"] for r in raw_images] 
+        self.get_image_urls(service_objects)
+
         for r in raw_images:
             key = r["service"]["key"]
+            self.marker_location.append(r['location'])
             url = self.image_urls.get(key, None)
             save_path = os.path.join(self.images_dir, key.split("/")[-1])
             self.image_paths.append(save_path)
@@ -147,10 +168,26 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.image_index = 0
         self.previous_img.setEnabled(False)
         self.nxt_img.setEnabled(True)
-        self.show_image(self.image_paths[0])
+        self.show_image(self.image_paths[0],self.marker_location[0])
+
+    def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
+        x1 = max(int(x-w/2), 0)
+        y1 = max(int(y-h/2), 0)
+        x2 = min(int(x+w/2), image_w)
+        y2 = min(int(y+h/2), image_h)
+        image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0, 0, 255], 2, 1)
+        image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
+        return image
     
-    def show_image(self, image_path):
-        self.photo_viewer.setPhoto(QtGui.QPixmap(image_path))
+    def show_image(self, image_path, marker):
+        x = marker[0]
+        y = marker[1]
+        img = cv2.imread(image_path)
+        self.painted_img = self.draw_box(img, x , y)
+        self.height, self.width, self.channel = self.painted_img.shape
+        self.bytesPerLine = 3 * self.width
+        qImg = QImage(self.painted_img.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        self.photo_viewer.setPhoto(QtGui.QPixmap(qImg))
 
     def change_image_index(self, change):
         self.image_index += change
@@ -165,5 +202,5 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         else:
             self.nxt_img.setEnabled(True)
 
-        self.show_image(self.image_paths[self.image_index])
+        self.show_image(self.image_paths[self.image_index], self.marker_location[self.image_index])
 
