@@ -3,6 +3,7 @@ import requests
 import json
 from qgis.PyQt import QtWidgets, uic
 from qgis.utils import iface
+from qgis.core import QgsApplication, QgsTask
 from qgis.PyQt.QtCore import Qt 
 from PyQt5.QtGui import QImage
 from PyQt5 import QtCore, QtGui, QtWidgets 
@@ -12,6 +13,7 @@ import tempfile
 from urllib import request
 import threading
 from .thermliteQc import PhotoViewer
+from ..utils import get_image_urls
 
 THERM_VIEWER, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'therm_viewer.ui'))
 
@@ -101,7 +103,7 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
 
     def generate_service_objects(self):
         self.uid_map = {}
-        # self.service_objects = {}
+        self.service_objects = {}
         g = json.load(open(self.project.geojson_path))
         for f in g["features"]:
             raw_images = f["properties"].get("raw_images")
@@ -109,13 +111,29 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
             if not raw_images and not uid:
                 continue
             self.uid_map[uid] = raw_images
-            # self.service_objects[uid] =  [r["service"] for r in raw_images] 
+            self.service_objects[uid] =  [r["service"] for r in raw_images] 
+        
+        # get all rawimages download urls 
+        self.get_image_urls()
 
-    def get_image_urls(self, service_objects):
+    def get_img_urls_callback(self, get_img_url_task_status, get_img_urls):
+        if get_img_url_task_status != 3:
+            return None
+        result = get_img_urls.returned_values
+        self.image_urls = result['image_urls']
+
+
+    def get_image_urls(self):
         data = {"project_uid": self.project.project_details["uid"], 
                 "organization": self.project.project_details.get("organization", {}).get("uid", None),
-                "service_objects": service_objects}
-        self.image_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", headers={"Authorization": f"Token {self.project.core_token}"}, json=data).json()
+                "service_objects": self.service_objects}
+        image_urls_inpurt = {'data':data,
+                              'token':self.project.core_token}
+        get_img_urls = QgsTask.fromFunction("Upload", get_image_urls, image_urls_inpurt)
+        QgsApplication.taskManager().addTask(get_img_urls)
+        get_img_urls.statusChanged.connect(lambda get_img_url_task_status: self.get_img_urls_callback(get_img_url_task_status, get_img_urls))
+
+        # self.image_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", headers={"Authorization": f"Token {self.project.core_token}"}, json=data).json()
     
     def hide_widget(self):
         self.hide()
@@ -152,8 +170,8 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.image_paths = []
         self.marker_location = []
         # Download images
-        service_objects = [r["service"] for r in raw_images] 
-        self.get_image_urls(service_objects)
+        # service_objects = [r["service"] for r in raw_images] 
+        # self.get_image_urls(service_objects)
 
         for r in raw_images:
             key = r["service"]["key"]
@@ -175,8 +193,9 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         y1 = max(int(y-h/2), 0)
         x2 = min(int(x+w/2), image_w)
         y2 = min(int(y+h/2), image_h)
-        image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0, 0, 255], 2, 1)
         image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
+        if  x and y :
+            image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0, 0, 255], 2, 1)
         return image
     
     def show_image(self, image_path, marker):

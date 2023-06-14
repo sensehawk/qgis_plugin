@@ -282,3 +282,11 @@ def get_presigned_post_urls(task, inputs):
     response = requests.get(url, json=data, headers=headers).json()
     return {'task': task.description(),
             'response': response}
+
+def get_image_urls(task , inputs):
+    token  = inputs['token']
+    data = inputs['data']
+    image_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", headers={"Authorization": f"Token {token}"}, json=data).json()
+    
+    return {'task':task.description(),
+            'image_urls':image_urls}
