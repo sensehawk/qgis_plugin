@@ -73,8 +73,10 @@ class HomeWindow(QtWidgets.QWidget):
         self.dock_widget = dock_widget
         self.dock_widget.setWidget(self)
 
-    def asset_info(self, load_task_status ,load_asset_task):
-
+    def asset_info(self, load_asset_task_status ,load_asset_task):
+        if load_asset_task_status != 3:
+            return None
+        
         result = load_asset_task.returned_values
         # task response bit slow in few circumstances Dont remove below peice of code 
         if not 'asset_list' in result:
@@ -94,7 +96,7 @@ class HomeWindow(QtWidgets.QWidget):
         org = self.org_details[self.org.currentText()]
         load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
         QgsApplication.taskManager().addTask(load_asset_task)
-        load_asset_task.statusChanged.connect(lambda load_task_status: self.asset_info(load_task_status, load_asset_task))
+        load_asset_task.statusChanged.connect(lambda load_asset_task_status: self.asset_info(load_asset_task_status, load_asset_task))
 
     
     def asset_tree(self):
