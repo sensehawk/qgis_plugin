@@ -161,7 +161,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     logger("Saving project geojson...")
 
     # Load vectors
-    vlayer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
+    vlayer = QgsVectorLayer(geojson_path+ "|geometrytype=Polygon", geojson_path, "ogr")
 
     return vlayer, geojson_path
 
