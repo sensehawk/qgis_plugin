@@ -103,7 +103,7 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
 
     def generate_service_objects(self):
         self.uid_map = {}
-        self.service_objects = {}
+        self.service_objects = []
         g = json.load(open(self.project.geojson_path))
         for f in g["features"]:
             raw_images = f["properties"].get("raw_images")
@@ -111,10 +111,10 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
             if not raw_images and not uid:
                 continue
             self.uid_map[uid] = raw_images
-            self.service_objects[uid] =  [r["service"] for r in raw_images] 
+            self.service_objects +=  [r["service"] for r in raw_images] 
         
         # get all rawimages download urls 
-        self.get_image_urls()
+        self.start_get_image_urls()
 
     def get_img_urls_callback(self, get_img_url_task_status, get_img_urls):
         if get_img_url_task_status != 3:
@@ -122,14 +122,13 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         result = get_img_urls.returned_values
         self.image_urls = result['image_urls']
 
-
-    def get_image_urls(self):
+    def start_get_image_urls(self):
         data = {"project_uid": self.project.project_details["uid"], 
                 "organization": self.project.project_details.get("organization", {}).get("uid", None),
                 "service_objects": self.service_objects}
-        image_urls_inpurt = {'data':data,
-                              'token':self.project.core_token}
-        get_img_urls = QgsTask.fromFunction("Upload", get_image_urls, image_urls_inpurt)
+        image_urls_input = {'data':data,
+                            'token':self.project.core_token}
+        get_img_urls = QgsTask.fromFunction("Get image urls", get_image_urls, image_urls_input)
         QgsApplication.taskManager().addTask(get_img_urls)
         get_img_urls.statusChanged.connect(lambda get_img_url_task_status: self.get_img_urls_callback(get_img_url_task_status, get_img_urls))
 
