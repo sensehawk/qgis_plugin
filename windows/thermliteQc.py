@@ -352,7 +352,8 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
             print('adding in new issue')
             self.temp_issueUid += 1
             sfeature['temp_uid'] = float(self.temp_issueUid)
-            sfeature['timestamp'] = str(self.sorted_timestamps[self.image_index])
+            dt = unicode(self.sorted_timestamps[self.image_index].replace(microsecond=0))
+            sfeature['timestamp'] = str(dt)
             sfeature['temperature_difference'] = float(self.delta_temp.text())
             sfeature['temperature_min']  = float(self.min_temp)
             sfeature['temperature_max'] = float(self.max_temp)

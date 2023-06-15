@@ -159,17 +159,17 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         feature = self.project.vlayer.getFeature(selected_features[-1])
         self.uid = feature["uid"]
         
-        if not self.active_layer.fields().indexFromName('uid') == -1:  self.uid_name.setText(str(feature['uid'])) 
+        if not self.active_layer.fields().indexFromName('uid') == -1 and feature['uid'] :  self.uid_name.setText(feature['uid']) 
         else: self.uid_name.setText("N/A") 
-        if not self.active_layer.fields().indexFromName('timestamp') == -1: self.timestamp.setText(str(feature['timestamp']))
+        if not self.active_layer.fields().indexFromName('timestamp') == -1 and feature['timestamp']: self.timestamp.setText(feature['timestamp'])
         else: self.timestamp.setText("N/A")
-        if not self.active_layer.fields().indexFromName('string_number') == -1:  self.string_number.setText(str(feature['string_number']))
+        if not self.active_layer.fields().indexFromName('string_number') == -1 and feature['string_number']:  self.string_number.setText(feature['string_number'])
         else: self.string_number.setText("N/A")
-        if not self.active_layer.fields().indexFromName('tempereature_min') == -1:  self.min_temp.setText(str(feature['temperature_min']))
+        if not self.active_layer.fields().indexFromName('temperature_min') == -1 and feature['temperature_min']:  self.min_temp.setText(str(feature['temperature_min']))
         else: self.min_temp.setText("N/A")
-        if not self.active_layer.fields().indexFromName('tempereature_max') == -1:   self.max_temp.setTexts(str(feature['temperature_max']))
+        if not self.active_layer.fields().indexFromName('temperature_max') == -1 and feature['temperature_max']:   self.max_temp.setText(str(feature['temperature_max']))
         else: self.max_temp.setText("N/A")
-        if not self.active_layer.fields().indexFromName('temperature_difference') == -1:  self.delta_temp.setText(str(feature['temperature_difference']))
+        if not self.active_layer.fields().indexFromName('temperature_difference') == -1 and feature['temperature_difference']:  self.delta_temp.setText(str(feature['temperature_difference']))
         else: self.delta_temp.setText('N/A')
 
         if self.uid not in self.uid_map:
