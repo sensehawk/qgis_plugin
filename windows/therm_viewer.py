@@ -89,7 +89,6 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.project = project
         self.active_layer = self.project.vlayer
         self.generate_service_objects()
-        # self.get_image_urls()
         iface.addDockWidget(Qt.RightDockWidgetArea, self)
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
         self.project.vlayer.selectionChanged.connect(lambda x: self.show_raw_images(x))
@@ -100,10 +99,12 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.image_layout.addWidget(self.photo_viewer)
         self.previous_img.clicked.connect(lambda: self.change_image_index(-1))
         self.nxt_img.clicked.connect(lambda: self.change_image_index(1))
+        self.logger = self.project.logger
 
     def generate_service_objects(self):
         self.uid_map = {}
         self.service_objects = []
+        self.image_urls_loaded = False
         g = json.load(open(self.project.geojson_path))
         for f in g["features"]:
             raw_images = f["properties"].get("raw_images")
@@ -121,6 +122,7 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
             return None
         result = get_img_urls.returned_values
         self.image_urls = result['image_urls']
+        self.image_urls_loaded = True
 
     def start_get_image_urls(self):
         data = {"project_uid": self.project.project_details["uid"], 
@@ -144,6 +146,9 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
     
 
     def show_raw_images(self, selected_features):
+        if not self.image_urls_loaded:
+            self.logger("Still loading image urls")
+            return None
         if not selected_features:
             return None
         feature = self.project.vlayer.getFeature(selected_features[-1])
@@ -208,6 +213,9 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.photo_viewer.setPhoto(QtGui.QPixmap(qImg))
 
     def change_image_index(self, change):
+        if not self.image_urls_loaded:
+            self.logger("Still loading image urls")
+            return None
         self.image_index += change
         if self.image_index <= 0:
             self.image_index = 0
