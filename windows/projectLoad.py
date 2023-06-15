@@ -37,7 +37,10 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.iface = iface
         self.home = homeobj
         self.core_token = self.home.core_token
-        self.asset_uid = self.home.asset_uid
+        try:
+            self.asset_uid = self.home.asset_uid
+        except AttributeError:
+            self.homeobj.logger("Select Asset", level=Qgis.Warning)
         self.org_uid = self.home.org_uid
         self.org_contianer_details = self.home.org_contianer_details
         self.group_details = group_details(self.asset_uid, self.org_uid, self.core_token) # list of all groups in asset and there respective projects are loaded all at once 

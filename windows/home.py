@@ -93,7 +93,10 @@ class HomeWindow(QtWidgets.QWidget):
         
 
     def org_tree(self, value):
-        org = self.org_details[self.org.currentText()]
+        try:
+            org = self.org_details[self.org.currentText()]
+        except KeyError:
+            return None
         load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
         QgsApplication.taskManager().addTask(load_asset_task)
         load_asset_task.statusChanged.connect(lambda load_asset_task_status: self.asset_info(load_asset_task_status, load_asset_task))

@@ -28,8 +28,9 @@ class Project:
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
         self.project_tab_layout.setContentsMargins(10, 10, 10, 10)
         self.tools_widget = None
-        # Dummy active tool widget
+        # Dummy active tool widget and tool dock widget
         self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
+        self.active_docktool_widget = QtWidgets.QDockWidget()
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
@@ -220,27 +221,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.iface = iface
         self.setupKeyboardShortcuts()
 
-    def setupKeyboardShortcuts(self):
-        # Create gis shortcuts generic to all projects
-        self.qgis_shortcuts = {
-            "E": "self.active_project.vlayer.startEditing()",
-            "Return": "self.active_project.vlayer.removeSelection()\n"
-                      "self.active_project.vlayer.commitChanges()",
-            "F": "self.active_project.vlayer.startEditing()\n"
-                 "iface.actionAddFeature().trigger()",
-            "S": "iface.actionSelect().trigger()",
-            "Z": "iface.actionZoomToLayer().trigger()",
-            "P": "iface.showAttributeTable(self.active_project.vlayer())"
-        }
-        # Create a key emitter that sends the key presses
-        self.key_emitter = KeypressEmitter()
-        # Connect the key emitter to the key eater that performs required shortcuts
-        self.key_emitter.signal.connect(lambda x: self.key_eater(x))
-        # Create keypress event filter to consume the key presses from iface and send it to key_emitter
-        self.keypress_filter = KeypressFilter(self.key_emitter)
-        # Install key press filter to iface's map canvas
-        self.iface.mapCanvas().installEventFilter(self.keypress_filter)
-
     def setupUi(self):
 
         # Create a group of widgets and define layout
@@ -277,6 +257,41 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         save_project_button.setText("Save Project")
         save_project_button.clicked.connect(self.save_project)
         main_layout.addWidget(save_project_button)
+
+    def setupKeyboardShortcuts(self):
+        # Create gis shortcuts generic to all projects
+        self.qgis_shortcuts = {
+            "E": "self.active_project.vlayer.startEditing()",
+            "Return": "self.active_project.vlayer.removeSelection()\n"
+                      "self.active_project.vlayer.commitChanges()",
+            "F": "self.active_project.vlayer.startEditing()\n"
+                 "iface.actionAddFeature().trigger()",
+            "S": "iface.actionSelect().trigger()",
+            "Z": "iface.actionZoomToLayer().trigger()",
+            "P": "iface.showAttributeTable(self.active_project.vlayer())"
+        }
+        # Create a key emitter that sends the key presses
+        self.key_emitter = KeypressEmitter()
+        # Connect the key emitter to the key eater that performs required shortcuts
+        self.key_emitter.signal.connect(lambda x: self.key_eater(x))
+        # Create keypress event filter to consume the key presses from iface and send it to key_emitter
+        self.keypress_filter = KeypressFilter(self.key_emitter)
+        # Install key press filter to iface's map canvas
+        self.iface.mapCanvas().installEventFilter(self.keypress_filter)
+    
+    def key_eater(self, x):
+        # Connect to active projects feature shortcuts and qgis shortcuts
+        key = QtGui.QKeySequence(x).toString()
+        if not self.active_project:
+            return None
+        if key in self.active_project.feature_shortcuts:
+            self.active_project.vlayer.commitChanges()
+            self.active_project.vlayer.startEditing()
+            feature_change_name = self.active_project.feature_shortcuts.get(key, None)
+            self.active_project.change_feature_type(feature_change_name)
+        elif key in self.qgis_shortcuts:
+            qgis_shortcut_function = self.qgis_shortcuts[key]
+            exec(compile(qgis_shortcut_function, "<string>", "exec"))
 
     def back_to_load(self):
         self.load_window.dock_widget.setWidget(self.load_window)
@@ -387,17 +402,3 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         del self.projects_loaded[self.active_project.project_details["uid"]]
         # Remove project tab
         self.project_tabs_widget.removeTab(self.project_tabs_widget.currentIndex())
-
-    def key_eater(self, x):
-        # Connect to active projects feature shortcuts and qgis shortcuts
-        key = QtGui.QKeySequence(x).toString()
-        if not self.active_project:
-            return None
-        if key in self.active_project.feature_shortcuts:
-            self.active_project.vlayer.commitChanges()
-            self.active_project.vlayer.startEditing()
-            feature_change_name = self.active_project.feature_shortcuts.get(key, None)
-            self.active_project.change_feature_type(feature_change_name)
-        elif key in self.qgis_shortcuts:
-            qgis_shortcut_function = self.qgis_shortcuts[key]
-            exec(compile(qgis_shortcut_function, "<string>", "exec"))

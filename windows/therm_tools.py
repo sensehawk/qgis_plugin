@@ -95,7 +95,10 @@ class ThermToolsWidget(QtWidgets.QWidget):
     def ThermliteTagging(self):
         if not self.thermlite_tagging_widget:
             self.thermlite_tagging_widget = ThermliteQcWindow(self, self.project)
-        self.project.active_tool_widget.hide()            
+        self.project.active_tool_widget.hide()
+        if self.project.active_docktool_widget != self.thermlite_tagging_widget:
+            self.project.active_docktool_widget.hide()
+            self.project.active_docktool_widget = self.thermlite_tagging_widget         
         self.thermlite_tagging_widget.show()
         self.uncheck_all_buttons()
         self.thermliteQcButton.setChecked(True)
@@ -104,6 +107,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if not self.therm_viewer_widget:
             self.therm_viewer_widget = ThermViewerDockWidget(self, self.project)
         self.project.active_tool_widget.hide()
+        if self.project.active_docktool_widget != self.therm_viewer_widget:
+            self.project.active_docktool_widget.hide()
+            self.project.active_docktool_widget = self.therm_viewer_widget
         self.therm_viewer_widget.show()
         self.uncheck_all_buttons()
         self.viewer_button.setChecked(True)

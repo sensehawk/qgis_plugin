@@ -149,7 +149,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
                                                                        raster_bounds[2],
                                                                        raster_bounds[3])).asJson())
         extent_feature = {"type": "Feature",
-                          "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None, "class": None},
+                          "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None, "class": None, "uid": None},
                           "geometry": extent_geometry, "workflow": {}}
         geojson["features"] += [extent_feature]
 
@@ -242,30 +242,37 @@ def file_existent(project_uid, org, token):
 def convert_and_upload(path, image_path, projectUid, post_urls_data):
     image_name = image_path.split('/')[-1]
     image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
-    dpath = os.path.join(f'{path}/', image_name)
+    dpath = os.path.join(f'{path}', image_name)
     image = cv2.imread(image_path, 0)
     colormap = plt.get_cmap('inferno')
     heatmap = (colormap(image) * 2**16)[:,:,:3].astype(np.uint16)
     heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0/65535.0))
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(dpath, heatmap)
-    post_url = post_urls_data[image_key]["url"]
-    post_data = post_urls_data[image_key]["fields"]
-    files = {'file': open(image_path, 'rb')}
-    requests.post(post_url, data=post_data, files=files)
+    if cv2.imwrite(dpath, heatmap):
+        post_url = post_urls_data[image_key]["url"]
+        post_data = post_urls_data[image_key]["fields"]
+        files = {'file': open(dpath, 'rb')}
+        requests.post(post_url, data=post_data, files=files)
+    else:
+        print("Unable to write inferno image")
 
 def upload(task ,inputs):
     images = inputs['imageslist']
     image_path = inputs['img_dir']
     projectUid = inputs['projectUid']
     post_urls_data = inputs['post_urls_data']
-    path = os.path.join(f'{image_path}/', 'inferno_scale') 
+    path = os.path.join(f'{image_path}', 'inferno_scale')
 
     if not os.path.exists(path):
         os.mkdir(path)
 
     for image in images:
-        threading.Thread(target=convert_and_upload, args=(path, image, projectUid, post_urls_data)).start()
+        print(image)
+        t = threading.Thread(target=convert_and_upload, args=(path, image, projectUid, post_urls_data))
+        t.start()
+    
+    if images:
+        t.join()
 
     return {'num_images':len(images),
             'task': task.description()}

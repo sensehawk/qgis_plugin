@@ -26,8 +26,7 @@ import cv2
 
 from qgis.PyQt.QtCore import Qt 
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import QgsVectorLayer, QgsApplication, QgsTask, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat
-from qgis.core import QgsField
+from qgis.core import QgsVectorLayer, QgsApplication, QgsTask, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat, Qgis, QgsField
 from PyQt5.QtCore import QVariant
 
 from PyQt5.QtGui import QImage
@@ -345,6 +344,10 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         
         print(sx,sy ,'and' , self.issue_list[-1])
 
+        if not self.delta_temp.text():
+            self.project.logger("No temperature detected", level=Qgis.Warning)
+            return None
+
         if sfeature['temp_uid'] is None or [sx, sy] != self.issue_list[-1]:
             print('adding in new issue')
             self.temp_issueUid += 1
@@ -390,22 +393,21 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
 
             aws_tagged_images[uid] = raw_image
         
-        self.active_layer.commitChanges()
-
         with open(self.project.geojson_path, 'r') as f:
             file = json.load(f)
 
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
         for feature in features:
-            mapping_uid  = feature['properties']['temp_uid']
-            feature['properties']['raw_images'] = aws_tagged_images[mapping_uid]
+            mapping_uid  = feature['properties'].get('temp_uid', None)
+            if not mapping_uid:
+                geojson['features'].append(feature)
+                continue
+            feature['properties']['raw_images'] = aws_tagged_images[int(mapping_uid)]
             feature['properties'].pop('temp_uid')
             feature['properties'].pop('num_images_tagged')
             geojson['features'].append(feature)
 
-        self.active_layer.commitChanges()
-        
         self.project.qgis_project.removeMapLayers([self.active_layer.id()])
         
         with open(self.project.geojson_path, 'w') as f:

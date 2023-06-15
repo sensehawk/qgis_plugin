@@ -100,6 +100,11 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.previous_img.clicked.connect(lambda: self.change_image_index(-1))
         self.nxt_img.clicked.connect(lambda: self.change_image_index(1))
         self.logger = self.project.logger
+        self.height, self.width = 512, 640
+    
+    def hide_widget(self):
+        self.hide()
+        self.therm_tools.uncheck_all_buttons()
 
     def generate_service_objects(self):
         self.uid_map = {}
@@ -154,11 +159,11 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         feature = self.project.vlayer.getFeature(selected_features[-1])
         self.uid = feature["uid"]
         
-        if not self.active_layer.fields().indexFromName('uid') == -1:  self.uid_name.setText(feature['uid']) 
+        if not self.active_layer.fields().indexFromName('uid') == -1:  self.uid_name.setText(str(feature['uid'])) 
         else: self.uid_name.setText("N/A") 
-        if not self.active_layer.fields().indexFromName('timestamp') == -1: self.timestamp.setText(feature['timestamp'])
+        if not self.active_layer.fields().indexFromName('timestamp') == -1: self.timestamp.setText(str(feature['timestamp']))
         else: self.timestamp.setText("N/A")
-        if not self.active_layer.fields().indexFromName('string_number') == -1:  self.string_number.setText(feature['string_number'])
+        if not self.active_layer.fields().indexFromName('string_number') == -1:  self.string_number.setText(str(feature['string_number']))
         else: self.string_number.setText("N/A")
         if not self.active_layer.fields().indexFromName('tempereature_min') == -1:  self.min_temp.setText(str(feature['temperature_min']))
         else: self.min_temp.setText("N/A")
@@ -176,7 +181,6 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         # Download images
         # service_objects = [r["service"] for r in raw_images] 
         # self.get_image_urls(service_objects)
-
         for r in raw_images:
             key = r["service"]["key"]
             self.marker_location.append(r['location'])
@@ -186,31 +190,22 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
             t = threading.Thread(target=self.download_image, args=(url, save_path))
             t.start()
         # Only join the last download thread to the main thread
-        t.join()
-        self.image_index = 0
-        self.previous_img.setEnabled(False)
-        self.nxt_img.setEnabled(True)
-        self.show_image(self.image_paths[0],self.marker_location[0])
-
-    def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
-        x1 = max(int(x-w/2), 0)
-        y1 = max(int(y-h/2), 0)
-        x2 = min(int(x+w/2), image_w)
-        y2 = min(int(y+h/2), image_h)
-        image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
-        if  x and y :
-            image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0, 0, 255], 2, 1)
-        return image
+        if raw_images:
+            t.join()
+            self.image_index = 0
+            self.previous_img.setEnabled(False)
+            self.nxt_img.setEnabled(True)
+            self.show_image(self.image_paths[0],self.marker_location[0])
+        else:
+            self.previous_img.setEnabled(False)
+            self.nxt_img.setEnabled(False)
     
     def show_image(self, image_path, marker):
         x = marker[0]
         y = marker[1]
-        img = cv2.imread(image_path)
-        self.painted_img = self.draw_box(img, x , y)
-        self.height, self.width, self.channel = self.painted_img.shape
-        self.bytesPerLine = 3 * self.width
-        qImg = QImage(self.painted_img.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.photo_viewer.setPhoto(QtGui.QPixmap(qImg))
+        img = QtGui.QPixmap(image_path)
+        print(image_path)
+        self.photo_viewer.setPhoto(img)
 
     def change_image_index(self, change):
         if not self.image_urls_loaded:
