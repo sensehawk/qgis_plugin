@@ -143,6 +143,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         load_task_inputs = {"project_uid": project_uid,
                             "project_type": project_type,
                             "core_token": self.core_token,
+                            "org_uid":self.org_uid,
                             "logger": self.logger}
         load_task = QgsTask.fromFunction("Load", loadTask, load_task_inputs)
         QgsApplication.taskManager().addTask(load_task)

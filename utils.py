@@ -9,7 +9,7 @@ from qgis.core import *
 import tempfile
 import random
 import tempfile
-from .constants import THERM_URL, THERMAL_TAGGING_URL
+from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
@@ -166,7 +166,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     return vlayer, geojson_path
 
 def project_details( group, org, token):
-    url = f'https://core-server.sensehawk.com/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
+    url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     project_details = response.json()['results']
@@ -180,7 +180,7 @@ def project_details( group, org, token):
 
 
 def group_details(asset, org, token):
-    url = f'https://core-server.sensehawk.com/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=10&organization={org}'
+    url = CORE_URL + f'/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=10&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     group_details = response.json()['results']
@@ -194,7 +194,7 @@ def group_details(asset, org, token):
 
 
 def asset_details(task ,org, token): # fetching asset and org_container details 
-    url = f'https://api.sensehawk.com/v1/assets/?organization={org}'
+    url = API_SENSEHAWK + f'/v1/assets/?organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     asset_details = response.json()['assets']
@@ -202,7 +202,7 @@ def asset_details(task ,org, token): # fetching asset and org_container details
     for asset in asset_details:
         asset_list[asset['name']] = asset['uid']
     
-    container_url =f'https://core-server.sensehawk.com/api/v1/containers/?groups=true&page=1&page_size=10&organization={org}'
+    container_url = CORE_URL + f'/api/v1/containers/?groups=true&page=1&page_size=10&organization={org}'
     container_response = requests.get(container_url, headers=headers)
     org_contianer_details = container_response.json()['results']
 
@@ -212,7 +212,7 @@ def asset_details(task ,org, token): # fetching asset and org_container details
 
 
 def organization_details(token):
-    url = 'https://api.sensehawk.com/v1/organizations/?limit=9007199254740991&page=1'
+    url = API_SENSEHAWK + '/v1/organizations/?limit=9007199254740991&page=1'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     org_details = response.json()['organizations']

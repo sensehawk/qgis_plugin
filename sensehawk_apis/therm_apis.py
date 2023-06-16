@@ -3,17 +3,17 @@ import os
 import requests
 from ..constants import THERM_URL
 
-def get_therm_classmaps():
+def get_therm_classmaps(core_token, org_uid):
     # IDs and class names of all the classes defined in Therm
-    class_maps_path = os.path.join(os.path.dirname(__file__), "therm_classmaps.json")
-    with open(class_maps_path, 'r') as fi:
-        therm_classes = json.load(fi)
+    headers = {'Authorization':f'Token {core_token}'}
+    respones = requests.get(THERM_URL + f'/viewer/config?organization={org_uid}', headers=headers)
+    therm_classes = respones.json()
     therm_classmaps = {}
     for i in range(len(therm_classes)):
         therm_class = therm_classes[i]
         class_name = therm_class["class_name"]
-        therm_classmaps[class_name] = therm_class
-        therm_classmaps[class_name]["name"] = class_name
+        therm_classmaps[class_name] = therm_class  # {hotspot = {}}
+        therm_classmaps[class_name]["name"] = class_name 
         # We will use the same order for keyboard shortcuts later
         therm_classmaps[class_name]["key"] = str(i)
         # Color is moved into properties key

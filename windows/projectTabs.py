@@ -49,12 +49,15 @@ class Project:
                 for i in self.class_maps}
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
 
+
     def import_geojson(self, geojson_path):
         if geojson_path:
             import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
             imported_features = [feature for feature in import_layer.getFeatures()]
             self.vlayer.dataProvider().addFeatures(imported_features)
             self.vlayer.triggerRepaint()
+            self.vlayer.featureAdded.connect(self.load_feature_count)
+
 
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
