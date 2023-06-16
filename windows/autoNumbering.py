@@ -39,6 +39,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         super(ThermNumberingWidget, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AutoNumbering.ui'), self)
         self.thermToolobj = thermToolobj
+        self.projectuid = thermToolobj.project_details['uid']
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
         self.approve.clicked.connect(self.string_numbering)
@@ -76,7 +77,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         #Grouping issues falling in Parent table and updating Parent Trow and Tcolumn number to issuesObj 
         update_issue_tRow_tColumn(featuresobjlist, Vlayer) 
         # Updating row and column to issuesObj 
-        update_issue_Row_column(featuresobjlist, Vlayer, module_height, module_width, angle) 
+        update_issue_Row_column(self.projectuid , featuresobjlist, Vlayer, module_height, module_width, angle) 
             
      
         """String NUmbering"""

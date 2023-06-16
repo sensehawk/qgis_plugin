@@ -12,7 +12,11 @@ def field_constructor(Vlayer):
     if Vlayer.fields().indexFromName('string_number') == -1:
         fieldz = QgsField('string_number' , QVariant.String)
         Vlayer.dataProvider().addAttributes([fieldz])
-        Vlayer.updateFields() 
+        Vlayer.updateFields()
+    if Vlayer.fields().indexFromName('uid') == -1:
+        fieldz = QgsField('uid' , QVariant.String)
+        Vlayer.dataProvider().addAttributes([fieldz])
+        Vlayer.updateFields()
 
 def topmost_table(sorted_tables):
     for ttable in sorted_tables:
@@ -115,7 +119,7 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
         setattr(feature,'utm_y',yutm)
         
         
-def update_issue_Row_column(featuresobjlist, Vlayer, Height, Width, angle):
+def update_issue_Row_column(project_uid, featuresobjlist, Vlayer, Height, Width, angle):
     tablelist = [table for table in featuresobjlist if table.feature['class_name'] == 'table' and table.issue_obj]
     for table in tablelist:
         parentTableIssueObj = [issue for issue in table.issue_obj]
@@ -123,6 +127,7 @@ def update_issue_Row_column(featuresobjlist, Vlayer, Height, Width, angle):
         abjy = Height/2
         leftTop_y = max(table.utm_coords, key=lambda x: x[1])[1]
         leftTop_x = min(table.utm_coords, key=lambda x: x[0])[0]
+        issue_num = 1
         for IssueObj in parentTableIssueObj:
             x = (IssueObj.utm_x-leftTop_x)/Width
             y = (leftTop_y-IssueObj.utm_y)/Height
@@ -132,6 +137,8 @@ def update_issue_Row_column(featuresobjlist, Vlayer, Height, Width, angle):
             if column < (Width+abjx): column =1
             IssueObj.feature['row']= row 
             IssueObj.feature['column'] = column
+            IssueObj.feature['uid'] = f"{project_uid}:{IssueObj.feature['table_row']}:{IssueObj.feature['table_column']}~{issue_num}"
+            issue_num += 1
             Vlayer.updateFeature(IssueObj.feature)
 
 
