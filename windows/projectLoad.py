@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QLineEdit, QCompleter, QVBoxLayout, QPushButton, QCo
 from PyQt5.QtCore import QRect
 from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier
 from .projectTabs import ProjectTabsWidget, Project
-
+from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 
 class ProjectForm:
     def __init__(self, project_list, project_selection_layout, project_selection_window):
@@ -50,8 +50,8 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.group = combobox_modifier(self.group_combobox, group_list)
         self.group_uid = self.group_details[self.group.currentText()][0]
         self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
+        self.container_uid = next((item['uid'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
         self.group.currentIndexChanged.connect(self.group_tree)
-
         self.project_details = self.group_details[self.group.currentText()][1]
         project_list = list(self.project_details.keys())
 
@@ -144,6 +144,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
                             "project_type": project_type,
                             "core_token": self.core_token,
                             "org_uid":self.org_uid,
+                            'container_uid':self.container_uid,
                             "logger": self.logger}
         load_task = QgsTask.fromFunction("Load", loadTask, load_task_inputs)
         QgsApplication.taskManager().addTask(load_task)

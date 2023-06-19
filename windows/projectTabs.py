@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
-from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
+from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from .therm_tools import ThermToolsWidget
 import pandas as pd
 from datetime import datetime
@@ -56,7 +56,6 @@ class Project:
             imported_features = [feature for feature in import_layer.getFeatures()]
             self.vlayer.dataProvider().addFeatures(imported_features)
             self.vlayer.triggerRepaint()
-            self.vlayer.featureAdded.connect(self.load_feature_count)
 
 
     def add_tools(self):
@@ -376,6 +375,19 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                     iface.actionZoomToLayer().trigger()
             else:
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
+
+        canvas = iface.mapCanvas()
+        e = KeypressEmitter()
+        mpf = MousepressFilter(e)
+        canvas.viewport().installEventFilter(mpf)
+        e.signal.connect(lambda x: self.mouse_click(x, project))
+        print('initialzing mouse singles')
+
+
+    def mouse_click(self, x, project):
+        print('testing')
+        if x.button() == 2:
+            print(project.vlayer.featureCount())
 
     def close_project(self):
         if not self.active_project:

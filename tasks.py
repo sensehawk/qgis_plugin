@@ -16,6 +16,7 @@ def loadTask(task, load_inputs):
     core_token = load_inputs.get("core_token", None)
     logger = load_inputs.get("logger", None)
     org_uid = load_inputs.get("org_uid", None)
+    container_uid = load_inputs.get('container_uid', None)
     # Get project details from core
     project_details = get_project_details(project_uid, core_token)
     project_details["project_type"] = project_type
@@ -24,7 +25,7 @@ def loadTask(task, load_inputs):
         class_maps, class_groups = get_terra_classmaps(project_details, core_token)
         existing_files = None
     elif project_type == "therm":
-        class_maps, class_groups = get_therm_classmaps(core_token, org_uid), None
+        class_maps, class_groups = get_therm_classmaps(core_token, org_uid, container_uid), None
         org = project_details['organization']['uid']
         existing_files = file_existent(project_uid,org,core_token)
 
