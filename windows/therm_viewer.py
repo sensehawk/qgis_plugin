@@ -79,7 +79,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._zoom = 0
 
-class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
+class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
     def __init__(self, therm_tools, project):
         """Constructor."""

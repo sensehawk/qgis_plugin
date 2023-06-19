@@ -37,6 +37,7 @@ import numpy as np
 import subprocess
 from ..utils import sort_images, upload, combobox_modifier, categorized_renderer, get_presigned_post_urls
 import json
+from ..constants import S3_BUCKET, S3_REGION
 
 
 class PhotoViewer(QtWidgets.QGraphicsView):
@@ -119,7 +120,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
 THERMLITE_QC_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'thermliteQc.ui'))
 
-class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
+class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
 
     def __init__(self, therm_tools, project):
         """Constructor."""
@@ -237,6 +238,9 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
 
         self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
         self.sorted_images, self.sorted_timestamps = sort_images(self.images_dir)
+        # Enable the buttons
+        for b in [self.nxt_img, self.previous_img]:
+            b.setEnabled(True)
         raw_images = [image.split('/')[-1] for image in self.sorted_images]
         self.image_selector = combobox_modifier(self.current_loaded_img, raw_images)
         self.image_selector.currentIndexChanged.connect(self.change_image)
@@ -385,11 +389,11 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
                 markerlocation = next(iter(img.values()))
                 image_type = 'Thermal Raw Image'
                 aws_image = {"location": markerlocation,
-                    "service": {'bucket': "sensehawk-mumbai",
+                    "service": {'bucket': S3_BUCKET,
                                                             'key': f'hawkai/{self.projectUid}/IR_rawimage/{image}',
                                                             'name': 'aws_s3',
-                                                            'stage': 'unity_core',
-                                                            'region': 'ap-south-1',
+                                                            'stage': 'qgis_plugin',
+                                                            'region': S3_REGION,
                                                             'filename': f'{image_type} {Image_num}.jpg'}}
                 Image_num += 1 
                 raw_image.append(aws_image)
