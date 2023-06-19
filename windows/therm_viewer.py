@@ -89,7 +89,7 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.project = project
         self.active_layer = self.project.vlayer
         self.generate_service_objects()
-        iface.addDockWidget(Qt.RightDockWidgetArea, self)
+        # iface.addDockWidget(Qt.RightDockWidgetArea, self)
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
         self.project.vlayer.selectionChanged.connect(lambda x: self.show_raw_images(x))
         self.images_dir = os.path.join(tempfile.gettempdir(), self.project.project_details["uid"])
@@ -101,9 +101,12 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.nxt_img.clicked.connect(lambda: self.change_image_index(1))
         self.logger = self.project.logger
         self.height, self.width = 512, 640
+        # Initially keep the buttons disabled
+        for b in [self.nxt_img, self.previous_img]:
+            b.setEnabled(False)
     
     def hide_widget(self):
-        self.hide()
+        self.project.active_docktool_widget.hide()
         self.therm_tools.uncheck_all_buttons()
 
     def generate_service_objects(self):
@@ -140,10 +143,6 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         get_img_urls.statusChanged.connect(lambda get_img_url_task_status: self.get_img_urls_callback(get_img_url_task_status, get_img_urls))
 
         # self.image_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", headers={"Authorization": f"Token {self.project.core_token}"}, json=data).json()
-    
-    def hide_widget(self):
-        self.hide()
-        self.therm_tools.uncheck_all_buttons()
     
     def download_image(self, url, savepath):
         if not os.path.exists(savepath):

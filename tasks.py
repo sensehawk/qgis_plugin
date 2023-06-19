@@ -114,7 +114,7 @@ def clipRequest(task, clip_task_input):
                     "clip_boundary_class_name": clip_boundary_class_name}
 
     headers = {"Authorization": f"Token {core_token}"}
-    requests.post(CLIP_FUNCTION_URL, headers=headers, json=request_body)
+    requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
     return {"task": task.description(), "success": True, "message": "Clip request sent"}
 
 def loginTask(task, login_window):

@@ -8,7 +8,7 @@ THERM_URL = "https://therm-server.sensehawk.com"
 SCM_TRAIN_URL = "https://scm-train.sensehawk.com"
 SCM_INFERENCE_URL = "https://scm-inference.sensehawk.com"
 SID_URL = "https://sid.sensehawk.com/detect-solar-issues"
-CLIP_FUNCTION_URL = "https://bt0xyuwjxi.execute-api.us-west-2.amazonaws.com/default/clipRaster"
+CLIP_FUNCTION_URL = "https://clip-raster-server.sensehawk.com"
 THERMAL_TAGGING_URL = "https://sid-tagging-server.sensehawk.com"
 API_SENSEHAWK = "https://api.sensehawk.com"
 

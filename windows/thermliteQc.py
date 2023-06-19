@@ -147,6 +147,9 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.nxt_img.clicked.connect(self.load_nxtimg)
         self.previous_img.setShortcut('a')
         self.previous_img.clicked.connect(self.load_previous)
+        # Initially keep the buttons disabled
+        for b in [self.nxt_img, self.previous_img]:
+            b.setEnabled(False)
         # Temperature widgets
         self.temp_patch_x.setText('30')
         self.temp_patch_y.setText('30')
@@ -157,7 +160,6 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.pan_toggle.stateChanged.connect(lambda x: self.pixInfo(x))
         self.tag_button.clicked.connect(self.tag_image)
         self.image_index = 0
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self)
         self.setFixedSize(628, 798)
         self.et = ExifTool()
         self.et.start()
@@ -172,7 +174,7 @@ class ThermliteQcWindow(QtWidgets.QDockWidget, THERMLITE_QC_UI):
         self.viewer.toggleDragMode(switch)
         
     def hide_widget(self):
-        self.hide()
+        self.project.active_docktool_widget.hide()
         self.therm_tools.uncheck_all_buttons()
 
     def toggle_temperature_fields(self, switch):
