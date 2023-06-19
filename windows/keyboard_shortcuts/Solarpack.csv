@@ -1,0 +1,18 @@
+Key,Feature Type
+0,Test
+1,abc
+2,Cracked Module
+3,Misaligned Module
+4,Multicell Hotspot
+5,DEL
+6,Potential Induced Degradation
+7,Shadow
+8,Dirt
+9,Missing Module
+10,Diode Failure
+11,Module Reverse Polarity
+12,Module Failure
+13,Vegetation
+14,Hotspot
+C,Clip_boundary
+T,Train_boundary
