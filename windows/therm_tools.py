@@ -34,7 +34,7 @@ from ..windows.autoNumbering import ThermNumberingWidget
 from ..windows.ImageTagging import ThermImageTaggingWidget
 from ..windows.thermliteQc import ThermliteQcWindow
 from ..windows.therm_viewer import ThermViewerDockWidget
-
+from ..tasks import clipRequest
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
 
@@ -57,6 +57,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.imagetaggingButton.clicked.connect(self.ImageTagging)
         self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
         self.viewer_button.clicked.connect(self.therm_viewer)
+        self.clipButton.clicked.connect(self.clip_raster)
         self.class_maps = self.project.class_maps
         self.core_token = self.project.core_token
         self.project_details = self.project.project_details
@@ -64,6 +65,28 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.imagetagging_widget = None
         self.thermlite_tagging_widget = None
         self.therm_viewer_widget = None
+    
+    def clipraster_callback(self, clip_status, clip_task):
+        if clip_status != 3:
+            return None
+        result = clip_task.returned_values
+        print('sucess...')
+
+    def clip_raster(self):
+        
+        self.uncheck_all_buttons()
+        self.clipButton.setChecked(True)
+
+        clip_task_input = {'project_details':self.project_details,
+                             'geojson_path':self.project.geojson_path,
+                             'class_maps':self.class_maps,
+                             'core_token':self.core_token,
+                             'project_type':'therm'}
+        
+        clip_task = QgsTask.fromFunction("Clip Raster", clipRequest ,clip_task_input)
+        QgsApplication.taskManager().addTask(clip_task)
+        clip_task.statusChanged.connect(lambda clip_status : self.clipraster_callback(clip_status, clip_task))
+
 
     def string_numbering(self):
         self.project.active_docktool_widget.hide()

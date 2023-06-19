@@ -74,14 +74,21 @@ def clipRequest(task, clip_task_input):
     """
     Sends clip request to the AWS lambda clip function
     """
-
-    logger, project_details, geojson_path, class_maps, core_token = clip_task_input
+    project_details = clip_task_input['project_details']
+    geojson_path = clip_task_input['geojson_path']
+    class_maps = clip_task_input['class_maps']
+    core_token = clip_task_input['core_token']
+    project_type = clip_task_input['project_type'] 
 
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
-    for i in class_maps.keys():
-        if i.lower() == "clip_boundary":
-            clip_boundary_class_name = class_maps[i]["uid"]
+    if project_type == 'therm':
+        clip_boundary_class_name = 'clip_boundary'
+    else:
+        for i in class_maps.keys():
+            if i.lower() == "clip_boundary":
+                clip_boundary_class_name = class_maps[i]["uid"]
+   
     if not clip_boundary_class_name:
         return {"task": task.description(), "success": False,
                 "message": "Please add clip_boundary feature type in class maps..."}
@@ -108,10 +115,12 @@ def clipRequest(task, clip_task_input):
     if not ortho_url:
         return {"task": task.description(), "success": False,
                 "message": "No ortho found for project..."}
+    
     request_body = {"project_uid": project_details.get("uid", None),
                     "raster_url": ortho_url,
                     "geojson": geojson,
-                    "clip_boundary_class_name": clip_boundary_class_name}
+                    "clip_boundary_class_name": clip_boundary_class_name,
+                    "project_type":project_type}
 
     headers = {"Authorization": f"Token {core_token}"}
     requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
