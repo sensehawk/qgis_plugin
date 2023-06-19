@@ -160,10 +160,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     logger("Saving project geojson...")
 
-    # Load vectors
-    vlayer = QgsVectorLayer(geojson_path+ "|geometrytype=Polygon", geojson_path, "ogr")
-
-    return vlayer, geojson_path
+    return geojson_path
 
 def project_details( group, org, token):
     url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'

@@ -49,7 +49,7 @@ def loadTask(task, load_inputs):
 
     # Load vectors
     try:
-        vlayer, geojson_path = load_vectors(project_details,
+        geojson_path = load_vectors(project_details,
                                             project_type,
                                             bounds,
                                             core_token,
@@ -61,7 +61,6 @@ def loadTask(task, load_inputs):
         return False
 
     return {'rlayer': rlayer,
-            'vlayer': vlayer,
             'project_uid': project_uid,
             'class_maps': class_maps,
             'class_groups': class_groups,
