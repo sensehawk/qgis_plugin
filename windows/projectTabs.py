@@ -173,7 +173,8 @@ class Project:
 
     def change_feature_type(self, class_name):
         # If there are selected items, change feature type for those or else change feature type of last added feature
-        selected_features = list(self.vlayer.selectedFeatures())
+        selected_features = list(iface.activeLayer().selectedFeatures())
+        print(selected_features)
         if selected_features:
             self.logger("Changing class_name of selected features to {}".format(class_name))
             for feature in selected_features:

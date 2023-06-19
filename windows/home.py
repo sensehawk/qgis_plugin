@@ -64,6 +64,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.org.currentIndexChanged.connect(self.org_tree)
         self.projectbutton.clicked.connect(self.show_project_load_window)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
+        self.asset_uid = None  # Pre loading
         logo_label = QtWidgets.QLabel(self)
         logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.png'))
         logo = logo.scaledToWidth(150)
@@ -72,6 +73,9 @@ class HomeWindow(QtWidgets.QWidget):
         self.layout.addWidget(logo_label)
         self.dock_widget = dock_widget
         self.dock_widget.setWidget(self)
+    
+    def logger(self, message, level=Qgis.Info):
+        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def asset_info(self, load_asset_task_status ,load_asset_task):
         if load_asset_task_status != 3:
@@ -108,6 +112,9 @@ class HomeWindow(QtWidgets.QWidget):
         print(self.org_uid, self.asset_uid)
 
     def show_project_load_window(self):
+        if not self.asset_uid:
+            self.logger("Select Asset", level=Qgis.Warning)
+            return None
         self.project_load_window = ProjectLoadWindow(self, self.iface)
         self.project_load_window.show()
         self.hide()
