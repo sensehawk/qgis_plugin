@@ -123,7 +123,7 @@ def clipRequest(task, clip_task_input):
                         "geojson": geojson,
                         "clip_boundary_class_name": clip_boundary_class_name,
                         "project_type": project_type,
-                        "user_email": user_email}
+                        "email_id": user_email}
 
         headers = {"Authorization": f"Token {core_token}"}
         requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
