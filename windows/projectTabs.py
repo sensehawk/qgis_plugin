@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
-from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut
+from ..event_filters import KeypressFilter, KeypressEmitter
 from .therm_tools import ThermToolsWidget
 import pandas as pd
 from datetime import datetime
@@ -16,9 +16,11 @@ from .keyboard_settings import ShortcutSettings
 
 class Project:
     def __init__(self, load_task_result):
+
         self.project_details = load_task_result['project_details']
-        self.vlayer = load_task_result['vlayer']
         self.geojson_path = load_task_result['geojson_path']
+        self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.geojson_path, "ogr")
+        self.vlayer.featureAdded.connect(self.load_feature_count)
         self.rlayer = load_task_result['rlayer']
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
@@ -34,6 +36,7 @@ class Project:
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
+
         # Time stamp of last saved
         self.last_saved = str(datetime.now())
         # color classifying based on class_name for therm / class_name and class_maps for terra
@@ -49,12 +52,14 @@ class Project:
                 for i in self.class_maps}
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
 
+
     def import_geojson(self, geojson_path):
         if geojson_path:
             import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
             imported_features = [feature for feature in import_layer.getFeatures()]
             self.vlayer.dataProvider().addFeatures(imported_features)
             self.vlayer.triggerRepaint()
+
 
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
@@ -219,7 +224,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.layer_tree = self.qgis_project.layerTreeRoot()
         self.active_project = None
         self.iface = iface
-        self.setupKeyboardShortcuts()
+        self.setupKeyboardShortcuts() 
 
     def setupUi(self):
 
@@ -257,7 +262,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         save_project_button.setText("Save Project")
         save_project_button.clicked.connect(self.save_project)
         main_layout.addWidget(save_project_button)
-
+    
     def setupKeyboardShortcuts(self):
         # Create gis shortcuts generic to all projects
         self.qgis_shortcuts = {
@@ -297,9 +302,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.load_window.dock_widget.setWidget(self.load_window)
 
     def add_project(self, project):
-        # Add uid to a list to track tab index
-        self.project_uids.append(project.project_details["uid"])
-        self.projects_loaded[project.project_details["uid"]] = project
         # Add project tab to the tabs widget
         self.project_tabs_widget.addTab(project.project_tab, project.project_details["name"])
         # Add project layers to the project
@@ -316,6 +318,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         project.qgis_project = self.qgis_project
         # Show all project details in the project tab
         project.populate_project_tab()
+        # Add uid to a list to track tab index
+        self.project_uids.append(project.project_details["uid"])
+        self.projects_loaded[project.project_details["uid"]] = project
         # Activate project
         self.activate_project()
 
