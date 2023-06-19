@@ -34,6 +34,8 @@ class Project:
         # Dummy active tool widget and tool dock widget
         self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
         self.active_docktool_widget = QtWidgets.QDockWidget()
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.active_docktool_widget)
+        self.active_docktool_widget.hide()
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
