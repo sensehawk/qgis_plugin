@@ -81,7 +81,8 @@ class ThermToolsWidget(QtWidgets.QWidget):
                              'geojson_path':self.project.geojson_path,
                              'class_maps':self.class_maps,
                              'core_token':self.core_token,
-                             'project_type':'therm'}
+                             'project_type':'therm',
+                             'user_email':self.project.user_email}
         
         clip_task = QgsTask.fromFunction("Clip Raster", clipRequest ,clip_task_input)
         QgsApplication.taskManager().addTask(clip_task)

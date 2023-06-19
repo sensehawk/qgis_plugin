@@ -79,6 +79,7 @@ def clipRequest(task, clip_task_input):
     class_maps = clip_task_input['class_maps']
     core_token = clip_task_input['core_token']
     project_type = clip_task_input['project_type'] 
+    user_email = clip_task_input['user_email']
 
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
@@ -95,35 +96,39 @@ def clipRequest(task, clip_task_input):
     # Updated geojson
     with open(geojson_path, "r") as fi:
         geojson = json.load(fi)
+    try:
 
-    all_clip_feature_names = []
+        all_clip_feature_names = []
 
-    for f in geojson["features"]:
-        properties = f["properties"]
-        if properties["class_name"] == clip_boundary_class_name:
-            name = properties.get("name", None)
-            all_clip_feature_names.append(name)
-    n_clip_features = len(all_clip_feature_names)
-    n_unique_clip_names = len(list(set(all_clip_feature_names)))
+        for f in geojson["features"]:
+            properties = f["properties"]
+            if properties["class_name"] == clip_boundary_class_name:
+                name = properties.get("name", None)
+                all_clip_feature_names.append(name)
+        n_clip_features = len(all_clip_feature_names)
+        n_unique_clip_names = len(list(set(all_clip_feature_names)))
 
-    # If there are no unique clip feature names or if any of them has None
-    if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
-        return {"task": task.description(), "success": False,
-                "message": "Please provide unique name property to all clip_boundary features before clipping..."}
+        # If there are no unique clip feature names or if any of them has None
+        if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
+            return {"task": task.description(), "success": False,
+                    "message": "Please provide unique name property to all clip_boundary features before clipping..."}
 
-    ortho_url = get_project_reports(project_details.get("uid", None), core_token).get("ortho", None)
-    if not ortho_url:
-        return {"task": task.description(), "success": False,
-                "message": "No ortho found for project..."}
-    
-    request_body = {"project_uid": project_details.get("uid", None),
-                    "raster_url": ortho_url,
-                    "geojson": geojson,
-                    "clip_boundary_class_name": clip_boundary_class_name,
-                    "project_type":project_type}
+        ortho_url = get_project_reports(project_details.get("uid", None), core_token).get("ortho", None)
+        if not ortho_url:
+            return {"task": task.description(), "success": False,
+                    "message": "No ortho found for project..."}
+        
+        request_body = {"project_uid": project_details.get("uid", None),
+                        "raster_url": ortho_url,
+                        "geojson": geojson,
+                        "clip_boundary_class_name": clip_boundary_class_name,
+                        "project_type": project_type,
+                        "user_email": user_email}
 
-    headers = {"Authorization": f"Token {core_token}"}
-    requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
+        headers = {"Authorization": f"Token {core_token}"}
+        requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
+    except Exception:
+        print(traceback.format_exc())
     return {"task": task.description(), "success": True, "message": "Clip request sent"}
 
 def loginTask(task, login_window):

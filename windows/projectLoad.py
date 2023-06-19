@@ -38,6 +38,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home = homeobj
         self.core_token = self.home.core_token
         self.asset_uid = self.home.asset_uid
+        self.user_email = self.home.user_email
             
         self.org_uid = self.home.org_uid
         self.org_contianer_details = self.home.org_contianer_details
@@ -114,6 +115,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
             return None
         # Create a project object from the callback result
         project = Project(result)
+        project.user_email = self.user_email
 
         # Add project to project tab
         project.project_tab_index = new_project_index
