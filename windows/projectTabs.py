@@ -25,6 +25,7 @@ class Project:
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
         self.existing_files = load_task_result['existing_files']
+        self.iface = iface
         self.project_tab = QtWidgets.QWidget()
         # Create a layout that contains project details
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
@@ -123,7 +124,6 @@ class Project:
         self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(self.project_details_widget.importFileWidget.filePath()))
 
     def populate_project_tab(self):
-        project_details = self.project_details
         # Create the project details widget
         self.create_project_details_widget()
         # Create features table
@@ -152,7 +152,7 @@ class Project:
             df = pd.read_csv(self.shortcuts_csv_path)
             for i in range(len(df)):
                 key, feature_type = df["Key"][i], df["Feature Type"][i].strip()
-                self.feature_shortcuts[key] = feature_type
+                self.feature_shortcuts[str(key)] = feature_type
         else:
             # Create default mapping and write to file
             default_maps = {"clip_boundary": "C", "train_boundary": "T"}
@@ -173,8 +173,7 @@ class Project:
 
     def change_feature_type(self, class_name):
         # If there are selected items, change feature type for those or else change feature type of last added feature
-        selected_features = list(iface.activeLayer().selectedFeatures())
-        print(selected_features)
+        selected_features = list(self.vlayer.selectedFeatures())
         if selected_features:
             self.logger("Changing class_name of selected features to {}".format(class_name))
             for feature in selected_features:
@@ -208,7 +207,6 @@ class Project:
                 class_id = self.class_maps.get(class_name, {}).get("id", None)
                 last_feature.setAttribute("class_id", int(class_id))
             self.vlayer.updateFeature(last_feature)
-        self.vlayer.triggerRepaint()
         self.load_feature_count()
 
 class ProjectTabsWidget(QtWidgets.QWidget):
@@ -291,7 +289,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         if not self.active_project:
             return None
         if key in self.active_project.feature_shortcuts:
-            self.active_project.vlayer.commitChanges()
             self.active_project.vlayer.startEditing()
             feature_change_name = self.active_project.feature_shortcuts.get(key, None)
             self.active_project.change_feature_type(feature_change_name)
