@@ -79,7 +79,7 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._zoom = 0
 
-class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
+class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
     def __init__(self, therm_tools, project):
         """Constructor."""
@@ -101,15 +101,15 @@ class ThermViewerDockWidget(QtWidgets.QDockWidget, THERM_VIEWER):
         self.nxt_img.clicked.connect(lambda: self.change_image_index(1))
         self.logger = self.project.logger
         self.height, self.width = 512, 640
-        # Initially keep the buttons disabled
-        for b in [self.nxt_img, self.previous_img]:
-            b.setEnabled(False)
     
     def hide_widget(self):
         self.project.active_docktool_widget.hide()
         self.therm_tools.uncheck_all_buttons()
 
     def generate_service_objects(self):
+        # Initially keep the buttons disabled
+        for b in [self.nxt_img, self.previous_img]:
+            b.setEnabled(False)
         self.uid_map = {}
         self.service_objects = []
         self.image_urls_loaded = False

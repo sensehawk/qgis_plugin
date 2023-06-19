@@ -11,6 +11,8 @@ SID_URL = "https://sid.sensehawk.com/detect-solar-issues"
 CLIP_FUNCTION_URL = "https://clip-raster-server.sensehawk.com"
 THERMAL_TAGGING_URL = "https://sid-tagging-server.sensehawk.com"
 API_SENSEHAWK = "https://api.sensehawk.com"
+S3_REGION="ap-south-1"
+S3_BUCKET="sh-inc-ap-south-1"
 
 
 # # Staging env
