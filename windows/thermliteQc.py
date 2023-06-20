@@ -252,6 +252,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.active_layer.setLabelsEnabled(True)
         self.active_layer.setLabeling(labeler)
         self.active_layer.triggerRepaint()
+        self.load_image(0)
 
     def folderpath(self):
         required_fields = {'timestamp':QVariant.String,'temperature_difference':QVariant.Double, 'temperature_min':QVariant.Double,
