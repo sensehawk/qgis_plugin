@@ -49,14 +49,16 @@ import requests
 
 
 class HomeWindow(QtWidgets.QWidget):
-    def __init__(self, dock_widget, user_email, core_token, org_details ,iface):
+    def __init__(self, login_obj):
         """Constructor."""
         super(HomeWindow, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'home.ui'), self)
-        self.core_token = core_token
-        self.user_email = user_email
+        self.canvas_logger = login_obj.canvas_logger
+        self.logger = login_obj.logger
+        self.core_token = login_obj.core_token
+        self.user_email = login_obj.user_email
         self.iface = iface
-        self.org_details = org_details
+        self.org_details = login_obj.org_details
         org_list = list(self.org_details.keys())
         org_combobox = self.organization
         self.asset_combobox = self.asset
@@ -71,11 +73,8 @@ class HomeWindow(QtWidgets.QWidget):
         logo_label.setPixmap(logo)
         logo_label.show()
         self.layout.addWidget(logo_label)
-        self.dock_widget = dock_widget
+        self.dock_widget = login_obj.dock_widget
         self.dock_widget.setWidget(self)
-    
-    def logger(self, message, level=Qgis.Info):
-        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def asset_info(self, load_asset_task_status ,load_asset_task):
         if load_asset_task_status != 3:
@@ -93,7 +92,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
         self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list)
-        self.iface.messageBar().pushMessage(self.tr(f'{self.org.currentText()} assets loaded'),Qgis.Success)
+        self.canvas_logger(f'{self.org.currentText()} assets loaded..')
         
 
     def org_tree(self, value):

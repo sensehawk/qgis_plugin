@@ -48,6 +48,8 @@ class ThermToolsWidget(QtWidgets.QWidget):
         """Constructor."""
         super(ThermToolsWidget, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'therm_tools.ui'), self)
+        self.logger = project.logger
+        self.canvas_logger = project.canvas_logger
         self.project = project
         self.parent = self.project.project_tab
         self.iface = self.project.iface
@@ -70,7 +72,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if clip_status != 3:
             return None
         result = clip_task.returned_values
-        print('sucess...')
+        message = result['title']
+        level = result['level']
+        self.canvas_logger(f'{message}', level=level)
 
     def clip_raster(self):
         
@@ -178,5 +182,4 @@ class ThermToolsWidget(QtWidgets.QWidget):
         QgsApplication.taskManager().addTask(dt)
         dt.statusChanged.connect(lambda: callback(dt, self.logger))
 
-    def logger(self, message, level=Qgis.Info):
-        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
+   

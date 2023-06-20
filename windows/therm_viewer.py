@@ -3,7 +3,7 @@ import requests
 import json
 from qgis.PyQt import QtWidgets, uic
 from qgis.utils import iface
-from qgis.core import QgsApplication, QgsTask
+from qgis.core import QgsApplication, QgsTask, Qgis
 from qgis.PyQt.QtCore import Qt 
 from PyQt5.QtGui import QImage
 from PyQt5 import QtCore, QtGui, QtWidgets 
@@ -85,6 +85,8 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         """Constructor."""
         super(ThermViewerDockWidget, self).__init__()
         self.setupUi(self)
+        self.canvas_logger = therm_tools.canvas_logger
+        self.logger = therm_tools.logger
         self.therm_tools = therm_tools
         self.project = project
         self.active_layer = self.project.vlayer
@@ -98,7 +100,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.image_layout.addWidget(self.photo_viewer)
         self.previous_img.clicked.connect(lambda: self.change_image_index(-1))
         self.nxt_img.clicked.connect(lambda: self.change_image_index(1))
-        self.logger = self.project.logger
         self.height, self.width = 512, 640
         # Feature Selection changed signal
         self.signal_connected = False
@@ -126,6 +127,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.therm_tools.uncheck_all_buttons()
 
     def generate_service_objects(self):
+        self.canvas_logger('Getting image urls')
         # Initially keep the buttons disabled
         for b in [self.nxt_img, self.previous_img]:
             b.setEnabled(False)
@@ -150,6 +152,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         result = get_img_urls.returned_values
         self.image_urls = result['image_urls']
         self.image_urls_loaded = True
+        self.canvas_logger(f'{self.project.project_details["name"]} : Therm viewer ready ')
 
     def start_get_image_urls(self):
         data = {"project_uid": self.project.project_details["uid"], 
@@ -170,7 +173,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
     def show_raw_images(self, selected_features):
         if not self.image_urls_loaded:
-            self.logger("Still loading image urls")
+            self.canvas_logger("Still loading image urls", level=Qgis.Info)
             return None
         if not selected_features:
             return None
@@ -232,9 +235,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.photo_viewer.setPhoto(img)
 
     def change_image_index(self, change):
-        if not self.image_urls_loaded:
-            self.logger("Still loading image urls")
-            return None
         self.image_index += change
         if self.image_index <= 0:
             self.image_index = 0

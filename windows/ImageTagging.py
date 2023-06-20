@@ -38,6 +38,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         """Constructor."""
         super(ThermImageTaggingWidget, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'ImageTagging.ui'), self)
+        self.canvas_logger = thermtool_obj.canvas_logger
+        self.logger = thermtool_obj.logger
         self.thermToolobj = thermtool_obj
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
@@ -59,11 +61,6 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.No_images.setMaximum(4)
         self.No_images.setMinimum(1)
 
-    def tr(self, message):
-        return QCoreApplication.translate('SenseHawk QC', message)
-
-    def logger(self, message, level=Qgis.Info):
-        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def api(self, json):
         canvas  = self.canvas
@@ -74,9 +71,9 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         headers = {'Authorization': f'Token {self.core_token}'}
         imagetag = requests.post(url, json=json, headers=headers)
         if imagetag.status_code == 200:
-            self.iface.messageBar().pushMessage(self.tr('Queued Successfully.'),Qgis.Success)
+            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
         else:
-            self.iface.messageBar().pushMessage(self.tr(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}'),Qgis.Warning)
+            self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
 
 
     def current_type(self, value):
@@ -129,7 +126,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         org = self.project_details['organization']['uid']
         if self.imagetaggingType.currentText() == 'Visual Tagging':
             if not self.projectUid.text() :
-                self.iface.messageBar().pushMessage(self.tr('Visual Project_uid field is empty....'),Qgis.Warning)
+                self.canvas_logger('Visual Project_uid field is empty....',level=Qgis.Warning)
             else:
                 json = {'projectUid': self.project_uid, 'method':2, 'VprojectUid': self.projectUid.text(), 'org':org,
                         'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':None}

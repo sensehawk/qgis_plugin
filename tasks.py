@@ -110,13 +110,13 @@ def clipRequest(task, clip_task_input):
 
         # If there are no unique clip feature names or if any of them has None
         if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
-            return {"task": task.description(), "success": False,
-                    "message": "Please provide unique name property to all clip_boundary features before clipping..."}
+            return {"task": task.description(), "title": 'Need unique clip boundary names',
+                    "description": "Please provide unique name property to all clip_boundary features before clipping...", 'level':Qgis.Warning}
 
         ortho_url = get_project_reports(project_details.get("uid", None), core_token).get("ortho", None)
         if not ortho_url:
-            return {"task": task.description(), "success": False,
-                    "message": "No ortho found for project..."}
+            return {"task": task.description(), "title": "Ortho doesn't exist",
+                    "description": "No ortho found for project...", 'level':Qgis.Warning}
         
         request_body = {"project_uid": project_details.get("uid", None),
                         "raster_url": ortho_url,
@@ -126,18 +126,26 @@ def clipRequest(task, clip_task_input):
                         "email_id": user_email}
 
         headers = {"Authorization": f"Token {core_token}"}
-        requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
+        response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
+        res_status = response.status_code
+        res_title, res_description = response.json()['title'], response.json()['description']
+        level = Qgis.Success
+        if res_status != 200:
+            level = Qgis.Warning
+        
     except Exception:
         print(traceback.format_exc())
-    return {"task": task.description(), "success": True, "message": "Clip request sent"}
+    return {"task": task.description(), 'title':res_title, 'description':res_description, 'level':level}
 
 def loginTask(task, login_window):
     login_window.user_email = login_window.userName.text()
     login_window.user_password = login_window.userPassword.text()
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
+
     if not login_window.user_email or not login_window.user_password:
-        login_window.logger('User email or Password empty...', level=Qgis.Warning)
+        login_window.logger('User email or Password empty...',level=Qgis.Warning)
         return None
+    
     login_window.core_token = core_login(login_window.user_email, login_window.user_password)
     if login_window.core_token:
         login_window.logger("Successfully logged in...")

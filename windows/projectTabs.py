@@ -151,12 +151,15 @@ class Project:
         self.project_tab_layout.addStretch()
 
     def setup_feature_shortcuts(self):
+        keyboard_shorcuts_dir = os.path.join(os.path.dirname(__file__), 'keyboard_shortcuts')
+        if not os.path.exists(keyboard_shorcuts_dir):
+            os.mkdir(keyboard_shorcuts_dir)
         # Feature types are defined at the container level in case of Terra and is fixed in case of Therm
         # Check if the container csv exists in case of terra or therm shortcuts in case of therm
         if self.project_details["project_type"] == "therm":
-            self.shortcuts_csv_path = os.path.join(os.path.dirname(__file__), 'keyboard_shortcuts', 'therm_keyboard_shortcuts.csv')
+            self.shortcuts_csv_path = os.path.join(keyboard_shorcuts_dir, 'therm_keyboard_shortcuts.csv')
         elif self.project_details["project_type"] == "terra":
-            self.shortcuts_csv_path = os.path.join(os.path.dirname(__file__), 'keyboard_shortcuts', f'{self.project_details["group"]["name"]}.csv')
+            self.shortcuts_csv_path = os.path.join(keyboard_shorcuts_dir, f'{self.project_details["group"]["name"]}.csv')
         # If shortcuts exist, load from there
         if os.path.exists(self.shortcuts_csv_path):
             df = pd.read_csv(self.shortcuts_csv_path)
@@ -222,8 +225,9 @@ class Project:
 class ProjectTabsWidget(QtWidgets.QWidget):
     def __init__(self, load_window):
         super().__init__()
+        self.canvas_logger = load_window.canvas_logger
+        self.logger = load_window.logger
         self.load_window = load_window
-        self.logger = self.load_window.logger
         # Save projects loaded dict mapping uid to project object
         self.projects_loaded = {}
         # Track index through uid list - index in list is the index of its tab
