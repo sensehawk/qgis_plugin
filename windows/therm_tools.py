@@ -116,6 +116,8 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.imagetaggingButton.setChecked(True)
         if self.thermlite_tagging_widget:
             self.thermlite_tagging_widget.hide()
+        # Setup selection changed signal
+        self.project.active_docktool_widget.visibilityChanged.connect(lambda x: self.imagetagging_widget.toggle_signal(x))
 
     def ThermliteTagging(self):
         self.project.active_tool_widget.hide()
@@ -139,6 +141,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         for button in self.findChildren(QtWidgets.QPushButton):
             if button.isCheckable():
                 button.setChecked(False)
+
     def detect(self):
         map_angle = self.canvas.rotation()
         self.logger("Map canvas angle: {}".format(map_angle))

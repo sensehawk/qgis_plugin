@@ -6,8 +6,8 @@ from ..constants import THERM_URL
 def get_therm_classmaps(core_token, org_uid, container_uid):
     # IDs and class names of all the classes defined in Therm
     headers = {'Authorization':f'Token {core_token}'}
-    # response = requests.get(THERM_URL + f'/viewer/config?organization={org_uid}', headers=headers)
-    response = requests.get(THERM_URL + f'/viewer/view/{container_uid}/config/?organization={org_uid}', headers=headers)
+    response = requests.get(THERM_URL + f'/viewer/config?organization={org_uid}', headers=headers)
+    # response = requests.get(THERM_URL + f'/viewer/view/{container_uid}/config/?organization={org_uid}', headers=headers)
     therm_classes = response.json()
     therm_classmaps = {}
     for i in range(len(therm_classes)):

@@ -31,11 +31,8 @@ class Project:
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
         self.project_tab_layout.setContentsMargins(10, 10, 10, 10)
         self.tools_widget = None
-        # Dummy active tool widget and tool dock widget
-        self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
-        self.active_docktool_widget = QtWidgets.QDockWidget()
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.active_docktool_widget)
-        self.active_docktool_widget.hide()
+        self.setup_tool_widget()
+        self.setup_docktool_widget()
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
@@ -55,6 +52,14 @@ class Project:
                 for i in self.class_maps}
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
 
+    def setup_tool_widget(self):
+        # Dummy active tool widget and tool dock widget
+        self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
+
+    def setup_docktool_widget(self):
+        self.active_docktool_widget = QtWidgets.QDockWidget()
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.active_docktool_widget)
+        self.active_docktool_widget.hide()
 
     def import_geojson(self, geojson_path):
         if geojson_path:
