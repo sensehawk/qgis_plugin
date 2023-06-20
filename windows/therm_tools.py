@@ -75,8 +75,17 @@ class ThermToolsWidget(QtWidgets.QWidget):
     def clip_raster(self):
         
         self.uncheck_all_buttons()
-        self.clipButton.setChecked(True)
+        # Do not create the task if there are no clip_boundary features
+        features = json.load(open(self.project.geojson_path))["features"]
+        clip_boundary_exists = False
+        for f in features:
+            if f["properties"].get("class_name") == "clip_boundary":
+                clip_boundary_exists = True
+                break
 
+        if not clip_boundary_exists:
+            self.logger("There are no clip boundaries", level=Qgis.Warning)
+            return None
         clip_task_input = {'project_details':self.project_details,
                              'geojson_path':self.project.geojson_path,
                              'class_maps':self.class_maps,
