@@ -100,20 +100,21 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.nxt_img.clicked.connect(lambda: self.change_image_index(1))
         self.logger = self.project.logger
         self.height, self.width = 512, 640
+        # Feature Selection changed signal
         self.signal_connected = False
+        self.signal_slot = lambda x: self.show_raw_images(x)
+        self.connect_signal()
 
     def connect_signal(self):
         if not self.signal_connected:
-            print("Connecting")
-            self.project.vlayer.selectionChanged.connect(lambda x: self.show_raw_images(x))
+            self.project.vlayer.selectionChanged.connect(self.signal_slot)
         self.signal_connected = True
 
     def disconnect_signal(self):
         if self.signal_connected:
-            print("Disconnecting")
-            self.project.vlayer.selectionChanged.disconnect(lambda x: self.show_raw_images(x))
+            self.project.vlayer.selectionChanged.disconnect(self.signal_slot)
         self.signal_connected = False
-        
+    
     def toggle_signal_connection(self, visibility):
         if visibility and self.project.active_docktool_widget == self:
             self.connect_signal()
@@ -121,7 +122,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             self.disconnect_signal()
 
     def hide_widget(self):
-        self.project.active_docktool_widget.hide()
+        self.project.docktool_widget.hide()
         self.therm_tools.uncheck_all_buttons()
 
     def generate_service_objects(self):

@@ -175,7 +175,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.viewer.toggleDragMode(switch)
         
     def hide_widget(self):
-        self.project.active_docktool_widget.hide()
+        self.project.docktool_widget.hide()
         self.therm_tools.uncheck_all_buttons()
 
     def toggle_temperature_fields(self, switch):

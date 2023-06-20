@@ -30,7 +30,6 @@ class Project:
         # Create a layout that contains project details
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
         self.project_tab_layout.setContentsMargins(10, 10, 10, 10)
-        self.tools_widget = None
         self.setup_tool_widget()
         self.setup_docktool_widget()
         self.project_tabs_widget = None
@@ -54,12 +53,16 @@ class Project:
 
     def setup_tool_widget(self):
         # Dummy active tool widget and tool dock widget
-        self.active_tool_widget = QtWidgets.QWidget(self.project_tab)
+        self.tools_widget = QtWidgets.QWidget(self.project_tab)
+        self.active_tool_widget = self.tools_widget
 
     def setup_docktool_widget(self):
-        self.active_docktool_widget = QtWidgets.QDockWidget()
-        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.active_docktool_widget)
-        self.active_docktool_widget.hide()
+        self.docktool_widget = QtWidgets.QDockWidget()
+        # Dummy placeholder widget
+        self.active_docktool_widget = QtWidgets.QWidget()
+        self.docktool_widget.setWidget(self.active_docktool_widget)
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.docktool_widget)
+        self.docktool_widget.hide()
 
     def import_geojson(self, geojson_path):
         if geojson_path:
