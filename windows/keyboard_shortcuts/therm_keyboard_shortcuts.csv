@@ -31,3 +31,7 @@ Key,Feature Type
 29,homerun
 30,suspected_soiling
 31,misaligned_module
+32,to_be_investigated
+C,clip_boundary
+T,train_boundary
+33,junction_box_hot

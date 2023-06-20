@@ -33,6 +33,8 @@ class ProjectForm:
 class ProjectLoadWindow(QtWidgets.QWidget):
     def __init__(self, homeobj, iface):
         super().__init__()
+        self.canvas_logger = homeobj.canvas_logger
+        self.logger = homeobj.logger
         self.projects_form = None
         self.iface = iface
         self.home = homeobj
@@ -84,8 +86,6 @@ class ProjectLoadWindow(QtWidgets.QWidget):
     def show_projects_loaded(self):
         self.dock_widget.setWidget(self.project_tabs_widget)
 
-    def logger(self, message, level=Qgis.Info):
-        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def group_tree(self):
         self.group_uid = self.group_details[self.group.currentText()][0]
@@ -116,7 +116,9 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         # Create a project object from the callback result
         project = Project(result)
         project.user_email = self.user_email
-
+        project.canvas_logger = self.canvas_logger
+        project.logger = self.logger
+        
         # Add project to project tab
         project.project_tab_index = new_project_index
         self.project_tabs_widget.add_project(project)

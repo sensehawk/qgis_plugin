@@ -22,8 +22,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def sort_images(images_dir, reverse=False):
+def sort_images(task, images_dir, reverse=False):
     images = glob.glob(images_dir+"/*")
+    supported_image_formats = ('.jpg','.JPG','.tiff','.tif','.TIFF','.TIF')
+    images = [i for i in images if i.endswith(supported_image_formats)]
     with ExifTool() as e:
         time_stamps = []
         for i in images:
@@ -41,7 +43,10 @@ def sort_images(images_dir, reverse=False):
     sorted_tuples = sorted(zip(time_stamps, images), reverse=reverse)
     images = [i[1] for i in sorted_tuples]
     timestamps = [i[0] for i in sorted_tuples]
-    return images, timestamps
+    
+    return {'sorted_images':images,
+            'sorted_timestamps':timestamps,
+            'task': task.description()}
 
 
 def combobox_modifier(combobox, wordlist):

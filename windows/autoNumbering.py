@@ -38,6 +38,8 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         """Constructor."""
         super(ThermNumberingWidget, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AutoNumbering.ui'), self)
+        self.canvas_logger = thermToolobj.canvas_logger
+        self.logger = thermToolobj.logger
         self.thermToolobj = thermToolobj
         self.projectuid = thermToolobj.project_details['uid']
         self.iface = iface
@@ -56,8 +58,6 @@ class ThermNumberingWidget(QtWidgets.QWidget):
 
         return self.Width.value(), self.Height.value(),Angle,self.Prefix.text(),self.Suffix.text()
 
-    def tr(self, message):
-        return QCoreApplication.translate('SenseHawk QC', message)
 
     def string_numbering(self):
         startTime = time()
@@ -116,4 +116,4 @@ class ThermNumberingWidget(QtWidgets.QWidget):
 
         endTime = time()
         duration = int(round((endTime - startTime) * 1000))
-        self.iface.messageBar().pushMessage(self.tr(f'<b>String_numbeirng</b> done in {duration} s.'),Qgis.Success)
+        self.canvas_logger(f'<b>String_numbeirng</b> done in {duration} s.', level=Qgis.Success)

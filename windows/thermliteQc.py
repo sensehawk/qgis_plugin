@@ -126,6 +126,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         """Constructor."""
         super(ThermliteQcWindow, self).__init__()
         self.setupUi(self)
+        self.canvas_logger = therm_tools.canvas_logger
+        self.logger = therm_tools.logger
         self.therm_tools = therm_tools
         self.project = project
         self.project.manual_tagging_widget = self
@@ -229,15 +231,11 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text()))
         self.delta_temp.setText("{:.2f}".format(self.max_temp-self.min_temp))
     
-
-    def folderpath(self):
-        required_fields = {'timestamp':QVariant.String,'temperature_difference':QVariant.Double, 'temperature_min':QVariant.Double,
-                            'temperature_max':QVariant.Double, 'temp_uid':QVariant.Double,'num_images_tagged':QVariant.Double}
-        
-        self.fields_validator(required_fields, self.active_layer)
-
-        self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
-        self.sorted_images, self.sorted_timestamps = sort_images(self.images_dir)
+    def sort_task_callback(self, sort_task_status, image_sort_task):
+        if sort_task_status != 3:
+            return None
+        result = image_sort_task.returned_values
+        self.sorted_images, self.sorted_timestamps = result['sorted_images'], result['sorted_timestamps']
         # Enable the buttons
         for b in [self.nxt_img, self.previous_img]:
             b.setEnabled(True)
@@ -254,6 +252,19 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.active_layer.setLabelsEnabled(True)
         self.active_layer.setLabeling(labeler)
         self.active_layer.triggerRepaint()
+
+    def folderpath(self):
+        required_fields = {'timestamp':QVariant.String,'temperature_difference':QVariant.Double, 'temperature_min':QVariant.Double,
+                            'temperature_max':QVariant.Double, 'temp_uid':QVariant.Double,'num_images_tagged':QVariant.Double}
+        
+        self.fields_validator(required_fields, self.active_layer)
+        self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
+        
+        self.canvas_logger('Sorting images')
+        image_sort_task = QgsTask.fromFunction("Sort Images", sort_images, self.images_dir)
+        QgsApplication.taskManager().addTask(image_sort_task)
+        image_sort_task.statusChanged.connect(lambda sort_task_status: self.sort_task_callback(sort_task_status, image_sort_task))
+
 
     def change_image(self):
         print(self.image_selector.currentIndex())
@@ -351,7 +362,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         print(sx,sy ,'and' , self.issue_list[-1])
 
         if not self.delta_temp.text():
-            self.project.logger("No temperature detected", level=Qgis.Warning)
+            self.canvas_logger("Invalid image for temperature", level=Qgis.Warning)
             return None
 
         if sfeature['temp_uid'] is None or [sx, sy] != self.issue_list[-1]:
@@ -374,6 +385,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.active_layer.updateFeature(sfeature)
 
     def parse_tagged_data(self):
+        self.canvas_logger('Saving changes to Sensehawk Core')
         self.active_layer.commitChanges()
         self.active_layer.startEditing()
         self.upload_image_list = []
@@ -433,7 +445,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         result = upload_task.returned_values
         print(f"{result['num_images']} uploaded")
         self.project.project_tabs_window.save_project()
-        self.project.project_tabs_window.logger("Project geojson saved in SenseHawk App")
+        self.canvas_logger("Project geojson saved in SenseHawk App", level=Qgis.Success)
         # Reload service object urls if viewer exists
         if self.therm_tools.therm_viewer_widget:
             self.therm_tools.therm_viewer_widget.generate_service_objects()

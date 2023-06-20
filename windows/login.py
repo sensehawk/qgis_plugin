@@ -27,7 +27,7 @@ from ..windows.home import HomeWindow
 
 from qgis.PyQt import QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QCoreApplication
 
 from ..tasks import loginTask
 # from ..utils import organization_details
@@ -61,20 +61,26 @@ class LoginWindow(QtWidgets.QWidget):
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
+    def canvas_logger(self, message, level=Qgis.Info):
+        self.iface.messageBar().clearWidgets()
+        self.iface.messageBar().pushMessage(message, level=level, duration=3)
+        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
+
     def login_callback(self, login_task_status, login_task):
         if login_task_status != 3:
             return None
         if not login_task.returned_values:
-            self.logger("Login task returned None...", level=Qgis.Warning)
+            self.canvas_logger("Check username and password", level=Qgis.Warning)
             return None
         self.show_load_window()
 
     def start_login_task(self):
+        self.canvas_logger('Initiated login process')
         login_task = QgsTask.fromFunction("Login", loginTask, login_window=self)
         QgsApplication.taskManager().addTask(login_task)
         login_task.statusChanged.connect(lambda login_task_status: self.login_callback(login_task_status, login_task))
 
     def show_load_window(self):
         # Initialize load save window (next window post login)
-        self.load_window = HomeWindow(self.dock_widget, self.user_email, self.core_token, self.org_details, self.iface)
+        self.load_window = HomeWindow(self)
         self.load_window.show()
