@@ -157,11 +157,13 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             return None
         feature = self.project.vlayer.getFeature(selected_features[-1])
         self.uid = feature["uid"]
-        try:
-            timestamp = feature["timestamp"].toString()
-        except AttributeError:
-            timestamp = str(feature["timestamp"])
-        
+
+        if not self.active_layer.fields().indexFromName('timestamp') == -1:
+            try:
+                timestamp = feature["timestamp"].toString()
+            except AttributeError:
+                timestamp = str(feature["timestamp"])
+
         if not self.active_layer.fields().indexFromName('uid') == -1 and feature['uid'] :  self.uid_name.setText(feature['uid']) 
         else: self.uid_name.setText("N/A") 
         if not self.active_layer.fields().indexFromName('timestamp') == -1 and feature['timestamp']: self.timestamp.setText(timestamp)
