@@ -68,9 +68,10 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
         self.asset_uid = None  # Pre loading
         logo_label = QtWidgets.QLabel(self)
-        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.png'))
-        logo = logo.scaledToWidth(150)
+        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))
+        logo = logo.scaled(350, 60, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
         logo_label.setPixmap(logo)
+        logo_label.setAlignment(Qt.AlignCenter)
         logo_label.show()
         self.layout.addWidget(logo_label)
         self.dock_widget = login_obj.dock_widget

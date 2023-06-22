@@ -130,7 +130,7 @@ def clipRequest(task, clip_task_input):
         res_status = response.status_code
         res_title, res_description = response.json()['title'], response.json()['description']
         level = Qgis.Success
-        if res_status != 200:
+        if res_status != 200 or res_status != 201 or res_status != 202:
             level = Qgis.Warning
         
     except Exception:

@@ -3,9 +3,10 @@ import requests
 import json
 from qgis.PyQt import QtWidgets, uic
 from qgis.utils import iface
-from qgis.core import QgsApplication, QgsTask, Qgis
+from qgis.core import QgsApplication, QgsTask, Qgis, QgsField
+from PyQt5.QtCore import QVariant
 from qgis.PyQt.QtCore import Qt 
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QIcon
 from PyQt5 import QtCore, QtGui, QtWidgets 
 import os
 import cv2
@@ -89,7 +90,14 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.logger = therm_tools.logger
         self.therm_tools = therm_tools
         self.project = project
-        self.active_layer = self.project.vlayer
+        edit = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'edit.jpg')) 
+        save = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'save.jpg'))
+        edit.scaled(48, 8, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+        save.scaled(48, 8, Qt.AspectRatioMode.KeepAspectRatioByExpanding) 
+        self.editbutton.setIcon(QIcon(edit))
+        self.savebutton.setIcon(QIcon(save))
+        self.editbutton.clicked.connect(self.startediting)
+        self.savebutton.clicked.connect(self.savestringnumber)
         self.generate_service_objects()
         # iface.addDockWidget(Qt.RightDockWidgetArea, self)
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
@@ -105,6 +113,10 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.signal_connected = False
         self.signal_slot = lambda x: self.show_raw_images(x)
         self.connect_signal()
+        if self.project.vlayer.fields().indexFromName('string_number') == -1:
+                fieldz = QgsField('string_number', QVariant.String)
+                self.project.vlayer.dataProvider().addAttributes([fieldz])
+                self.project.vlayer.updateFields()
 
     def connect_signal(self):
         if not self.signal_connected:
@@ -112,6 +124,11 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.signal_connected = True
 
     def disconnect_signal(self):
+        # See if vector layer exists
+        try:
+            self.project.vlayer.isValid()
+        except RuntimeError:
+            return None
         if self.signal_connected:
             self.project.vlayer.selectionChanged.disconnect(self.signal_slot)
         self.signal_connected = False
@@ -177,26 +194,26 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             return None
         if not selected_features:
             return None
-        feature = self.project.vlayer.getFeature(selected_features[-1])
-        self.uid = feature["uid"]
+        self.sfeature = self.project.vlayer.getFeature(selected_features[-1])
+        self.uid = self.sfeature["uid"]
 
-        if not self.active_layer.fields().indexFromName('timestamp') == -1:
+        if not self.project.vlayer.fields().indexFromName('timestamp') == -1:
             try:
-                timestamp = feature["timestamp"].toString()
+                timestamp = self.sfeature["timestamp"].toString()
             except AttributeError:
-                timestamp = str(feature["timestamp"])
+                timestamp = str(self.sfeature["timestamp"])
 
-        if not self.active_layer.fields().indexFromName('uid') == -1 and feature['uid'] :  self.uid_name.setText(feature['uid']) 
+        if not self.project.vlayer.fields().indexFromName('uid') == -1 and self.sfeature['uid'] :  self.uid_name.setText(self.sfeature['uid']) 
         else: self.uid_name.setText("N/A") 
-        if not self.active_layer.fields().indexFromName('timestamp') == -1 and feature['timestamp']: self.timestamp.setText(timestamp)
+        if not self.project.vlayer.fields().indexFromName('timestamp') == -1 and self.sfeature['timestamp']: self.timestamp.setText(timestamp)
         else: self.timestamp.setText("N/A")
-        if not self.active_layer.fields().indexFromName('string_number') == -1 and feature['string_number']:  self.string_number.setText(feature['string_number'])
+        if not self.project.vlayer.fields().indexFromName('string_number') == -1 and self.sfeature['string_number']:  self.string_number.setText(self.sfeature['string_number'])
         else: self.string_number.setText("N/A")
-        if not self.active_layer.fields().indexFromName('temperature_min') == -1 and feature['temperature_min']:  self.min_temp.setText(str(feature['temperature_min']))
+        if not self.project.vlayer.fields().indexFromName('temperature_min') == -1 and self.sfeature['temperature_min']:  self.min_temp.setText(str(self.sfeature['temperature_min']))
         else: self.min_temp.setText("N/A")
-        if not self.active_layer.fields().indexFromName('temperature_max') == -1 and feature['temperature_max']:   self.max_temp.setText(str(feature['temperature_max']))
+        if not self.project.vlayer.fields().indexFromName('temperature_max') == -1 and self.sfeature['temperature_max']:   self.max_temp.setText(str(self.sfeature['temperature_max']))
         else: self.max_temp.setText("N/A")
-        if not self.active_layer.fields().indexFromName('temperature_difference') == -1 and feature['temperature_difference']:  self.delta_temp.setText(str(feature['temperature_difference']))
+        if not self.project.vlayer.fields().indexFromName('temperature_difference') == -1 and self.sfeature['temperature_difference']:  self.delta_temp.setText(str(self.sfeature['temperature_difference']))
         else: self.delta_temp.setText('N/A')
 
         if self.uid not in self.uid_map:
@@ -226,12 +243,26 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         else:
             self.previous_img.setEnabled(False)
             self.nxt_img.setEnabled(False)
+
+    def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
+        x1 = max(int(x-w/2), 0)
+        y1 = max(int(y-h/2), 0)
+        x2 = min(int(x+w/2), image_w)
+        y2 = min(int(y+h/2), image_h)
+        image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [255, 206, 85], 2, 1)
+        if x or y:   
+            image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
+        return image
     
     def show_image(self, image_path, marker):
         x = marker[0]
         y = marker[1]
-        img = QtGui.QPixmap(image_path)
-        print(image_path)
+        image = cv2.imread(image_path)
+        height, width, channel = image.shape
+        bytesPerLine = 3 * width
+        self.painted_image = self.draw_box(image.copy(), x, y)
+        qImg = QImage(self.painted_image.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        img = QtGui.QPixmap(qImg)
         self.photo_viewer.setPhoto(img)
 
     def change_image_index(self, change):
@@ -249,3 +280,11 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
         self.show_image(self.image_paths[self.image_index], self.marker_location[self.image_index])
 
+    def startediting(self):
+        self.string_number.setReadOnly(False)
+
+    def savestringnumber(self):
+        self.sfeature['string_number'] = str(self.string_number.text())
+        self.project.vlayer.updateFeature(self.sfeature)
+        self.canvas_logger(f'{self.sfeature["uid"]} string number updated')
+        self.string_number.setReadOnly(True)

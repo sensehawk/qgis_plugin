@@ -1,7 +1,7 @@
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QVariant
 import os
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer
+from PyQt5 import QtGui, QtWidgets, uic
+from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer, QgsField
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
 from ..event_filters import KeypressFilter, KeypressEmitter
@@ -12,6 +12,8 @@ from ..sensehawk_apis.core_apis import save_project_geojson
 import qgis
 import json
 from .keyboard_settings import ShortcutSettings
+import random 
+import string
 
 
 class Project:
@@ -20,7 +22,7 @@ class Project:
         self.project_details = load_task_result['project_details']
         self.geojson_path = load_task_result['geojson_path']
         self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.geojson_path, "ogr")
-        self.vlayer.featureAdded.connect(self.load_feature_count)
+        self.vlayer.featureAdded.connect(lambda x: self.load_feature_count(new_feature_id=x))
         self.rlayer = load_task_result['rlayer']
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
@@ -35,6 +37,7 @@ class Project:
         self.project_tabs_widget = None
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
+        self.setup_feature_uid()
 
         # Time stamp of last saved
         self.last_saved = str(datetime.now())
@@ -82,7 +85,12 @@ class Project:
         self.project_tab_layout.addWidget(self.tools_widget)
         self.tools_widget.show()
     
-    def load_feature_count(self):
+    def load_feature_count(self, new_feature_id=None):
+        if new_feature_id:
+            # Update uid field 
+            feature = list(self.vlayer.getFeatures([new_feature_id]))[0]
+            feature['uid'] = self.create_uid()
+            self.vlayer.updateFeature(feature)
         # Get feature count by class_name
         feature_count_dict = {}
         class_name_keyword = {"terra": "class", "therm": "class_name"}[self.project_details["project_type"]]
@@ -186,6 +194,8 @@ class Project:
 
     def change_feature_type(self, class_name):
         # If there are selected items, change feature type for those or else change feature type of last added feature
+        self.vlayer.commitChanges()
+        self.vlayer.startEditing()
         selected_features = list(self.vlayer.selectedFeatures())
         if selected_features:
             self.logger("Changing class_name of selected features to {}".format(class_name))
@@ -221,6 +231,21 @@ class Project:
                 last_feature.setAttribute("class_id", int(class_id))
             self.vlayer.updateFeature(last_feature)
         self.load_feature_count()
+
+    def create_uid(self):
+        unique_string = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase) for _ in range(9))
+        uid = f"{self.project_details['uid']}-{unique_string[:3]}:{unique_string[3:6]}~{unique_string[6:]}"
+        return uid
+
+    def setup_feature_uid(self):
+        if self.vlayer.fields().indexFromName("uid") == -1:
+                uid_field = QgsField("uid", QVariant.String)
+                self.vlayer.dataProvider().addAttributes([uid_field])
+                self.vlayer.updateFields() # update layer fields after creating new one
+        self.vlayer.commitChanges()
+        self.vlayer.startEditing()
+
+
 
 class ProjectTabsWidget(QtWidgets.QWidget):
     def __init__(self, load_window):

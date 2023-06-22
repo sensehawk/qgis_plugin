@@ -50,13 +50,15 @@ class LoginWindow(QtWidgets.QWidget):
         # Add to the left docking area by default
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
         logo_label = QtWidgets.QLabel(self)
-        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.png'))
-        logo = logo.scaledToWidth(150)
+        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))
+        logo = logo.scaled(350, 60, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
         logo_label.setPixmap(logo)
+        logo_label.setAlignment(Qt.AlignCenter)
         logo_label.show()
         self.layout.addWidget(logo_label)
         self.dock_widget.setWidget(self)
         self.dock_widget.setFixedSize(310, 830)
+        self.canvas_logger('Welcome to Sensehawk Qgis plugin')
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)

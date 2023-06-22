@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>628</width>
-    <height>798</height>
+    <height>816</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,23 +19,10 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QLabel" name="temp_txt_3">
-   <property name="geometry">
-    <rect>
-     <x>60</x>
-     <y>540</y>
-     <width>41</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>UID:</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="nxt_img">
    <property name="geometry">
     <rect>
-     <x>570</x>
+     <x>580</x>
      <y>40</y>
      <width>21</width>
      <height>461</height>
@@ -48,7 +35,7 @@
   <widget class="QPushButton" name="previous_img">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>30</x>
      <y>40</y>
      <width>21</width>
      <height>461</height>
@@ -58,23 +45,10 @@
     <string>&lt;</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="max_temp">
-   <property name="geometry">
-    <rect>
-     <x>480</x>
-     <y>550</y>
-     <width>111</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>50</x>
+     <x>60</x>
      <y>40</y>
      <width>511</width>
      <height>461</height>
@@ -82,135 +56,139 @@
    </property>
    <layout class="QVBoxLayout" name="image_layout"/>
   </widget>
-  <widget class="QLabel" name="timestamp_label">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>590</y>
-     <width>81</width>
-     <height>20</height>
+     <x>30</x>
+     <y>520</y>
+     <width>301</width>
+     <height>91</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Timestamp:</string>
-   </property>
+   <layout class="QFormLayout" name="formLayout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="temp_txt_4">
+      <property name="text">
+       <string>Max temp:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="max_temp">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="temp_txt_5">
+      <property name="text">
+       <string>Min temp:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="min_temp">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="temp_txt">
+      <property name="text">
+       <string>Delta temp:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="delta_temp">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
-  <widget class="QLineEdit" name="min_temp">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>480</x>
-     <y>590</y>
-     <width>111</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="delta_temp">
-   <property name="geometry">
-    <rect>
-     <x>480</x>
-     <y>630</y>
-     <width>111</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="temp_txt_2">
-   <property name="geometry">
-    <rect>
-     <x>-10</x>
+     <x>30</x>
      <y>620</y>
-     <width>111</width>
-     <height>41</height>
+     <width>301</width>
+     <height>61</height>
     </rect>
    </property>
-   <property name="text">
-    <string>String Number:</string>
-   </property>
+   <layout class="QFormLayout" name="formLayout_2">
+    <item row="0" column="0">
+     <widget class="QLabel" name="temp_txt_3">
+      <property name="text">
+       <string>UID:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="uid_name">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="timestamp_label">
+      <property name="text">
+       <string>Timestamp:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="timestamp">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
-  <widget class="QLabel" name="temp_txt_5">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>390</x>
-     <y>580</y>
-     <width>81</width>
-     <height>41</height>
+     <x>30</x>
+     <y>690</y>
+     <width>411</width>
+     <height>31</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Min temp:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="temp_txt">
-   <property name="geometry">
-    <rect>
-     <x>380</x>
-     <y>620</y>
-     <width>101</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Delta temp:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="uid_name">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>550</y>
-     <width>241</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="temp_txt_4">
-   <property name="geometry">
-    <rect>
-     <x>390</x>
-     <y>540</y>
-     <width>81</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max temp:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="timestamp">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>590</y>
-     <width>241</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="string_number">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>630</y>
-     <width>241</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="string_number">
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="3">
+     <widget class="QPushButton" name="savebutton">
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="temp_txt_2">
+      <property name="text">
+       <string>String Number:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QPushButton" name="editbutton">
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>

@@ -29,7 +29,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>250</y>
+     <y>210</y>
      <width>46</width>
      <height>25</height>
     </rect>
@@ -45,7 +45,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>250</y>
+     <y>210</y>
      <width>231</width>
      <height>31</height>
     </rect>
@@ -60,7 +60,7 @@
    <property name="geometry">
     <rect>
      <x>260</x>
-     <y>290</y>
+     <y>250</y>
      <width>31</width>
      <height>31</height>
     </rect>
@@ -85,7 +85,7 @@
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>210</y>
+     <y>170</y>
      <width>48</width>
      <height>25</height>
     </rect>
@@ -98,7 +98,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>210</y>
+     <y>170</y>
      <width>231</width>
      <height>31</height>
     </rect>
@@ -116,10 +116,13 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>330</y>
+     <y>290</y>
      <width>311</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -128,10 +131,10 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>80</x>
-     <y>40</y>
-     <width>151</width>
-     <height>131</height>
+     <x>20</x>
+     <y>90</y>
+     <width>271</width>
+     <height>51</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="layout"/>
@@ -140,10 +143,13 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>180</y>
+     <y>140</y>
      <width>311</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -152,11 +158,14 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>20</y>
+     <x>290</x>
+     <y>80</y>
      <width>21</width>
-     <height>171</height>
+     <height>71</height>
     </rect>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
    </property>
    <property name="orientation">
     <enum>Qt::Vertical</enum>
@@ -165,11 +174,14 @@
   <widget class="Line" name="line_3">
    <property name="geometry">
     <rect>
-     <x>60</x>
-     <y>10</y>
-     <width>191</width>
+     <x>10</x>
+     <y>70</y>
+     <width>291</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -178,11 +190,14 @@
   <widget class="Line" name="line_2">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>20</y>
+     <x>0</x>
+     <y>80</y>
      <width>21</width>
-     <height>171</height>
+     <height>71</height>
     </rect>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
    </property>
    <property name="orientation">
     <enum>Qt::Vertical</enum>
