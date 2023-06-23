@@ -190,19 +190,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="remove_tagged_image_button">
-   <property name="geometry">
-    <rect>
-     <x>140</x>
-     <y>600</y>
-     <width>273</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Remove tagged image</string>
-   </property>
-  </widget>
  </widget>
  <resources/>
  <connections/>

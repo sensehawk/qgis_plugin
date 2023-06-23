@@ -209,11 +209,11 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         else: self.timestamp.setText("N/A")
         if not self.project.vlayer.fields().indexFromName('string_number') == -1 and self.sfeature['string_number']:  self.string_number.setText(self.sfeature['string_number'])
         else: self.string_number.setText("N/A")
-        if not self.project.vlayer.fields().indexFromName('temperature_min') == -1 and self.sfeature['temperature_min']:  self.min_temp.setText(f"{self.sfeature['temperature_min']:.2f}")
+        if not self.project.vlayer.fields().indexFromName('temperature_min') == -1 and self.sfeature['temperature_min']:  self.min_temp.setText("{:.2f}".format(float(self.sfeature['temperature_min'])))
         else: self.min_temp.setText("N/A")
-        if not self.project.vlayer.fields().indexFromName('temperature_max') == -1 and self.sfeature['temperature_max']:   self.max_temp.setText(f"{self.sfeature['temperature_max']:.2f}")
+        if not self.project.vlayer.fields().indexFromName('temperature_max') == -1 and self.sfeature['temperature_max']:   self.max_temp.setText("{:.2f}".format(float(self.sfeature['temperature_max'])))
         else: self.max_temp.setText("N/A")
-        if not self.project.vlayer.fields().indexFromName('temperature_difference') == -1 and self.sfeature['temperature_difference']:  self.delta_temp.setText(f"{self.sfeature['temperature_difference']:.2f}")
+        if not self.project.vlayer.fields().indexFromName('temperature_difference') == -1 and self.sfeature['temperature_difference']:  self.delta_temp.setText("{:.2f}".format(float(self.sfeature['temperature_difference'])))
         else: self.delta_temp.setText('N/A')
 
         if self.uid not in self.uid_map:
