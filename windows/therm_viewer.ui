@@ -190,7 +190,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="pushButton">
+  <widget class="QPushButton" name="remove_tagged_image_button">
    <property name="geometry">
     <rect>
      <x>140</x>
