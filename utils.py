@@ -13,7 +13,7 @@ from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
-from exiftool import ExifTool
+from .packages.exiftool.exiftool import ExifTool
 from datetime import datetime
 import glob
 import threading

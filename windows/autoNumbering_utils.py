@@ -1,6 +1,6 @@
 import math
 from math import ceil
-from utm import from_latlon
+from ..packages.utm import from_latlon
 import numpy as np
 from qgis.core import QgsField
 from PyQt5.QtCore import QVariant
