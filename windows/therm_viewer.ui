@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>628</width>
-    <height>816</height>
+    <height>798</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -59,10 +59,10 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>430</x>
      <y>520</y>
-     <width>301</width>
-     <height>91</height>
+     <width>161</width>
+     <height>101</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout">
@@ -94,17 +94,17 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="temp_txt">
-      <property name="text">
-       <string>Delta temp:</string>
-      </property>
-     </widget>
-    </item>
     <item row="2" column="1">
      <widget class="QLineEdit" name="delta_temp">
       <property name="readOnly">
        <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="temp_txt">
+      <property name="text">
+       <string>Delta temp:</string>
       </property>
      </widget>
     </item>
@@ -113,10 +113,10 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>620</y>
-     <width>301</width>
-     <height>61</height>
+     <x>50</x>
+     <y>520</y>
+     <width>361</width>
+     <height>71</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout_2">
@@ -154,9 +154,9 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>690</y>
-     <width>411</width>
-     <height>31</height>
+     <y>640</y>
+     <width>561</width>
+     <height>41</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -174,13 +174,6 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="0">
-     <widget class="QLabel" name="temp_txt_2">
-      <property name="text">
-       <string>String Number:</string>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="2">
      <widget class="QPushButton" name="editbutton">
       <property name="text">
@@ -188,7 +181,27 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="temp_txt_2">
+      <property name="text">
+       <string>String Number:</string>
+      </property>
+     </widget>
+    </item>
    </layout>
+  </widget>
+  <widget class="QPushButton" name="pushButton">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>600</y>
+     <width>273</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Remove tagged image</string>
+   </property>
   </widget>
  </widget>
  <resources/>
