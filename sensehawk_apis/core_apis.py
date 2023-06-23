@@ -2,6 +2,7 @@ import requests
 import json
 import os
 from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
+from qgis.core import Qgis
 
 def get_project_reports(project_uid, token):
     PROJECT_REPORT_URL = CORE_URL + "/api/v1/projects/%s/reports/"
@@ -82,7 +83,7 @@ def save_project_geojson(geojson, project_uid, token, project_type="terra"):
     return res.json()
 
 
-def core_login(username, password):
+def core_login(username, password, logger):
     url = CORE_URL + "/api/v1/api-basic-auth/"
     payload = json.dumps({
         "username": username,
@@ -95,7 +96,7 @@ def core_login(username, password):
     try:
         token = response.json()["Authorization"]
     except Exception as e:
-        print(e)
+        logger(str(e), Qgis.Warning)
         token = None
     return token
 

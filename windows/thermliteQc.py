@@ -241,21 +241,23 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         raw_images = [image.split('/')[-1] for image in self.sorted_images]
         self.image_selector = combobox_modifier(self.current_loaded_img, raw_images)
         self.image_selector.currentIndexChanged.connect(self.change_image)
-        # Enable num_images_tagged label
-        # self.num_images_label = QgsPalLayerSettings()
-        # self.num_images_label.fieldName = 'num_images_tagged'
-        # self.num_images_label.enabled = True
-        # formate = QgsTextFormat()
-        # self.num_images_label.setFormat()
-        # self.num_images_label.placement = QgsPalLayerSettings.Line
-        # labeler = QgsVectorLayerSimpleLabeling(self.num_images_label)
-        # labeler.requiresAdvancedEffects()
-        # self.project.vlayer.setLabelsEnabled(True)
-        # self.project.vlayer.setLabeling(labeler)
-        # self.project.vlayer.triggerRepaint()
-        self.trigger_custom_label(self.project.Vlayer)
+        self.trigger_custom_label(self.project.vlayer)
+        self.generate_num_tagged_rawimages()
         self.load_image(0)
-
+    
+    def generate_num_tagged_rawimages(self):
+        # Get num tagged raw images that already exists in the geojson
+        features = json.load(open(self.project.geojson_path))["features"]
+        num_tagged_rawimages = {}
+        for feature in features:
+            num_tagged_rawimages[feature["properties"].get("uid", None)] = len(feature["properties"].get("raw_images", []))
+        # Loop through layer features and add num_tagged_rawimages as a field for labeler
+        features = self.project.vlayer.getFeatures()
+        for feature in features:
+            uid = feature["uid"]
+            feature["num_images_tagged"] = num_tagged_rawimages.get(uid, 0)
+            self.project.vlayer.updateFeature(feature)
+            
     def trigger_custom_label(self, vlayer):
         num_images_label = QgsPalLayerSettings()
         num_images_label.fieldName = 'num_images_tagged'
@@ -475,6 +477,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         renderer = categorized_renderer(self.project)
         qclayer.setRenderer(renderer)
         qclayer.triggerRepaint()
+        # trigger cutom label for freshly loaded vlayer
+        self.trigger_custom_label(qclayer)
         self.project.vlayer = qclayer
         self.initiate_upload_process()
 

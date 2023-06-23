@@ -146,10 +146,10 @@ def loginTask(task, login_window):
         login_window.logger('User email or Password empty...',level=Qgis.Warning)
         return None
     
-    login_window.core_token = core_login(login_window.user_email, login_window.user_password)
+    login_window.core_token = core_login(login_window.user_email, login_window.user_password, login_window.logger)
+    login_window.org_details = organization_details(login_window.core_token)
     if login_window.core_token:
         login_window.logger("Successfully logged in...")
-        login_window.org_details = organization_details(login_window.core_token)
         return {"login_window": login_window, "task": task.description()}
     else:
         login_window.logger("incorrect user email or password...", level=Qgis.Warning)
