@@ -31,7 +31,7 @@ from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QImage, QColor, QFont
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from qgis.utils import iface
-from exiftool import ExifTool
+from ..packages.exiftool.exiftool import ExifTool
 import numpy as np
 import subprocess
 from ..utils import sort_images, upload, combobox_modifier, categorized_renderer, get_presigned_post_urls

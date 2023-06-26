@@ -66,8 +66,8 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_selection_layout.addWidget(self.home_button, 0, Qt.AlignTop)
 
         # Simple line widget separator
-        line = QtGui.QFrame()
-        line.setFrameShape(QtGui.QFrame.HLine)
+        line = QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.HLine)
         self.project_selection_layout.addWidget(line)
         self.project_selection_layout.addWidget(self.group, 0)
         self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)

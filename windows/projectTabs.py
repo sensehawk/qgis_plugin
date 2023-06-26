@@ -150,8 +150,8 @@ class Project:
         # Add project tools
         self.add_tools()
         # Simple line widget separator
-        line = QtGui.QFrame()
-        line.setFrameShape(QtGui.QFrame.HLine)
+        line = QtWidgets.QFrame()
+        line.setFrameShape(QtWidgets.QFrame.HLine)
         self.project_tab_layout.addWidget(line)
         # Add the dummy active tool widget
         self.project_tab_layout.addWidget(self.active_tool_widget)
