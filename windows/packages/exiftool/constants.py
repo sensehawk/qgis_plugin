@@ -27,6 +27,7 @@ This submodule defines constants which are used by other modules in the package
 """
 
 import sys
+import os
 
 
 ##################################
@@ -61,10 +62,9 @@ By default, the executable is searched for on one of the paths listed in the
 """
 
 if PLATFORM_WINDOWS:
-	DEFAULT_EXECUTABLE = "exiftool.exe"
+	DEFAULT_EXECUTABLE = os.path.join(os.path.dirname(__file__), "exiftool.exe")
 else:  # pytest-cov:windows: no cover
-	DEFAULT_EXECUTABLE = "exiftool"
-
+	DEFAULT_EXECUTABLE = os.path.join(os.path.dirname(__file__), "exiftool")
 
 
 ##################################

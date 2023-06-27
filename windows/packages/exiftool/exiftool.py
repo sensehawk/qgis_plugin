@@ -359,13 +359,6 @@ class ExifTool(object):
 		if self.running:
 			raise ExifToolRunning("Cannot set new executable")
 
-		# Set the path to exiftool.exe
-		_abs_path = os.path.join(os.path.dirname(__file__), "exiftool.exe")
-		_rel_path = os.path.relpath(_abs_path, start=os.getcwd())
-
-		abs_path: Optional[str] = _rel_path
-		print(_rel_path)
-
 		# in testing, shutil.which() will work if a complete path is given,
 		# but this isn't clear from documentation, so we explicitly check and
 		# don't search if path exists
@@ -374,7 +367,6 @@ class ExifTool(object):
 		else:
 			# Python 3.3+ required
 			abs_path = shutil.which(new_executable)
-			
 
 			if abs_path is None:
 				raise FileNotFoundError(f'"{new_executable}" is not found, on path or as absolute path')

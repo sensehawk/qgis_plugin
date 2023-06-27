@@ -236,6 +236,9 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             return None
         result = image_sort_task.returned_values
         self.sorted_images, self.sorted_timestamps = result['sorted_images'], result['sorted_timestamps']
+        if not self.sorted_images:
+            self.canvas_logger("No valid images in selected folder", level=Qgis.Warning)
+            return None
         # Enable the buttons
         for b in [self.nxt_img, self.previous_img]:
             b.setEnabled(True)
@@ -287,12 +290,12 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def folderpath(self):
         self.fields_validator(self.required_fields, self.project.vlayer)
         self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
-        
+        if not self.images_dir:
+            return None
         self.canvas_logger('Sorting images')
         image_sort_task = QgsTask.fromFunction("Sort Images", sort_images, self.images_dir)
         QgsApplication.taskManager().addTask(image_sort_task)
         image_sort_task.statusChanged.connect(lambda sort_task_status: self.sort_task_callback(sort_task_status, image_sort_task))
-
 
     def change_image(self):
         print(self.image_selector.currentIndex())
