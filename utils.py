@@ -1,3 +1,7 @@
+try :
+    from .windows.packages.cv2 import cv2
+except Exception:
+    import cv2
 import requests
 from urllib.request import urlopen
 import os
@@ -13,20 +17,20 @@ from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
-from .packages.exiftool.exiftool import ExifTool
+from .windows.packages.exiftool.exiftool import ExifTool
 from datetime import datetime
 import glob
 import threading
-import cv2
 import matplotlib.pyplot as plt 
 import numpy as np
 
+exiftool_path = os.path.join(os.path.dirname(__file__), "windows\exiftool.exe")
 
 def sort_images(task, images_dir, reverse=False):
     images = glob.glob(images_dir+"/*")
     supported_image_formats = ('.jpg','.JPG','.tiff','.tif','.TIFF','.TIF')
     images = [i for i in images if i.endswith(supported_image_formats)]
-    with ExifTool() as e:
+    with ExifTool(exiftool_path) as e:
         time_stamps = []
         for i in images:
             m = e.get_metadata(i)

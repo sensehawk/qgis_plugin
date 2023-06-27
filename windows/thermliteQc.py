@@ -31,12 +31,14 @@ from PyQt5.QtCore import QVariant
 from PyQt5.QtGui import QImage, QColor, QFont
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from qgis.utils import iface
-from ..packages.exiftool.exiftool import ExifTool
+from .packages.exiftool import ExifToolHelper
 import numpy as np
 import subprocess
 from ..utils import sort_images, upload, combobox_modifier, categorized_renderer, get_presigned_post_urls
 import json
 from ..constants import S3_BUCKET, S3_REGION
+
+exiftool_path = os.path.join(os.path.dirname(__file__), "exiftool.exe")
 
 class PhotoViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
@@ -161,8 +163,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.tag_button.setShortcut("Space")
         self.image_index = 0
         self.setFixedSize(628, 798)
-        self.et = ExifTool()
-        self.et.start()
+        self.et = ExifToolHelper()
         self.DJI_SDK_PATH = os.path.join(os.path.dirname(__file__), "dji_thermal_sdk")
         self.geojson = json.load(open(self.geojson_path))
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
@@ -198,7 +199,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             degree_map.data = open("temp.raw", "rb").read()
             degree_map = degree_map / 10
         else:
-            os.system('exiftool -RawThermalImage -b "{}" > raw.dat'.format(image_path))
+            os.system('{} -RawThermalImage -b "{}" > raw.dat'.format(exiftool_path, image_path))
             img = cv2.imread("raw.dat", cv2.IMREAD_UNCHANGED)
             os.remove('raw.dat')
 
