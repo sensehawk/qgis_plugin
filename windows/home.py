@@ -39,7 +39,7 @@ import json
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer, QgsRectangle, QgsFeature, \
     QgsGeometry, QgsField, QgsCategorizedSymbolRenderer, QgsApplication, QgsTask
-from qgis.PyQt.QtCore import Qt, QVariant
+from qgis.PyQt.QtCore import Qt, QVariant, QSize
 from qgis.gui import QgsMessageBar
 from PyQt5.QtWidgets import QLineEdit, QCompleter
 import qgis
@@ -64,6 +64,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset_combobox = self.asset
         self.org = combobox_modifier(org_combobox, org_list)
         self.org.currentIndexChanged.connect(self.org_tree)
+        self.projectbutton.setText("👉")
         self.projectbutton.clicked.connect(self.show_project_load_window)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
         self.asset_uid = None  # Pre loading
@@ -76,6 +77,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.layout.addWidget(logo_label)
         self.dock_widget = login_obj.dock_widget
         self.dock_widget.setWidget(self)
+        # self.dock_widget.setFixedSize(340, 830)
 
     def asset_info(self, load_asset_task_status ,load_asset_task):
         if load_asset_task_status != 3:

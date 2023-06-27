@@ -1,8 +1,8 @@
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QSize
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from qgis.core import Qgis, QgsApplication, QgsTask, QgsProject, QgsMessageLog
 from ..tasks import loadTask
-from PyQt5.QtWidgets import QLineEdit, QCompleter, QVBoxLayout, QPushButton, QComboBox
+from PyQt5.QtWidgets import QLineEdit, QLabel,QCompleter, QVBoxLayout, QPushButton, QComboBox
 from PyQt5.QtCore import QRect
 from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier
 from .projectTabs import ProjectTabsWidget, Project
@@ -22,7 +22,7 @@ class ProjectForm:
         self.scroll_widget = QtWidgets.QScrollArea()
         self.scroll_widget.setWidget(project_groupbox)
         self.scroll_widget.setWidgetResizable(True)
-        self.scroll_widget.setFixedHeight(300)
+        self.scroll_widget.setFixedHeight(400)
         # Replace the scroll widget if it exists
         if project_selection_window.projects_form:
             project_selection_layout.replaceWidget(project_selection_window.projects_form.scroll_widget, self.scroll_widget)
@@ -59,12 +59,17 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_tabs_widget = ProjectTabsWidget(self)
 
         self.home_button = QPushButton(self)
-        self.home_button.setText('Home')
+        self.home_button.setText('🏡 Home')
         self.home_button.clicked.connect(self.back_to_home)
 
+        # self.group_text = QLabel(self)
+        # self.group_text.setText('Select Group:🔽')
+        # self.group_text.setStyleSheet("background-color: white;")  
+        
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
+        self.project_selection_layout.setContentsMargins(10, 15, 0, 10)
         self.project_selection_layout.addWidget(self.home_button, 0, Qt.AlignTop)
-
+        # self.project_selection_layout.addWidget(self.group_text, 0, Qt.AlignTop)
         # Simple line widget separator
         line = QtWidgets.QFrame()
         line.setFrameShape(QtWidgets.QFrame.HLine)
@@ -79,7 +84,9 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_selection_layout.addWidget(projects_loaded_button, 0, Qt.AlignBottom)
 
         self.dock_widget = homeobj.dock_widget
-        self.dock_widget.setFixedSize(310, 830)
+        # self.dock_widget.setFixedSize(330, 830)
+        self.dock_widget.setMinimumSize(QSize(200, 380))
+        self.dock_widget.setMaximumSize(QSize(500,800))
         self.dock_widget.setWidget(self)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
 
