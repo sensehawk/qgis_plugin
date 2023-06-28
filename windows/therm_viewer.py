@@ -90,12 +90,14 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.logger = therm_tools.logger
         self.therm_tools = therm_tools
         self.project = project
-        edit = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'edit.jpg')) 
-        save = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'save.jpg'))
-        edit.scaled(48, 8, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
-        save.scaled(48, 8, Qt.AspectRatioMode.KeepAspectRatioByExpanding) 
-        self.editbutton.setIcon(QIcon(edit))
-        self.savebutton.setIcon(QIcon(save))
+        # edit = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'edit.jpg')) 
+        # save = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'save.jpg'))
+        # edit.scaled(48, 8, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+        # save.scaled(48, 8, Qt.AspectRatioMode.KeepAspectRatioByExpanding) 
+        # self.editbutton.setIcon(QIcon(edit))
+        # self.savebutton.setIcon(QIcon(save))
+        self.editbutton.setText('⚒️')
+        self.savebutton.setText('✅')
         self.editbutton.clicked.connect(self.startediting)
         self.savebutton.clicked.connect(self.savestringnumber)
         self.generate_service_objects()
