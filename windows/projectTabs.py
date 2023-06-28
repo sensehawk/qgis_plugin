@@ -1,4 +1,4 @@
-from qgis.PyQt.QtCore import Qt, QVariant
+from qgis.PyQt.QtCore import Qt, QVariant, QSize
 import os
 from PyQt5 import QtGui, QtWidgets, uic
 from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer, QgsField
@@ -31,7 +31,7 @@ class Project:
         self.project_tab = QtWidgets.QWidget()
         # Create a layout that contains project details
         self.project_tab_layout = QtWidgets.QVBoxLayout(self.project_tab)
-        self.project_tab_layout.setContentsMargins(10, 10, 10, 10)
+        self.project_tab_layout.setContentsMargins(5, 5, 5, 5)
         self.setup_tool_widget()
         self.setup_docktool_widget()
         self.project_tabs_widget = None
@@ -116,8 +116,11 @@ class Project:
 
         # Hide headers
         self.features_table.verticalHeader().setVisible(False)
+        self.features_table.verticalHeader().resizeSection(0, 100)
+        self.features_table.verticalHeader().resizeSection(1, 100)
         self.features_table.horizontalHeader().setVisible(False)
-
+        self.features_table.horizontalHeader().resizeSection(0, 100)
+        self.features_table.horizontalHeader().resizeSection(1, 100)
         # 2 columns
         self.features_table.setColumnCount(2)
 
@@ -125,16 +128,18 @@ class Project:
         self.features_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.project_tab_layout.addWidget(self.features_table)
 
-        self.features_table.setFixedWidth(250)
-        self.features_table.setFixedHeight(75)
+        # self.features_table.setMinimumSize(QSize(200, 100))
+        # self.features_table.setMaximumSize(QSize(250,100))
+        # self.features_table.setFixedWidth(200)
+        # self.features_table.setFixedHeight(100)
 
     def create_project_details_widget(self):
         self.project_details_widget = QtWidgets.QWidget(self.project_tab)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'project_details.ui'), self.project_details_widget)
         self.project_details_widget.project_uid.setText(f"UID: {self.project_details['uid']}")
         self.project_details_widget.group.setText(f"Group: {self.project_details['group']['name']}")
-        self.project_details_widget.project_type.setText(
-            f"Project Type: {self.project_details['project_type'].capitalize()}")
+        # self.project_details_widget.project_type.setText(
+        #     f"Project Type: {self.project_details['project_type'].capitalize()}")
         self.project_details_widget.show()
         self.project_tab_layout.addWidget(self.project_details_widget)
         self.feature_shortcut_settings_widget = ShortcutSettings(self)
@@ -142,21 +147,29 @@ class Project:
         self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(self.project_details_widget.importFileWidget.filePath()))
 
     def populate_project_tab(self):
+        # Simple line widget separator
+        line1 = QtWidgets.QFrame()
+        line1.setFrameShape(QtWidgets.QFrame.HLine)
+        self.project_tab_layout.addWidget(line1)
         # Create the project details widget
         self.create_project_details_widget()
+        line2 = QtWidgets.QFrame()
+        line2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.project_tab_layout.addWidget(line2)
         # Create features table
         self.create_features_table()
         self.load_feature_count()
+        line3 = QtWidgets.QFrame()
+        line3.setFrameShape(QtWidgets.QFrame.HLine)
+        self.project_tab_layout.addWidget(line3)
         # Add project tools
         self.add_tools()
-        # Simple line widget separator
-        line = QtWidgets.QFrame()
-        line.setFrameShape(QtWidgets.QFrame.HLine)
-        self.project_tab_layout.addWidget(line)
         # Add the dummy active tool widget
         self.project_tab_layout.addWidget(self.active_tool_widget)
-        # Add spacer to expand from bottom
-        self.project_tab_layout.addStretch()
+        line4 = QtWidgets.QFrame()
+        line4.setFrameShape(QtWidgets.QFrame.HLine)
+        self.project_tab_layout.addWidget(line4)
+        
 
     def setup_feature_shortcuts(self):
         keyboard_shorcuts_dir = os.path.join(os.path.dirname(__file__), 'keyboard_shortcuts')
@@ -280,27 +293,30 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         projects_group_layout.addWidget(self.project_tabs_widget)
 
         # Create main layout for the main widget and add the widgets group
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(projects_group)
+        Vmain_layout = QtWidgets.QVBoxLayout(self)
+        Vmain_layout.addWidget(projects_group)
 
+        Hmain_layout = QtWidgets.QHBoxLayout(self)
         # Back to project load button
         back_button = QtWidgets.QPushButton(self)
-        back_button.setText("Back to load")
+        back_button.setText("👈 Back")
         back_button.clicked.connect(self.back_to_load)
-        main_layout.addWidget(back_button)
+        Hmain_layout.addWidget(back_button)
 
         # Close project button
         close_project_button = QtWidgets.QPushButton(self)
-        close_project_button.setText("Close Project")
+        close_project_button.setText("❌ Close")
         close_project_button.clicked.connect(self.close_project)
-        main_layout.addWidget(close_project_button)
+        Hmain_layout.addWidget(close_project_button)
 
         # Save project button
         save_project_button = QtWidgets.QPushButton(self)
-        save_project_button.setText("Save Project")
+        save_project_button.setText("✔️ Save")
         save_project_button.clicked.connect(self.save_project)
-        main_layout.addWidget(save_project_button)
-    
+        Hmain_layout.addWidget(save_project_button)
+
+        Vmain_layout.addLayout(Hmain_layout)
+        Vmain_layout.setContentsMargins(10, 15, 0, 10)
     def setupKeyboardShortcuts(self):
         # Create gis shortcuts generic to all projects
         self.qgis_shortcuts = {

@@ -27,7 +27,7 @@ from ..windows.home import HomeWindow
 
 from qgis.PyQt import QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
-from qgis.PyQt.QtCore import Qt, QCoreApplication
+from qgis.PyQt.QtCore import Qt, QCoreApplication, QSize
 
 from ..tasks import loginTask
 # from ..utils import organization_details
@@ -39,6 +39,7 @@ class LoginWindow(QtWidgets.QWidget):
         """Constructor."""
         super(LoginWindow, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'login.ui'), self)
+        self.loginButton.setText('👉 Login')
         self.loginButton.clicked.connect(self.start_login_task)
         self.user_email = None
         self.user_password = None
@@ -48,16 +49,17 @@ class LoginWindow(QtWidgets.QWidget):
         self.load_window = None
         self.dock_widget = QtWidgets.QDockWidget()
         # Add to the left docking area by default
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
         logo_label = QtWidgets.QLabel(self)
         logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))
-        logo = logo.scaled(350, 60, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+        logo = logo.scaled(300, 60, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
         logo_label.setPixmap(logo)
         logo_label.setAlignment(Qt.AlignCenter)
         logo_label.show()
         self.layout.addWidget(logo_label)
         self.dock_widget.setWidget(self)
-        self.dock_widget.setFixedSize(310, 830)
+        self.dock_widget.setMinimumSize(QSize(300, 380))
+        # self.dock_widget.setFixedSize(330, 700)
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
         self.canvas_logger('Welcome to Sensehawk Qgis plugin')
 
     def logger(self, message, level=Qgis.Info):

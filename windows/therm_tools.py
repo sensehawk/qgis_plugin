@@ -67,7 +67,14 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.imagetagging_widget = None
         self.thermlite_tagging_widget = None
         self.therm_viewer_widget = None
+        self.project.docktool_widget.visibilityChanged.connect(lambda x :self.uncheck_buttons(x))
     
+    def uncheck_buttons(self, visibility):
+        if visibility :
+            pass
+        else:
+            self.uncheck_all_buttons()
+            
     def clipraster_callback(self, clip_status, clip_task):
         if clip_status != 3:
             return None
@@ -102,40 +109,13 @@ class ThermToolsWidget(QtWidgets.QWidget):
         clip_task.statusChanged.connect(lambda clip_status : self.clipraster_callback(clip_status, clip_task))
 
 
-    def string_numbering(self):
-        self.project.docktool_widget.hide()
-        if not self.numbering_widget:
-            self.numbering_widget = ThermNumberingWidget(self, self.iface)
-        if self.project.active_tool_widget != self.numbering_widget:
-            self.project.active_tool_widget.hide()
-            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.numbering_widget)
-        self.project.active_tool_widget = self.numbering_widget
-        self.numbering_widget.show()
-        self.uncheck_all_buttons()
-        self.StringNumberButton.setChecked(True)
-        if self.thermlite_tagging_widget:
-            self.thermlite_tagging_widget.hide()
-
-    def ImageTagging(self):
-        self.project.docktool_widget.hide()
-        if not self.imagetagging_widget:
-            self.imagetagging_widget = ThermImageTaggingWidget(self, self.iface)
-        if self.project.active_tool_widget != self.imagetagging_widget:
-            self.project.active_tool_widget.hide()
-            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.imagetagging_widget)
-        self.project.active_tool_widget = self.imagetagging_widget
-        self.imagetagging_widget.show()
-        self.uncheck_all_buttons()
-        self.imagetaggingButton.setChecked(True)
-        if self.thermlite_tagging_widget:
-            self.thermlite_tagging_widget.hide()
-
     def ThermliteTagging(self):
         self.project.active_tool_widget.hide()
         if not self.thermlite_tagging_widget:
             self.thermlite_tagging_widget = ThermliteQcWindow(self, self.project)
         self.project.active_docktool_widget = self.thermlite_tagging_widget
-        self.project.docktool_widget.setWidget(self.thermlite_tagging_widget)         
+        self.project.docktool_widget.setWidget(self.thermlite_tagging_widget)
+        # self.project.docktool_widget.setFixedSize(250, 230)         
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.thermliteQcButton.setChecked(True)
@@ -148,6 +128,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if not self.therm_viewer_widget:
             self.therm_viewer_widget = ThermViewerDockWidget(self, self.project)
         self.project.docktool_widget.setWidget(self.therm_viewer_widget)
+        self.project.docktool_widget.setFixedSize(585, 700)
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.viewer_button.setChecked(True)
@@ -155,6 +136,30 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.active_docktool_widget = self.therm_viewer_widget
         self.therm_viewer_widget.connect_signal()
         self.project.docktool_widget.visibilityChanged.connect(lambda x: self.therm_viewer_widget.toggle_signal_connection(x))
+
+    def string_numbering(self):
+        self.project.active_tool_widget.hide()
+        if not self.numbering_widget:
+            self.numbering_widget = ThermNumberingWidget(self, self.iface)
+        self.project.docktool_widget.setWidget(self.numbering_widget)
+        self.project.docktool_widget.setFixedSize(250, 355)    
+        self.project.docktool_widget.show()
+        self.uncheck_all_buttons()
+        self.StringNumberButton.setChecked(True)
+        if self.therm_viewer_widget:
+            self.therm_viewer_widget.disconnect_signal()
+    
+    def ImageTagging(self):
+        self.project.active_tool_widget.hide()
+        if not self.imagetagging_widget:
+            self.imagetagging_widget = ThermImageTaggingWidget(self, self.iface)
+        self.project.docktool_widget.setWidget(self.imagetagging_widget)
+        self.project.docktool_widget.setFixedSize(250, 355)   
+        self.project.docktool_widget.show()
+        self.uncheck_all_buttons()
+        self.imagetaggingButton.setChecked(True)
+        if self.therm_viewer_widget:
+            self.therm_viewer_widget.disconnect_signal()
 
     def uncheck_all_buttons(self):
         for button in self.findChildren(QtWidgets.QPushButton):
