@@ -96,7 +96,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         # save.scaled(48, 8, Qt.AspectRatioMode.KeepAspectRatioByExpanding) 
         # self.editbutton.setIcon(QIcon(edit))
         # self.savebutton.setIcon(QIcon(save))
-        self.editbutton.setText('⚒️')
+        self.editbutton.setText('📝')
         self.savebutton.setText('✅')
         self.editbutton.clicked.connect(self.startediting)
         self.savebutton.clicked.connect(self.savestringnumber)
