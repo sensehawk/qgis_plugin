@@ -80,6 +80,7 @@ class Project:
             imported_features = [feature for feature in import_layer.getFeatures()]
             self.vlayer.dataProvider().addFeatures(imported_features)
             self.vlayer.triggerRepaint()
+            self.load_feature_count()
 
 
     def add_tools(self):
@@ -335,7 +336,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                  "iface.actionAddFeature().trigger()",
             "S": "iface.actionSelect().trigger()",
             "Z": "iface.actionZoomToLayer().trigger()",
-            "P": "iface.showAttributeTable(self.active_project.vlayer))",
+            "P": "iface.showAttributeTable(self.active_project.vlayer)",
             "D": "iface.actionCopyFeatures().trigger()"
         }
         # Create a key emitter that sends the key presses
