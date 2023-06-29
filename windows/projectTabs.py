@@ -214,7 +214,6 @@ class Project:
 
     def change_feature_type(self, class_name):
         # If there are selected items, change feature type for those or else change feature type of last added feature
-        self.vlayer.commitChanges()
         self.vlayer.startEditing()
         selected_features = list(self.vlayer.selectedFeatures())
         if selected_features:
@@ -231,6 +230,8 @@ class Project:
                     feature.setAttribute("class_id", int(class_id))
                 self.vlayer.updateFeature(feature)
         else:
+            self.vlayer.commitChanges()
+            self.vlayer.startEditing()
             # Change last added feature
             features = list(self.vlayer.getFeatures())
             last_feature_index = -1
@@ -334,7 +335,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                  "iface.actionAddFeature().trigger()",
             "S": "iface.actionSelect().trigger()",
             "Z": "iface.actionZoomToLayer().trigger()",
-            "P": "iface.showAttributeTable(self.active_project.vlayer())"
+            "P": "iface.showAttributeTable(self.active_project.vlayer))",
+            "D": "iface.actionCopyFeatures().trigger()"
         }
         # Create a key emitter that sends the key presses
         self.key_emitter = KeypressEmitter()
