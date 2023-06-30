@@ -1,4 +1,4 @@
-from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer
+from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer, QgsField
 from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
 from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson, get_project_reports, get_project_details
@@ -129,13 +129,11 @@ def clipRequest(task, clip_task_input):
         response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
         res_status = response.status_code
         res_title, res_description = response.json()['title'], response.json()['description']
-        level = Qgis.Success
-        if res_status != 200 or res_status != 201 or res_status != 202:
-            level = Qgis.Warning
+        
         
     except Exception:
         print(traceback.format_exc())
-    return {"task": task.description(), 'title':res_title, 'description':res_description, 'level':level}
+    return {"task": task.description(), 'title':res_title, 'description':res_description, 'res_status':res_status}
 
 def loginTask(task, login_window):
     login_window.user_email = login_window.userName.text()
@@ -170,3 +168,5 @@ def approveTask(task, approve_task_input):
         return {"task": task.description(), "Exception": None, "success": True}
     except Exception as e:
         return {"task": task.description(), "Exception": e, "success": False}
+
+

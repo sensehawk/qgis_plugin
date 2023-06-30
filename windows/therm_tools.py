@@ -80,7 +80,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
             return None
         result = clip_task.returned_values
         message = result['title']
-        level = result['level']
+        res_status = result['res_status']
+        if res_status == 202:level = Qgis.Success
+        else: level = Qgis.Warning
         self.canvas_logger(f'{message}', level=level)
 
     def clip_raster(self):
@@ -115,7 +117,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
             self.thermlite_tagging_widget = ThermliteQcWindow(self, self.project)
         self.project.active_docktool_widget = self.thermlite_tagging_widget
         self.project.docktool_widget.setWidget(self.thermlite_tagging_widget)
-        # self.project.docktool_widget.setFixedSize(250, 230)         
+        self.project.docktool_widget.setFixedSize(560, 780)        
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.thermliteQcButton.setChecked(True)

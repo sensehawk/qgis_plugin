@@ -7,7 +7,7 @@ from urllib.request import urlopen
 import os
 from .sensehawk_apis.core_apis import get_project_geojson
 import json
-from qgis.core import Qgis, QgsVectorLayer
+from qgis.core import Qgis, QgsVectorLayer, QgsField
 from qgis.utils import iface
 from qgis.core import *
 import tempfile
@@ -302,3 +302,15 @@ def get_image_urls(task , inputs):
     image_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", headers={"Authorization": f"Token {token}"}, json=data).json()
     return {'task':task.description(),
             'image_urls':image_urls}
+
+def fields_validator(required_fields, layer):
+        layer.startEditing()
+        fname = list(required_fields.keys())
+        for field in fname:
+            variant = required_fields[field]
+            if layer.fields().indexFromName(field) == -1:
+                fieldz = QgsField(field , variant)
+                layer.dataProvider().addAttributes([fieldz])
+                layer.updateFields() # update layer fields after creating new one
+        layer.commitChanges()
+        layer.startEditing()

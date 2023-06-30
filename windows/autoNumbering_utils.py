@@ -2,21 +2,8 @@ import math
 from math import ceil
 from .packages.utm import from_latlon
 import numpy as np
-from qgis.core import QgsField
-from PyQt5.QtCore import QVariant
 
 
-
-def field_constructor(Vlayer):
-    Vlayer.startEditing()
-    if Vlayer.fields().indexFromName('string_number') == -1:
-        fieldz = QgsField('string_number' , QVariant.String)
-        Vlayer.dataProvider().addAttributes([fieldz])
-        Vlayer.updateFields()
-    if Vlayer.fields().indexFromName('uid') == -1:
-        fieldz = QgsField('uid' , QVariant.String)
-        Vlayer.dataProvider().addAttributes([fieldz])
-        Vlayer.updateFields()
 
 def topmost_table(sorted_tables):
     for ttable in sorted_tables:
@@ -55,7 +42,7 @@ class Table:
         self.raw_utm_x , self.raw_utm_y = from_latlon(self.raw_lonlat_y, self.raw_lonlat_x)[:2]
         table_lonlat = table.geometry().asPolygon()[0] 
         self.raw_utm_coords = table_vertex(table_lonlat)  #[[x,y],[x,y]]
-
+        
 
 def row_wise_sortedTables(tableslist, top, bottom): 
     sorted_row = []
@@ -70,10 +57,16 @@ def update_TableRowAndColumn(sorted_row, Vlayer,current_row):
     t_column = 1
     t_row = current_row
     for rs_tables in x_sorted:
-        rs_tables.feature['table_row'] = t_row
-        rs_tables.feature['table_column'] = t_column
-        rs_tables.feature['row'] = t_row
-        rs_tables.feature['column'] = t_column
+        try:
+            rs_tables.feature['table_row'] = t_row
+            rs_tables.feature['table_column'] = t_column
+            rs_tables.feature['row'] = t_row
+            rs_tables.feature['column'] = t_column
+        except KeyError:
+            rs_tables.feature['table_row'] = t_row
+            rs_tables.feature['table_column'] = t_column
+            rs_tables.feature['row'] = t_row
+            rs_tables.feature['column'] = t_column
         t_column += 1
         Vlayer.updateFeature(rs_tables.feature) 
 

@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>628</width>
-    <height>798</height>
+    <width>554</width>
+    <height>757</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>628</width>
-    <height>798</height>
+    <width>0</width>
+    <height>0</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -22,11 +22,17 @@
   <widget class="QLineEdit" name="marker_info">
    <property name="geometry">
     <rect>
-     <x>100</x>
-     <y>650</y>
+     <x>62</x>
+     <y>610</y>
      <width>111</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="readOnly">
     <bool>true</bool>
@@ -35,8 +41,8 @@
   <widget class="QLineEdit" name="temp_patch_x">
    <property name="geometry">
     <rect>
-     <x>450</x>
-     <y>640</y>
+     <x>412</x>
+     <y>600</y>
      <width>41</width>
      <height>21</height>
     </rect>
@@ -45,8 +51,8 @@
   <widget class="QLabel" name="patch_y">
    <property name="geometry">
     <rect>
-     <x>520</x>
-     <y>640</y>
+     <x>480</x>
+     <y>600</y>
      <width>16</width>
      <height>20</height>
     </rect>
@@ -58,8 +64,8 @@
   <widget class="QLineEdit" name="temp_patch_y">
    <property name="geometry">
     <rect>
-     <x>540</x>
-     <y>640</y>
+     <x>498</x>
+     <y>600</y>
      <width>41</width>
      <height>21</height>
     </rect>
@@ -68,11 +74,17 @@
   <widget class="QLineEdit" name="delta_temp">
    <property name="geometry">
     <rect>
-     <x>470</x>
-     <y>710</y>
-     <width>111</width>
-     <height>25</height>
+     <x>432</x>
+     <y>670</y>
+     <width>115</width>
+     <height>22</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="readOnly">
     <bool>true</bool>
@@ -81,8 +93,8 @@
   <widget class="QLineEdit" name="max_percentile">
    <property name="geometry">
     <rect>
-     <x>450</x>
-     <y>670</y>
+     <x>412</x>
+     <y>630</y>
      <width>41</width>
      <height>21</height>
     </rect>
@@ -91,8 +103,8 @@
   <widget class="QLabel" name="max_percentile_text">
    <property name="geometry">
     <rect>
-     <x>410</x>
-     <y>670</y>
+     <x>372</x>
+     <y>630</y>
      <width>31</width>
      <height>20</height>
     </rect>
@@ -104,11 +116,17 @@
   <widget class="QPushButton" name="save_tagged_data">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>750</y>
-     <width>311</width>
+     <x>242</x>
+     <y>706</y>
+     <width>307</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="text">
     <string>Save tagged data</string>
@@ -117,8 +135,8 @@
   <widget class="QLabel" name="marker_txt">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>650</y>
+     <x>2</x>
+     <y>610</y>
      <width>51</width>
      <height>20</height>
     </rect>
@@ -130,8 +148,8 @@
   <widget class="QLabel" name="temp_patch_txt">
    <property name="geometry">
     <rect>
-     <x>280</x>
-     <y>640</y>
+     <x>242</x>
+     <y>600</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -143,11 +161,17 @@
   <widget class="QPushButton" name="nxt_img">
    <property name="geometry">
     <rect>
-     <x>340</x>
-     <y>520</y>
+     <x>306</x>
+     <y>492</y>
      <width>241</width>
      <height>25</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="text">
     <string>&gt;</string>
@@ -156,9 +180,9 @@
   <widget class="QCheckBox" name="pan_toggle">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>690</y>
-     <width>101</width>
+     <x>66</x>
+     <y>654</y>
+     <width>91</width>
      <height>23</height>
     </rect>
    </property>
@@ -169,9 +193,9 @@
   <widget class="QCheckBox" name="temperature_toggle">
    <property name="geometry">
     <rect>
-     <x>430</x>
-     <y>600</y>
-     <width>161</width>
+     <x>398</x>
+     <y>564</y>
+     <width>151</width>
      <height>23</height>
     </rect>
    </property>
@@ -185,8 +209,8 @@
   <widget class="QLabel" name="temp_txt">
    <property name="geometry">
     <rect>
-     <x>330</x>
-     <y>700</y>
+     <x>292</x>
+     <y>660</y>
      <width>131</width>
      <height>41</height>
     </rect>
@@ -198,8 +222,8 @@
   <widget class="QLineEdit" name="min_percentile">
    <property name="geometry">
     <rect>
-     <x>540</x>
-     <y>670</y>
+     <x>498</x>
+     <y>630</y>
      <width>41</width>
      <height>21</height>
     </rect>
@@ -208,8 +232,8 @@
   <widget class="QLabel" name="percentile_text">
    <property name="geometry">
     <rect>
-     <x>280</x>
-     <y>670</y>
+     <x>242</x>
+     <y>630</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -221,11 +245,17 @@
   <widget class="QPushButton" name="tag_button">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>750</y>
+     <x>6</x>
+     <y>708</y>
      <width>151</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="text">
     <string>Tag Feature</string>
@@ -234,20 +264,26 @@
   <widget class="QComboBox" name="current_loaded_img">
    <property name="geometry">
     <rect>
-     <x>140</x>
-     <y>560</y>
+     <x>106</x>
+     <y>528</y>
      <width>441</width>
      <height>25</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
   </widget>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>50</y>
+     <x>6</x>
+     <y>42</y>
      <width>541</width>
-     <height>451</height>
+     <height>445</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="image_layout"/>
@@ -255,8 +291,8 @@
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>650</y>
+     <x>202</x>
+     <y>610</y>
      <width>20</width>
      <height>71</height>
     </rect>
@@ -268,8 +304,8 @@
   <widget class="QLabel" name="timestamp_label">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>600</y>
+     <x>8</x>
+     <y>564</y>
      <width>81</width>
      <height>20</height>
     </rect>
@@ -281,8 +317,8 @@
   <widget class="QPushButton" name="folder_path">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>10</y>
+     <x>6</x>
+     <y>8</y>
      <width>541</width>
      <height>25</height>
     </rect>
@@ -294,8 +330,8 @@
   <widget class="QLabel" name="patch_x">
    <property name="geometry">
     <rect>
-     <x>430</x>
-     <y>640</y>
+     <x>392</x>
+     <y>600</y>
      <width>16</width>
      <height>20</height>
     </rect>
@@ -307,11 +343,17 @@
   <widget class="QPushButton" name="previous_img">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>520</y>
+     <x>6</x>
+     <y>492</y>
      <width>241</width>
      <height>25</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="text">
     <string>&lt;</string>
@@ -320,11 +362,17 @@
   <widget class="QLineEdit" name="timestamp">
    <property name="geometry">
     <rect>
-     <x>140</x>
-     <y>600</y>
+     <x>108</x>
+     <y>564</y>
      <width>241</width>
      <height>25</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="readOnly">
     <bool>true</bool>
@@ -333,8 +381,8 @@
   <widget class="QLabel" name="min_percentile_text">
    <property name="geometry">
     <rect>
-     <x>500</x>
-     <y>670</y>
+     <x>462</x>
+     <y>630</y>
      <width>31</width>
      <height>20</height>
     </rect>
@@ -346,8 +394,8 @@
   <widget class="QLabel" name="image_txt">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>560</y>
+     <x>6</x>
+     <y>528</y>
      <width>81</width>
      <height>20</height>
     </rect>

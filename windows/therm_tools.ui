@@ -64,7 +64,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Clip Raster</string>
+        <string>ClipRaster</string>
        </property>
       </widget>
      </item>
@@ -80,7 +80,7 @@
         <enum>Qt::TabFocus</enum>
        </property>
        <property name="text">
-        <string>Auto Tag</string>
+        <string>AutoTag</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -99,7 +99,7 @@
         <enum>Qt::TabFocus</enum>
        </property>
        <property name="text">
-        <string>String Number</string>
+        <string>StringNumber</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -118,7 +118,7 @@
         <enum>Qt::TabFocus</enum>
        </property>
        <property name="text">
-        <string>Therm Viewer</string>
+        <string>ThermViewer</string>
        </property>
        <property name="checkable">
         <bool>true</bool>
@@ -137,7 +137,7 @@
         <enum>Qt::TabFocus</enum>
        </property>
        <property name="text">
-        <string>Manual Tagging</string>
+        <string>ManualTagging</string>
        </property>
        <property name="checkable">
         <bool>true</bool>

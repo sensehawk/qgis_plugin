@@ -88,6 +88,7 @@ class HomeWindow(QtWidgets.QWidget):
         if not 'asset_list' in result:
             return None
         
+        self.org.setEnabled(True)
         self.asset_details = result['asset_list']
         self.org_contianer_details = result['org_contianer_details']
         
@@ -103,6 +104,8 @@ class HomeWindow(QtWidgets.QWidget):
             org = self.org_details[self.org.currentText()]
         except KeyError:
             return None
+        self.org.setEnabled(False)
+        self.asset_combobox.setEnabled(False)
         load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
         QgsApplication.taskManager().addTask(load_asset_task)
         load_asset_task.statusChanged.connect(lambda load_asset_task_status: self.asset_info(load_asset_task_status, load_asset_task))

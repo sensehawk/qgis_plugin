@@ -34,7 +34,7 @@ from qgis.utils import iface
 from .packages.exiftool import ExifToolHelper
 import numpy as np
 import subprocess
-from ..utils import sort_images, upload, combobox_modifier, categorized_renderer, get_presigned_post_urls
+from ..utils import sort_images, upload, combobox_modifier, categorized_renderer, get_presigned_post_urls, fields_validator
 import json
 from ..constants import S3_BUCKET, S3_REGION
 
@@ -167,8 +167,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.DJI_SDK_PATH = os.path.join(os.path.dirname(__file__), "dji_thermal_sdk")
         self.geojson = json.load(open(self.geojson_path))
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
-        self.required_fields = {'timestamp':QVariant.String,'temperature_difference':QVariant.Double, 'temperature_min':QVariant.Double,
-                            'temperature_max':QVariant.Double, 'uid':QVariant.String,'num_images_tagged':QVariant.Double}
 
         #save tagged data
         self.save_tagged_data.clicked.connect(self.parse_tagged_data)
@@ -288,7 +286,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     
 
     def folderpath(self):
-        self.fields_validator(self.required_fields, self.project.vlayer)
+        self.required_fields = {'num_images_tagged':QVariant.Double, 'timestamp':QVariant.String}
+        fields_validator(self.required_fields, self.project.vlayer)
         self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
         if not self.images_dir:
             return None
@@ -364,16 +363,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             if self.temperature_toggle.isChecked():
                 self.extract_temperature(pos)
 
-    def fields_validator(self, required_fields, layer):
-        fname = list(required_fields.keys())
-        for field in fname:
-            variant = required_fields[field]
-            if layer.fields().indexFromName(field) == -1:
-                fieldz = QgsField(field , variant)
-                layer.dataProvider().addAttributes([fieldz])
-                layer.updateFields() # update layer fields after creating new one
-        layer.commitChanges()
-        layer.startEditing()
         
     def tag_image(self):
         
@@ -418,7 +407,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         try:
             sfeature['num_images_tagged'] = len(self.image_tagged_info[uid])
         except KeyError:
-            self.fields_validator(self.required_fields, self.project.vlayer)
+            fields_validator(self.required_fields, self.project.vlayer)
         self.project.vlayer.updateFeature(sfeature)
 
     def parse_tagged_data(self):

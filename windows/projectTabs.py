@@ -6,9 +6,10 @@ from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
 from ..event_filters import KeypressFilter, KeypressEmitter
 from .therm_tools import ThermToolsWidget
-import pandas as pd
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
+from ..utils import fields_validator
+import pandas as pd
 import qgis
 import json
 from .keyboard_settings import ShortcutSettings
@@ -22,7 +23,17 @@ class Project:
         self.project_details = load_task_result['project_details']
         self.geojson_path = load_task_result['geojson_path']
         self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.geojson_path, "ogr")
-        self.vlayer.featureAdded.connect(lambda x: self.load_feature_count(new_feature_id=x))
+        self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
+        self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
+
+        #validate fields and create if not there
+        required_fields = {'temperature_min':QVariant.Double,'temperature_max':QVariant.Double, 
+                            'temperature_difference':QVariant.Double, 'uid':QVariant.String,
+                            'string_number':QVariant.String, 'table_row':QVariant.Double,
+                            'table_column':QVariant.Double, 'row':QVariant.Double,
+                            'column':QVariant.Double, 'timestamp':QVariant.String}
+        fields_validator(required_fields, self.vlayer)
+
         self.rlayer = load_task_result['rlayer']
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
@@ -92,12 +103,16 @@ class Project:
         self.project_tab_layout.addWidget(self.tools_widget)
         self.tools_widget.show()
     
-    def load_feature_count(self, new_feature_id=None):
-        if new_feature_id:
-            # Update uid field 
-            feature = list(self.vlayer.getFeatures([new_feature_id]))[0]
-            feature['uid'] = self.create_uid()
-            self.vlayer.updateFeature(feature)
+    # update uid to newly added feature and synch feature count in project table tab widget
+    def updateUid_and_sync_featurecount(self, new_feature_id=None):
+        # Update uid field 
+        feature = list(self.vlayer.getFeatures([new_feature_id]))[0]
+        self.load_feature_count()
+        feature['uid'] = self.create_uid()
+        self.vlayer.updateFeature(feature)
+
+    # synch  feature count in project table
+    def load_feature_count(self, feature_id=None):
         # Get feature count by class_name
         feature_count_dict = {}
         class_name_keyword = {"terra": "class", "therm": "class_name"}[self.project_details["project_type"]]
@@ -406,10 +421,13 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             saved = save_project_geojson(geojson, project_uid, core_token,
                                          project_type=project_type)
             return {'status': str(saved), 'task': task.description()}
+        
         def callback(task, logger):
             result = task.returned_values
             if result:
-                logger(result["status"])
+                self.logger(result["status"])
+                self.canvas_logger(result['status'])
+                
         st = QgsTask.fromFunction("Save", save_task,
                                   save_task_input=[self.active_project.geojson_path,
                                                    self.load_window.core_token,

@@ -64,7 +64,6 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         Vlayer = self.iface.activeLayer()
         Vfeatures = Vlayer.getFeatures()
         module_width, module_height, angle, Prefix, Suffix = self.stringNumber_configuration()
-        field_constructor(Vlayer) # If not exist create stirng number field
         featureslist = [feature for feature in Vfeatures] #QgsfeatureIterator[] => Qgsfeatures
         featuresobjlist = [Table(feature) for feature in featureslist] 
         sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_lonlat_y, reverse=True)
@@ -90,12 +89,15 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                     Icolumn = featureobj.feature['column']
                     if self.stringnum_type.currentText() == 'Basic':
                         basic_number = f"{Prefix}-R{Trow}-T{Tcolumn}-{Suffix}"
-                        print(basic_number)
-                        featureobj.feature['string_number'] = basic_number.strip('-')
+                        try:
+                            featureobj.feature['string_number'] = basic_number.strip('-')
+                        except KeyError:
+                            Vlayer.commitChanges()
+                            Vlayer.startEditing()
+                            featureobj.feature['string_number'] = basic_number.strip('-')
                         Vlayer.updateFeature(featureobj.feature)
                     elif self.stringnum_type.currentText() == 'Basic+module':
                         basicModule_number = f"{Prefix}-R{Trow}-T{Tcolumn}-R{Irow}-C{Icolumn}-{Suffix}"
-                        print(basicModule_number)
                         featureobj.feature['string_number'] = basicModule_number.strip('-')
                         Vlayer.updateFeature(featureobj.feature)
 

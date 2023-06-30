@@ -40,7 +40,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home = homeobj
         self.core_token = self.home.core_token
         self.asset_uid = self.home.asset_uid
-        self.user_email = self.home.user_email
+        self.user_email = self.home.user_email 
             
         self.org_uid = self.home.org_uid
         self.org_contianer_details = self.home.org_contianer_details
@@ -63,11 +63,12 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home_button.clicked.connect(self.back_to_home)
 
         # self.group_text = QLabel(self)
-        # self.group_text.setText('Select Group:🔽')
-        # self.group_text.setStyleSheet("background-color: white;")  
+        # self.group_text.setText('Groups:')
+        # self.group_text.setStyleSheet("background-color: white;") 
         
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
         self.project_selection_layout.setContentsMargins(10, 15, 0, 10)
+        # self.project_selection_layout.addWidget(self.group_text,0, Qt.AlignTop)
         self.project_selection_layout.addWidget(self.home_button, 0, Qt.AlignTop)
         # self.project_selection_layout.addWidget(self.group_text, 0, Qt.AlignTop)
         # Simple line widget separator
@@ -110,7 +111,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         clicked_button = self.sender()
         project_uid = self.project_details[clicked_button.text()]
         project_type = app_dict[self.associated_group_app]
-        self.start_project_load(project_uid, project_type)
+        self.start_project_load(project_uid, project_type, clicked_button.text())
 
     def load_callback(self, load_task_status, load_task):
         new_project_index = len(self.project_tabs_widget.project_uids)
@@ -136,7 +137,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_tabs_widget.show()
         self.show_projects_loaded()
 
-    def start_project_load(self, project_uid, project_type):
+    def start_project_load(self, project_uid, project_type, project_name):
         if not project_uid:
             self.logger("No project uid given", level=Qgis.Warning)
             return None
@@ -155,7 +156,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
                             "org_uid":self.org_uid,
                             'container_uid':self.container_uid,
                             "logger": self.logger}
-        load_task = QgsTask.fromFunction("Load", loadTask, load_task_inputs)
+        load_task = QgsTask.fromFunction(f"{project_name} Project Load", loadTask, load_task_inputs)
         QgsApplication.taskManager().addTask(load_task)
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
