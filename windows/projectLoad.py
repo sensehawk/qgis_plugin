@@ -1,5 +1,6 @@
 from qgis.PyQt.QtCore import Qt, QSize
 from PyQt5 import QtCore, QtGui, QtWidgets 
+from qgis.utils import iface
 from qgis.core import Qgis, QgsApplication, QgsTask, QgsProject, QgsMessageLog
 from ..tasks import loadTask
 from PyQt5.QtWidgets import QLineEdit, QLabel,QCompleter, QVBoxLayout, QPushButton, QComboBox
@@ -40,7 +41,8 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home = homeobj
         self.core_token = self.home.core_token
         self.asset_uid = self.home.asset_uid
-        self.user_email = self.home.user_email 
+        self.user_email = self.home.user_email
+        self.layers_id = []
             
         self.org_uid = self.home.org_uid
         self.org_contianer_details = self.home.org_contianer_details
@@ -136,6 +138,13 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.categorized_renderer = categorize_layer(project)
         self.project_tabs_widget.show()
         self.show_projects_loaded()
+        # collect loaded project layers id's
+        self.layers_id_collect()
+        
+    def layers_id_collect(self):
+        self.layers_id.append(self.project_tabs_widget.rlayer_id)
+        self.layers_id.append(self.project_tabs_widget.vlayer_id)
+        print(self.layers_id)
 
     def start_project_load(self, project_uid, project_type, project_name):
         if not project_uid:
@@ -161,4 +170,23 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
     def back_to_home(self):
+        confirmation_widget = iface.messageBar().createMessage("Are u sure? one or more projects loaded!")
+        yes_button = QtWidgets.QPushButton(confirmation_widget)
+        yes_button.setText("Yes")
+        yes_button.clicked.connect(self.to_home)
+        no_button = QtWidgets.QPushButton(confirmation_widget)
+        no_button.setText("No")
+        no_button.clicked.connect(iface.messageBar().clearWidgets)
+        confirmation_widget.layout().addWidget(yes_button)
+        confirmation_widget.layout().addWidget(no_button)
+        iface.messageBar().pushWidget(confirmation_widget, Qgis.Warning)
+        
+
+    def to_home(self):
+        iface.messageBar().clearWidgets()
+        print(self.layers_id)
+        try:
+            self.project_tabs_widget.qgis_project.removeMapLayers(self.layers_id)
+        except Exception as e:
+            self.logger(str(e), level=Qgis.Warning)
         self.dock_widget.setWidget(self.home)

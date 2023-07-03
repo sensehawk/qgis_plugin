@@ -8,7 +8,7 @@ from ..event_filters import KeypressFilter, KeypressEmitter
 from .therm_tools import ThermToolsWidget
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
-from ..utils import fields_validator
+from ..utils import fields_validator, categorize_layer
 import pandas as pd
 import qgis
 import json
@@ -90,9 +90,17 @@ class Project:
             import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
             imported_features = [feature for feature in import_layer.getFeatures()]
             self.vlayer.dataProvider().addFeatures(imported_features)
-            self.vlayer.triggerRepaint()
+            categorize_layer(self)
             self.load_feature_count()
 
+    def export_geojson(self, save_path):
+        if save_path:
+            real_path = os.path.realpath(save_path)
+            self.vlayer.commitChanges()
+            current_layer = json.load(open(self.geojson_path))
+            json.dump(current_layer, open(real_path, "w"))
+            self.canvas_logger(f'{self.project_details.get("name", None)} Geojson exported...', level=Qgis.Success)
+            del current_layer # to aviod ram overload
 
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
@@ -167,7 +175,9 @@ class Project:
         self.project_tab_layout.addWidget(self.project_details_widget)
         self.feature_shortcut_settings_widget = ShortcutSettings(self)
         self.project_details_widget.toolButton.clicked.connect(self.feature_shortcut_settings_widget.show)
-        self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(self.project_details_widget.importFileWidget.filePath()))
+        self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(QtWidgets.QFileDialog.getOpenFileName(None, "Title", "", "JSON (*.json)")[0]))
+        self.project_details_widget.exportButton.clicked.connect(lambda: self.export_geojson(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "JSON (*.json)")[0]))
+        self.project_details_widget.project_uid.setTextInteractionFlags(Qt.TextSelectableByMouse)
 
     def populate_project_tab(self):
         # Simple line widget separator
@@ -380,6 +390,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.load_window.dock_widget.setWidget(self.load_window)
 
     def add_project(self, project):
+        self.rlayer_id = project.rlayer.id()
+        self.vlayer_id = project.vlayer.id()
         # Add project tab to the tabs widget
         self.project_tabs_widget.addTab(project.project_tab, project.project_details["name"])
         # Add project layers to the project
