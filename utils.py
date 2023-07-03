@@ -23,31 +23,37 @@ import glob
 import threading
 import matplotlib.pyplot as plt 
 import numpy as np
+import traceback
 
 exiftool_path = os.path.join(os.path.dirname(__file__), "windows\exiftool.exe")
 
-def sort_images(task, images_dir, reverse=False):
-    images = glob.glob(images_dir+"/*")
-    supported_image_formats = ('.jpg','.JPG','.tiff','.tif','.TIFF','.TIF')
-    images = [i for i in images if i.endswith(supported_image_formats)]
-    with ExifTool(exiftool_path) as e:
-        time_stamps = []
-        for i in images:
-            m = e.get_metadata(i)
-            m = {k.split(":")[1]: m[k] for k in m if ":" in k}
-            t = m["DateTimeOriginal"]
-            try:
-                t = datetime.strptime(t, "%Y:%m:%d  %H:%M:%S")
-            except Exception:
+def sort_images(task, images_dir, logger, reverse=False):
+    try:
+        logger('Strated sorting images datataken wise')
+        images = glob.glob(images_dir+"\*")
+        supported_image_formats = ('.jpg','.JPG','.tiff','.tif','.TIFF','.TIF')
+        images = [i for i in images if i.endswith(supported_image_formats)]
+        with ExifTool(exiftool_path) as e:
+            time_stamps = []
+            for i in images:
+                m = e.get_metadata(i)
+                m = {k.split(":")[1]: m[k] for k in m if ":" in k}
+                t = m["DateTimeOriginal"]
                 try:
-                    t = datetime.strptime(t.split(".")[0], "%Y:%m:%d  %H:%M:%S")
+                    t = datetime.strptime(t, "%Y:%m:%d  %H:%M:%S")
                 except Exception:
-                    t = datetime.strptime(t, "%H:%M:%S")
-            time_stamps.append(t)
-    sorted_tuples = sorted(zip(time_stamps, images), reverse=reverse)
-    images = [i[1] for i in sorted_tuples]
-    timestamps = [i[0] for i in sorted_tuples]
-    
+                    try:
+                        t = datetime.strptime(t.split(".")[0], "%Y:%m:%d  %H:%M:%S")
+                    except Exception:
+                        t = datetime.strptime(t, "%H:%M:%S")
+                time_stamps.append(t)
+        sorted_tuples = sorted(zip(time_stamps, images), reverse=reverse)
+        images = [i[1] for i in sorted_tuples]
+        timestamps = [i[0] for i in sorted_tuples]
+    except Exception as e:
+        dt = traceback.format_exc()
+        logger(f'Error:{e}', extra={"traceback": dt})
+
     return {'sorted_images':images,
             'sorted_timestamps':timestamps,
             'task': task.description()}

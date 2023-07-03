@@ -398,6 +398,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.projects_loaded[project.project_details["uid"]] = project
         # Activate project
         self.activate_project()
+        #get docktool_widget
+        self.docktool_widget = project.docktool_widget
 
     def save_project(self):
         if not self.active_project:
@@ -485,3 +487,4 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         del self.projects_loaded[self.active_project.project_details["uid"]]
         # Remove project tab
         self.project_tabs_widget.removeTab(self.project_tabs_widget.currentIndex())
+        self.docktool_widget.hide()

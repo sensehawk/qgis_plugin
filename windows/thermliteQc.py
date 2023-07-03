@@ -23,6 +23,8 @@
 # """
 import os
 import cv2
+import glob
+import datetime
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsVectorLayer, QgsApplication, QgsTask, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat, Qgis, QgsField, QgsTextBufferSettings
@@ -230,17 +232,20 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.delta_temp.setText("{:.2f}".format(self.max_temp-self.min_temp))
     
     def sort_task_callback(self, sort_task_status, image_sort_task):
-        if sort_task_status != 3:
-            return None
+        # if sort_task_status != 3:
+        #     return None
+        # print('testing')
         result = image_sort_task.returned_values
         self.sorted_images, self.sorted_timestamps = result['sorted_images'], result['sorted_timestamps']
+        self.logger(f'{self.sorted_images} {self.sorted_timestamps}') #remove
         if not self.sorted_images:
             self.canvas_logger("No valid images in selected folder", level=Qgis.Warning)
             return None
         # Enable the buttons
         for b in [self.nxt_img, self.previous_img]:
             b.setEnabled(True)
-        raw_images = [image.split('/')[-1] for image in self.sorted_images]
+        raw_images = [image.split("\\")[-1] for image in self.sorted_images]
+        self.logger(f'{raw_images}') #remove
         self.image_selector = combobox_modifier(self.current_loaded_img, raw_images)
         self.image_selector.currentIndexChanged.connect(self.change_image)
         self.trigger_custom_label(self.project.vlayer)
@@ -291,8 +296,29 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
         if not self.images_dir:
             return None
+        # images = glob.glob(self.images_dir+"\*")
+        # supported_image_formats = ('.jpg','.JPG','.tiff','.tif','.TIFF','.TIF')
+        # images = [i for i in images if i.endswith(supported_image_formats)]
+        # with ExifToolHelper(exiftool_path) as e:
+        #     time_stamps = []
+        #     for i in images:
+        #         m = e.get_metadata(i)
+        #         m = {k.split(":")[1]: m[k] for k in m if ":" in k}
+        #         t = m["DateTimeOriginal"]
+        #         try:
+        #             t = datetime.strptime(t, "%Y:%m:%d  %H:%M:%S")
+        #         except Exception:
+        #             try:
+        #                 t = datetime.strptime(t.split(".")[0], "%Y:%m:%d  %H:%M:%S")
+        #             except Exception:
+        #                 t = datetime.strptime(t, "%H:%M:%S")
+        #         time_stamps.append(t)
+        # sorted_tuples = sorted(zip(time_stamps, images), reverse=True)
+        # images = [i[1] for i in sorted_tuples]
+        # timestamps = [i[0] for i in sorted_tuples]
+        # print(images)
         self.canvas_logger('Sorting images')
-        image_sort_task = QgsTask.fromFunction("Sort Images", sort_images, self.images_dir)
+        image_sort_task = QgsTask.fromFunction("Sort Images", sort_images, self.images_dir, self.logger)
         QgsApplication.taskManager().addTask(image_sort_task)
         image_sort_task.statusChanged.connect(lambda sort_task_status: self.sort_task_callback(sort_task_status, image_sort_task))
 
