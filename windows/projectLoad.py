@@ -62,6 +62,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
 
         self.home_button = QPushButton(self)
         self.home_button.setText('🏡 Home')
+        self.home_button.setStyleSheet('QPushButton {background-color: #dcf7ea; color: #3d3838;}')
         self.home_button.clicked.connect(self.back_to_home)
 
         # self.group_text = QLabel(self)
@@ -144,7 +145,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
     def layers_id_collect(self):
         self.layers_id.append(self.project_tabs_widget.rlayer_id)
         self.layers_id.append(self.project_tabs_widget.vlayer_id)
-        print(self.layers_id)
+       
 
     def start_project_load(self, project_uid, project_type, project_name):
         if not project_uid:
@@ -184,7 +185,6 @@ class ProjectLoadWindow(QtWidgets.QWidget):
 
     def to_home(self):
         iface.messageBar().clearWidgets()
-        print(self.layers_id)
         try:
             self.project_tabs_widget.qgis_project.removeMapLayers(self.layers_id)
         except Exception as e:

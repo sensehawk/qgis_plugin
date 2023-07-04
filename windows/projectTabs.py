@@ -90,6 +90,7 @@ class Project:
             import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
             imported_features = [feature for feature in import_layer.getFeatures()]
             self.vlayer.dataProvider().addFeatures(imported_features)
+            self.vlayer.commitChanges()
             categorize_layer(self)
             self.load_feature_count()
 
@@ -175,8 +176,11 @@ class Project:
         self.project_tab_layout.addWidget(self.project_details_widget)
         self.feature_shortcut_settings_widget = ShortcutSettings(self)
         self.project_details_widget.toolButton.clicked.connect(self.feature_shortcut_settings_widget.show)
+        self.project_details_widget.toolButton.setStyleSheet("background-color:#dcf7ea;")
         self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(QtWidgets.QFileDialog.getOpenFileName(None, "Title", "", "JSON (*.json)")[0]))
+        self.project_details_widget.importButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
         self.project_details_widget.exportButton.clicked.connect(lambda: self.export_geojson(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "JSON (*.json)")[0]))
+        self.project_details_widget.exportButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
         self.project_details_widget.project_uid.setTextInteractionFlags(Qt.TextSelectableByMouse)
 
     def populate_project_tab(self):
@@ -333,19 +337,22 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         Hmain_layout = QtWidgets.QHBoxLayout(self)
         # Back to project load button
         back_button = QtWidgets.QPushButton(self)
-        back_button.setText("👈 Back")
+        back_button.setText("👈🏼 Back")
+        back_button.setStyleSheet('QPushButton {background-color: #f6f7b7; color: #3d3838;}')
         back_button.clicked.connect(self.back_to_load)
         Hmain_layout.addWidget(back_button)
 
         # Close project button
         close_project_button = QtWidgets.QPushButton(self)
         close_project_button.setText("❌ Close")
+        close_project_button.setStyleSheet('QPushButton {background-color: #f7b7ce; color: #3d3838;}')
         close_project_button.clicked.connect(self.close_project)
         Hmain_layout.addWidget(close_project_button)
 
         # Save project button
         save_project_button = QtWidgets.QPushButton(self)
         save_project_button.setText("✔️ Save")
+        save_project_button.setStyleSheet('QPushButton {background-color: #b9f7b7; color: #3d3838;}')
         save_project_button.clicked.connect(self.save_project)
         Hmain_layout.addWidget(save_project_button)
 
