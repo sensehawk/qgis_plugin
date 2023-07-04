@@ -26,12 +26,25 @@ class Project:
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
 
+        # Update center field, raw_images and attachments if they don't exist since QGIS does not read lists and dicts properly
+        for f in self.vlayer.getFeatures():
+            raw_images = f["raw_images"]
+            center = f["center"]
+            attachments = f["attachments"]
+            if not raw_images:
+                f["raw_images"] = []
+            if not attachments:
+                f["attachments"] = []
+            if isinstance(center, str):
+                f["center"] = [[0, 0]]
+
         #validate fields and create if not there
         required_fields = {'temperature_min':QVariant.Double,'temperature_max':QVariant.Double, 
-                            'temperature_difference':QVariant.Double, 'uid':QVariant.String,
-                            'string_number':QVariant.String, 'table_row':QVariant.Double,
-                            'table_column':QVariant.Double, 'row':QVariant.Double,
-                            'column':QVariant.Double, 'timestamp':QVariant.String}
+-                            'temperature_difference':QVariant.Double, 'uid':QVariant.String,
+-                            'string_number':QVariant.String, 'table_row':QVariant.Double,
+-                            'table_column':QVariant.Double, 'row':QVariant.Double,
+-                            'column':QVariant.Double, 'timestamp':QVariant.String}
+
         fields_validator(required_fields, self.vlayer)
 
         self.rlayer = load_task_result['rlayer']

@@ -285,7 +285,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     
 
     def folderpath(self):
-        self.required_fields = {'num_images_tagged':QVariant.Double, 'timestamp':QVariant.String}
+        self.required_fields = {'num_images_tagged':QVariant.Double, 
+                                'timestamp':QVariant.String}
         fields_validator(self.required_fields, self.project.vlayer)
         self.images_dir = os.path.realpath(QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder'))
         self.logger(f"Images dir selected: {self.images_dir}")
@@ -399,7 +400,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             if not num_images_tagged:
                 sfeature['num_images_tagged'] = 1
             else:
-                sfeature['num_images_tagged'] += 1
+                sfeature['num_images_tagged'] = (sfeature['num_images_tagged']) + 1
 
         # If the same marker location and the same image exists, don't add it again
         if sfeature_image_tagged_info.get(image_path, [0, 0]) != self.markerlocation:        
@@ -448,8 +449,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             json.dump(file , p)
 
         # Saving tagged images meta data
-        with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
-            json.dump(aws_tagged_images, g)
+        # with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
+        #     json.dump(aws_tagged_images, g)
 
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
@@ -458,7 +459,11 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             if not mapping_uid:
                 geojson['features'].append(feature)
                 continue
-            feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
+            raw_images = feature['properties']['raw_images']
+            if isinstance(raw_images, type("")):
+                feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
+            else:
+                feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
             if 'num_images_tagged' in feature['properties']:
                 feature['properties'].pop('num_images_tagged')
             geojson['features'].append(feature)

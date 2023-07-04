@@ -7,7 +7,7 @@ from urllib.request import urlopen
 import os
 from .sensehawk_apis.core_apis import get_project_geojson
 import json
-from qgis.core import Qgis, QgsVectorLayer, QgsField
+from qgis.core import Qgis, QgsDefaultValue, QgsField
 from qgis.utils import iface
 from qgis.core import *
 import tempfile
