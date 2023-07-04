@@ -138,6 +138,7 @@ def clipRequest(task, clip_task_input):
 def loginTask(task, login_window):
     login_window.user_email = login_window.userName.text()
     login_window.user_password = login_window.userPassword.text()
+
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
 
     if not login_window.user_email or not login_window.user_password:
