@@ -7,7 +7,7 @@ from urllib.request import urlopen
 import os
 from .sensehawk_apis.core_apis import get_project_geojson
 import json
-from qgis.core import Qgis, QgsVectorLayer, QgsField
+from qgis.core import Qgis, QgsDefaultValue, QgsField
 from qgis.utils import iface
 from qgis.core import *
 import tempfile
@@ -17,7 +17,7 @@ from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import Qt
-from .windows.packages.exiftool.exiftool import ExifTool
+from .windows.packages.exiftool import ExifToolHelper
 from datetime import datetime
 import glob
 import threading
@@ -25,19 +25,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import traceback
 
-exiftool_path = os.path.join(os.path.dirname(__file__), "windows\exiftool.exe")
 
 def sort_images(task, images_dir, logger, reverse=False):
     try:
-        logger('Strated sorting images datataken wise')
-        images = glob.glob(images_dir+"\*")
+        logger('Started sorting images using DateTimeOriginal exif tag')
+        images = glob.glob(images_dir+"\\*")
         supported_image_formats = ('.jpg','.JPG','.tiff','.tif','.TIFF','.TIF')
         images = [i for i in images if i.endswith(supported_image_formats)]
-        with ExifTool(exiftool_path) as e:
+        with ExifToolHelper() as e:
             time_stamps = []
             for i in images:
-                m = e.get_metadata(i)
-                m = {k.split(":")[1]: m[k] for k in m if ":" in k}
+                m = e.get_metadata(i)[0]
+                m = {k.split(":")[-1]: m[k] for k in m}
                 t = m["DateTimeOriginal"]
                 try:
                     t = datetime.strptime(t, "%Y:%m:%d  %H:%M:%S")
@@ -52,7 +51,7 @@ def sort_images(task, images_dir, logger, reverse=False):
         timestamps = [i[0] for i in sorted_tuples]
     except Exception as e:
         dt = traceback.format_exc()
-        logger(f'Error:{e}', extra={"traceback": dt})
+        logger(f'Error:{e}')
 
     return {'sorted_images':images,
             'sorted_timestamps':timestamps,
@@ -252,8 +251,9 @@ def file_existent(project_uid, org, token):
         return existing_file
 
 def convert_and_upload(path, image_path, projectUid, post_urls_data):
-    image_name = image_path.split('/')[-1]
+    image_name = image_path.split('\\')[-1]
     image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
+    print("image key: ", image_key)
     dpath = os.path.join(f'{path}', image_name)
     image = cv2.imread(image_path, 0)
     colormap = plt.get_cmap('inferno')
@@ -279,7 +279,6 @@ def upload(task ,inputs):
         os.mkdir(path)
 
     for image in images:
-        print(image)
         t = threading.Thread(target=convert_and_upload, args=(path, image, projectUid, post_urls_data))
         t.start()
     
@@ -291,14 +290,17 @@ def upload(task ,inputs):
 
 def get_presigned_post_urls(task, inputs):
     upload_image_list = inputs["imageslist"]
+    print(f"Upload images list: {upload_image_list}")
     org_uid = inputs["orgUid"]
     project_uid = inputs["projectUid"]
     core_token = inputs["core_token"]
-    upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{i.split('/')[-1]}" for i in upload_image_list]
+    upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{os.path.split(i)[-1]}" for i in upload_image_list]
     data = {"project_uid": project_uid, "organization": org_uid, "object_keys": upload_keys}
+    print(f"Data for presigned post urls: {data}")
     url = THERMAL_TAGGING_URL + "/presigned_post_urls"
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, json=data, headers=headers).json()
+    print(f"Presigned post url response: {response}")
     return {'task': task.description(),
             'response': response}
 

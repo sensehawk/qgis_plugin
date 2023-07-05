@@ -1,7 +1,7 @@
 from qgis.PyQt.QtCore import Qt, QVariant, QSize
 import os
 from PyQt5 import QtGui, QtWidgets, uic
-from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer, QgsField
+from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer, QgsField, NULL
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
 from ..event_filters import KeypressFilter, KeypressEmitter
@@ -15,6 +15,7 @@ import json
 from .keyboard_settings import ShortcutSettings
 import random 
 import string
+import re
 
 
 class Project:
@@ -27,11 +28,19 @@ class Project:
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
 
         #validate fields and create if not there
-        required_fields = {'temperature_min':QVariant.Double,'temperature_max':QVariant.Double, 
-                            'temperature_difference':QVariant.Double, 'uid':QVariant.String,
-                            'string_number':QVariant.String, 'table_row':QVariant.Double,
-                            'table_column':QVariant.Double, 'row':QVariant.Double,
-                            'column':QVariant.Double, 'timestamp':QVariant.String}
+        required_fields = {'temperature_min':QVariant.Double,
+                           'temperature_max':QVariant.Double,
+                           'temperature_difference':QVariant.Double, 
+                           'uid':QVariant.String,
+                           'string_number':QVariant.String, 
+                           'table_row':QVariant.Double,
+                           'table_column':QVariant.Double, 
+                           'row':QVariant.Double,
+                           'column':QVariant.Double, 
+                           'timestamp':QVariant.String, 
+                           'center':QVariant.String, 
+                           'raw_images':QVariant.String}
+
         fields_validator(required_fields, self.vlayer)
 
         self.rlayer = load_task_result['rlayer']
@@ -65,6 +74,23 @@ class Project:
                 i: self.class_maps[i]["properties"]["color"].replace("rgb(", "").replace(")", "").replace(" ", "").split(",")
                 for i in self.class_maps}
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
+
+    def clean_fields(self):
+        # Clean wrongly formatted fields (center, raw_images, attachments) in case they exist
+        self.vlayer.startEditing()
+        default_values = {"raw_images": NULL, "attachments": NULL, "center": NULL}
+
+        for f in self.vlayer.getFeatures():
+            for attr in default_values.keys():
+                try:   
+                    attr_value = f[attr]
+                except KeyError:
+                    continue
+                if type(attr_value) in [str, dict]:
+                    f[attr] = re.sub('[{}\n]', '', str(f[attr]))
+                    if not f[attr]:
+                        f[attr] = default_values[attr]
+            self.vlayer.updateFeature(f)
 
     def refresh_wms_raster(self, msg, tag, level):
         # If the WMS log is received and it is of level Warning or Critical, then refresh the wms connection for raster layer
@@ -119,6 +145,8 @@ class Project:
         feature = list(self.vlayer.getFeatures([new_feature_id]))[0]
         self.load_feature_count()
         feature['uid'] = self.create_uid()
+        feature['projectUid'] = self.project_details["uid"]
+        feature['groupUid'] = self.project_details["group"]["uid"]
         self.vlayer.updateFeature(feature)
 
     # synch  feature count in project table
@@ -159,11 +187,6 @@ class Project:
         # Disable editing
         self.features_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.project_tab_layout.addWidget(self.features_table)
-
-        # self.features_table.setMinimumSize(QSize(200, 100))
-        # self.features_table.setMaximumSize(QSize(250,100))
-        # self.features_table.setFixedWidth(200)
-        # self.features_table.setFixedHeight(100)
 
     def create_project_details_widget(self):
         self.project_details_widget = QtWidgets.QWidget(self.project_tab)
@@ -286,6 +309,7 @@ class Project:
     def create_uid(self):
         unique_string = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase) for _ in range(9))
         uid = f"{self.project_details['uid']}-{unique_string[:3]}:{unique_string[3:6]}~{unique_string[6:]}"
+        print(f"UID of newly added feature: {uid}")
         return uid
 
     def setup_feature_uid(self):
@@ -427,21 +451,16 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         if not self.active_project:
             return None
         self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
+        self.active_project.clean_fields()
         self.active_project.vlayer.commitChanges()
         self.active_project.last_saved = str(datetime.now())
 
         def save_task(task, save_task_input):
             geojson_path, core_token, project_uid, project_type = save_task_input
-            cleaned_geojson_path = geojson_path.replace(".geojson", "_cleaned.geojson")
-            # Delete any duplicate features
-            qgis.processing.run('qgis:deleteduplicategeometries',
-                                {"INPUT": geojson_path, "OUTPUT": cleaned_geojson_path})
-            with open(cleaned_geojson_path, 'r') as fi:
+            with open(geojson_path, 'r') as fi:
                 geojson = json.load(fi)
-            # Clear UIDs to avoid duplicate error while saving to Therm
-            for f in geojson["features"]:
-                f["properties"]["uid"] = None
-            # Upload vectors
+            #Upload vectors
+            print("Uploading")
             saved = save_project_geojson(geojson, project_uid, core_token,
                                          project_type=project_type)
             return {'status': str(saved), 'task': task.description()}

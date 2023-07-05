@@ -24,7 +24,7 @@
 import os
 import cv2
 import glob
-import datetime
+from datetime import datetime
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsVectorLayer, QgsApplication, QgsTask, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat, Qgis, QgsField, QgsTextBufferSettings
@@ -36,11 +36,11 @@ from qgis.utils import iface
 from .packages.exiftool import ExifToolHelper
 import numpy as np
 import subprocess
-from ..utils import sort_images, upload, combobox_modifier, categorized_renderer, get_presigned_post_urls, fields_validator
+from ..utils import sort_images, upload, combobox_modifier, categorize_layer, get_presigned_post_urls, fields_validator
 import json
 from ..constants import S3_BUCKET, S3_REGION
 
-exiftool_path = os.path.join(os.path.dirname(__file__), "exiftool.exe")
+exiftool_path = r'{}'.format(os.path.realpath(os.path.join(os.path.dirname(__file__), "exiftool.exe")))
 
 class PhotoViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
@@ -130,6 +130,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.setupUi(self)
         self.canvas_logger = therm_tools.canvas_logger
         self.logger = therm_tools.logger
+        self.logger(exiftool_path)
         self.therm_tools = therm_tools
         self.project = project
         self.project.manual_tagging_widget = self
@@ -141,8 +142,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.viewer.photoClicked.connect(self.photoClicked)
         self.image_layout.addWidget(self.viewer)
         self.image_tagged_info = {}
-        self.issue_list = [[]]
-        self.markerlocation_list = [[0,0]]
         #select folder path
         self.folder_path.clicked.connect(self.folderpath)
         # # Navigation buttons
@@ -166,7 +165,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.image_index = 0
         self.setFixedSize(628, 798)
         self.et = ExifToolHelper()
-        self.DJI_SDK_PATH = os.path.join(os.path.dirname(__file__), "dji_thermal_sdk")
+        self.DJI_SDK_PATH = os.path.realpath(os.path.join(os.path.dirname(__file__), "dji_thermal_sdk"))
         self.geojson = json.load(open(self.geojson_path))
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
 
@@ -188,20 +187,18 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.delta_temp.setEnabled(switch)
 
     def get_temperature_map(self, image_path):
-        metadata = self.et.get_metadata(image_path)
+        metadata = self.et.get_metadata(image_path)[0]
         camera = metadata["EXIF:Model"]
         if "MAVIC2-ENTERPRISE-ADVANCED" in camera or "H20T" in camera or "M3T" in camera:
-            env = os.environ.copy()
-            env['LD_LIBRARY_PATH'] = self.DJI_SDK_PATH
-            subprocess.call(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp')} -s '{image_path}' -a measure -o temp.raw",
-                            shell=True, env=env)
+            os.system(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp.exe')} -s {image_path} -a measure -o temp.raw")
             degree_map = np.empty((512, 640), np.int16)
-            degree_map.data = open("temp.raw", "rb").read()
+            degree_map.data = open(os.path.join(os.getcwd(), "temp.raw"), "rb").read()
+            os.remove(os.path.join(os.getcwd(), "temp.raw"))
             degree_map = degree_map / 10
         else:
             os.system('{} -RawThermalImage -b "{}" > raw.dat'.format(exiftool_path, image_path))
-            img = cv2.imread("raw.dat", cv2.IMREAD_UNCHANGED)
-            os.remove('raw.dat')
+            img = cv2.imread(os.path.join(os.getcwd(), "raw.dat"), cv2.IMREAD_UNCHANGED)
+            os.remove(os.path.join(os.getcwd(), "raw.dat"))
 
             r1 = metadata['APP1:PlanckR1']
             r2 = metadata['APP1:PlanckR2']
@@ -236,7 +233,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             return None
         result = image_sort_task.returned_values
         self.sorted_images, self.sorted_timestamps = result['sorted_images'], result['sorted_timestamps']
-        self.logger(f'{self.sorted_images} {self.sorted_timestamps}') #remove
         if not self.sorted_images:
             self.canvas_logger("No valid images in selected folder", level=Qgis.Warning)
             return None
@@ -247,7 +243,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.image_selector = combobox_modifier(self.current_loaded_img, raw_images)
         self.image_selector.currentIndexChanged.connect(self.change_image)
         self.trigger_custom_label(self.project.vlayer)
-        self.generate_num_tagged_rawimages()
         self.load_image(0)
     
     def generate_num_tagged_rawimages(self):
@@ -286,12 +281,15 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         vlayer.setLabelsEnabled(True)
         vlayer.setLabeling(labeler)
         vlayer.triggerRepaint()
+        self.generate_num_tagged_rawimages()
     
 
     def folderpath(self):
-        self.required_fields = {'num_images_tagged':QVariant.Double, 'timestamp':QVariant.String}
+        self.required_fields = {'num_images_tagged':QVariant.Double, 
+                                'timestamp':QVariant.String}
         fields_validator(self.required_fields, self.project.vlayer)
-        self.images_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder')
+        self.images_dir = os.path.realpath(QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder'))
+        self.logger(f"Images dir selected: {self.images_dir}")
         if not self.images_dir:
             return None
         self.canvas_logger('Sorting images')
@@ -300,8 +298,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         image_sort_task.statusChanged.connect(lambda sort_task_status: self.sort_task_callback(sort_task_status, image_sort_task))
 
     def change_image(self):
-        print(self.image_selector.currentIndex())
-        print(self.sorted_images[self.image_index])
+        print(f"Current image index: {self.image_selector.currentIndex()}")
+        print(f"Changed image index: {self.sorted_images[self.image_index]}")
         self.image_index = self.image_selector.currentIndex()
         self.load_image(self.image_index)
         self.marker_info.setText('')
@@ -317,7 +315,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.viewer.setPhoto(self.current_image)
         # Load temperature map if temperature is enabled
         if self.temperature_toggle.isChecked():
-            self.temperature_map = self.get_temperature_map(self.image_path)
+            self.temperature_map = self.get_temperature_map(r'{}'.format(self.image_path))
         else:
             self.temperature_map = None
 
@@ -365,78 +363,80 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             self.viewer.setPhoto(self.current_image)
             if self.temperature_toggle.isChecked():
                 self.extract_temperature(pos)
-
         
     def tag_image(self):
-        
-        self.project.vlayer.commitChanges()
         self.project.vlayer.startEditing()
-
         # Check if there are any selected features
         if self.project.vlayer.selectedFeatures():
             sfeature = self.project.vlayer.selectedFeatures()[-1]
         else:
             *_, sfeature = self.project.vlayer.getFeatures()
-
         self.project.vlayer.removeSelection()
 
-        sx = sfeature.geometry().centroid().asPoint().x()
-        sy = sfeature.geometry().centroid().asPoint().y()
-        print(sx,sy ,'and' , self.issue_list[-1])
-        
         if not self.delta_temp.text():
             self.canvas_logger("Invalid image for temperature", level=Qgis.Warning)
             return None
-        uid = sfeature['uid']
 
-        if [sx, sy] != self.issue_list[-1]:    
+        # Get selected feature details
+        uid = sfeature['uid']
+        sfeature_image_tagged_info = self.image_tagged_info.get(uid, {})
+        image_path = self.sorted_images[self.image_index]
+        
+        # Tag temperature info if temperature is enabled
+        if self.temperature_toggle.isChecked():
             dt = unicode(self.sorted_timestamps[self.image_index].replace(microsecond=0))
             sfeature['timestamp'] = dt
             sfeature['temperature_difference'] = float(self.delta_temp.text())
             sfeature['temperature_min']  = float(self.min_temp)
             sfeature['temperature_max'] = float(self.max_temp)
-            print(self.min_temp, self.max_temp)
-            self.markerlocation_list.append(self.markerlocation)
-            self.image_tagged_info[uid] = [{self.sorted_images[self.image_index]:self.markerlocation}]
-            self.issue_list.append([sx, sy])
+
+        # Update num images tagged if the image does not already exist in the feature tagged info
+        if image_path not in sfeature_image_tagged_info:
+            try:
+                num_images_tagged = sfeature['num_images_tagged']
+            except KeyError:
+                fields_validator(self.required_fields, self.project.vlayer)
+                num_images_tagged = sfeature['num_images_tagged']
+            if not num_images_tagged:
+                sfeature['num_images_tagged'] = 1
+            else:
+                sfeature['num_images_tagged'] = (sfeature['num_images_tagged']) + 1
+
+        # If the same marker location and the same image exists, don't add it again
+        if sfeature_image_tagged_info.get(image_path, [0, 0]) != self.markerlocation:        
+            sfeature_image_tagged_info[image_path] = self.markerlocation
+            print(f"Tagged image info: {self.image_tagged_info}")
         else:
-            print('adding in existing isuues')
-            # If the photo is not clicked, self.markerlocation will be retained as the last item in the self.markerlocation_list,
-            # Correct it
-            if self.markerlocation == self.markerlocation_list[-1]:
-                self.markerlocation = [0,0]
-            self.image_tagged_info[uid].append({self.sorted_images[self.image_index]:self.markerlocation})
-        print(self.image_tagged_info)
-        try:
-            sfeature['num_images_tagged'] = len(self.image_tagged_info[uid])
-        except KeyError:
-            fields_validator(self.required_fields, self.project.vlayer)
+            return None
+        # Save sfeature tagged info for later use
+        self.image_tagged_info[uid] = sfeature_image_tagged_info
         self.project.vlayer.updateFeature(sfeature)
+        # Set the marker location to default [0, 0]
+        self.markerlocation = [0, 0]
 
     def parse_tagged_data(self):
         self.canvas_logger('Saving changes to Sensehawk Core')
         self.project.vlayer.commitChanges()
-        self.project.vlayer.startEditing()
         self.upload_image_list = []
         aws_tagged_images = {}
-        for uid, imgs_info in self.image_tagged_info.items():
+        for uid in self.image_tagged_info:
+            imgs_info = self.image_tagged_info[uid]
             raw_image = []
-            Image_num = 0
-            for img in imgs_info:
-                next_image = next(iter(img.keys()))
+            image_num = 0
+            for next_image in imgs_info:
                 if next_image not in self.upload_image_list:
                     self.upload_image_list.append(next_image)
-                image = next_image.split('/')[-1]
-                markerlocation = next(iter(img.values()))
+                image = next_image.split('\\')[-1]
+                markerlocation = imgs_info[next_image]
                 image_type = 'Thermal Raw Image'
                 aws_image = {"location": markerlocation,
                     "service": {'bucket': S3_BUCKET,
-                                                            'key': f'hawkai/{self.projectUid}/IR_rawimage/{image}',
-                                                            'name': 'aws_s3',
-                                                            'stage': 'qgis_plugin',
-                                                            'region': S3_REGION,
-                                                            'filename': f'{image_type} {Image_num}.jpg'}}
-                Image_num += 1 
+                                'key': f'hawkai/{self.projectUid}/IR_rawimage/{image}',
+                                'name': 'aws_s3',
+                                'stage': 'qgis_plugin',
+                                'region': S3_REGION,
+                                'filename': f'{image_type} {image_num}.jpg'}}
+                image_num += 1 
                 raw_image.append(aws_image)
 
             aws_tagged_images[uid] = raw_image
@@ -445,12 +445,12 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             file = json.load(f)
 
         # Saving tagged Geojson for backup
-        with open(self.images_dir+f'/{self.projectUid}_tagged.json', 'w') as p:
+        with open(self.images_dir+f'\\{self.projectUid}_tagged.json', 'w') as p:
             json.dump(file , p)
 
         # Saving tagged images meta data
-        with open(self.images_dir+f'/{self.projectUid}_image_metadata.json', 'w') as g:
-            json.dump(aws_tagged_images, g)
+        # with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
+        #     json.dump(aws_tagged_images, g)
 
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
@@ -459,7 +459,11 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             if not mapping_uid:
                 geojson['features'].append(feature)
                 continue
-            feature['properties']['raw_images'] = aws_tagged_images[mapping_uid]
+            raw_images = feature['properties']['raw_images']
+            if isinstance(raw_images, type("")):
+                feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
+            else:
+                feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
             if 'num_images_tagged' in feature['properties']:
                 feature['properties'].pop('num_images_tagged')
             geojson['features'].append(feature)
@@ -470,12 +474,12 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             json.dump(geojson, f)
         qclayer = QgsVectorLayer(self.project.geojson_path, self.project.geojson_path, "ogr")
         self.project.qgis_project.addMapLayer(qclayer)
-        renderer = categorized_renderer(self.project)
-        qclayer.setRenderer(renderer)
-        qclayer.triggerRepaint()
+        # Reload layer styles
+        categorize_layer(self.project)
         # trigger cutom label for freshly loaded vlayer
-        self.trigger_custom_label(qclayer)
         self.project.vlayer = qclayer
+        fields_validator(self.required_fields, self.project.vlayer)
+        self.trigger_custom_label(self.project.vlayer)
         self.initiate_upload_process()
 
     def upload_callback(self, upload_task_status, upload_task):
@@ -500,7 +504,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         upload_task = QgsTask.fromFunction("Upload", upload, upload_task_inputs)
         QgsApplication.taskManager().addTask(upload_task)
         upload_task.statusChanged.connect(lambda upload_task_status: self.upload_callback(upload_task_status, upload_task))
-
 
     def initiate_upload_process(self):
         task_inputs = {'imageslist':self.upload_image_list,
