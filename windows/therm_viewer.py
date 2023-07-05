@@ -155,7 +155,10 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             if not raw_images and not uid:
                 continue
             self.uid_map[uid] = raw_images
-            self.service_objects +=  [r["service"] for r in raw_images if r]
+            try:
+                self.service_objects +=  [r["service"] for r in raw_images if r]
+            except TypeError:
+                self.service_objects = []
         
         # get all rawimages download urls 
         self.start_get_image_urls()
@@ -215,6 +218,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
         raw_images = self.uid_map.get(self.uid, [])
         self.num_raw_images = len(raw_images)
+        print(f"Number of raw images: {len(raw_images)}")
         if not raw_images:
             print("No raw images for this feature")
             return None
@@ -257,9 +261,8 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
     def change_image_index(self, change):
         self.image_index += change
-        if 0 > self.image_index > (self.num_raw_images - 1):
-            self.previous_img.setEnabled(True)
-            self.nxt_img.setEnabled(True)
+        self.previous_img.setEnabled(True)
+        self.nxt_img.setEnabled(True)
         if self.image_index <= 0:
             self.image_index = 0
             self.previous_img.setEnabled(False)
