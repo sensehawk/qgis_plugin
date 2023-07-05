@@ -15,6 +15,9 @@ from urllib import request
 import threading
 from .thermliteQc import PhotoViewer
 from ..utils import get_image_urls
+import traceback
+import re
+import numpy as np
 
 THERM_VIEWER, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'therm_viewer.ui'))
 
@@ -186,7 +189,8 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             try:
                 request.urlretrieve(url, savepath)
             except Exception as e:
-                print(url, savepath)
+                tb = traceback.format_exc()
+                print(tb)
     
     def show_raw_images(self, selected_features):
         if not self.image_urls_loaded:
@@ -220,15 +224,24 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.num_raw_images = len(raw_images)
         print(f"Number of raw images: {len(raw_images)}")
         if not raw_images:
-            print("No raw images for this feature")
+            self.canvas_logger("No raw images for this feature")
+            # Set photo black image
+            black_pixmap = QtGui.QPixmap(640, 512)
+            black_pixmap.fill(Qt.black)
+            self.photo_viewer.setPhoto(black_pixmap)
+            self.previous_img.setEnabled(False)
+            self.nxt_img.setEnabled(False)
             return None
+        # Disconnecting signal to avoid rerunning this method while another is in process
+        self.disconnect_signal()
         self.image_paths = []
         self.marker_location = []
         for r in raw_images:
             key = r["service"]["key"]
             self.marker_location.append(r['location'])
             url = self.image_urls.get(key, None)
-            save_path = os.path.join(self.images_dir, key.split("/")[-1])
+            raw_image_name = re.sub(":", "_", key.split("/")[-1])
+            save_path = os.path.join(self.images_dir, raw_image_name)
             self.image_paths.append(save_path)
             t = threading.Thread(target=self.download_image, args=(url, save_path))
             t.start()
@@ -237,8 +250,12 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             t.join()
             self.image_index = 0
             self.change_image_index(0)
+        # Connecting signal again
+        self.connect_signal()
 
     def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
+        if not int(x) and not int(y):
+            return imagecopy
         x1 = max(int(x-w/2), 0)
         y1 = max(int(y-h/2), 0)
         x2 = min(int(x+w/2), image_w)
