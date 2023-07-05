@@ -129,8 +129,6 @@ def clipRequest(task, clip_task_input):
         response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
         res_status = response.status_code
         res_title, res_description = response.json()['title'], response.json()['description']
-        
-        
     except Exception:
         print(traceback.format_exc())
     return {"task": task.description(), 'title':res_title, 'description':res_description, 'res_status':res_status}

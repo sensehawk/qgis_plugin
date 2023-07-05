@@ -64,7 +64,8 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset_combobox = self.asset
         self.org = combobox_modifier(org_combobox, org_list)
         self.org.currentIndexChanged.connect(self.org_tree)
-        self.projectbutton.setText("👉")
+        self.projectbutton.setText("👉🏼")
+        self.projectbutton.setStyleSheet("background-color:#dcf6f7;")
         self.projectbutton.clicked.connect(self.show_project_load_window)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
         self.asset_uid = None  # Pre loading

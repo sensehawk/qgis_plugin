@@ -144,6 +144,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         # Initially keep the buttons disabled
         for b in [self.nxt_img, self.previous_img]:
             b.setEnabled(False)
+
         self.uid_map = {}
         self.service_objects = []
         self.image_urls_loaded = False
