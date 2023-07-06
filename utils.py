@@ -24,7 +24,7 @@ import threading
 import matplotlib.pyplot as plt 
 import numpy as np
 import traceback
-
+import re
 
 def sort_images(task, images_dir, logger, reverse=False):
     try:
@@ -322,3 +322,27 @@ def fields_validator(required_fields, layer):
                 layer.updateFields() # update layer fields after creating new one
         layer.commitChanges()
         layer.startEditing()
+
+def download_images(task, inputs):
+    threads = []
+    viewerobj, raw_images = inputs
+    for r in raw_images:
+        key = r["service"]["key"]
+        viewerobj.marker_location.append(r['location'])
+        url = viewerobj.image_urls.get(key, None)
+        raw_image_name = re.sub(":", "_", key.split("/")[-1])
+        save_path = os.path.join(viewerobj.images_dir, raw_image_name)
+        viewerobj.image_paths.append(save_path)
+        t = threading.Thread(target=viewerobj.download_image, args=(url, save_path))
+        threads.append(t)
+
+    # Start all threads
+    for x in threads:
+        x.start()
+
+    # Wait for all of them to finish
+    for x in threads:
+        x.join()
+        
+    return {'task':task.description(),
+            'status':'Downloaded'}

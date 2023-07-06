@@ -14,7 +14,7 @@ import tempfile
 from urllib import request
 import threading
 from .thermliteQc import PhotoViewer
-from ..utils import get_image_urls
+from ..utils import get_image_urls, download_images
 import traceback
 import re
 import numpy as np
@@ -236,22 +236,21 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.disconnect_signal()
         self.image_paths = []
         self.marker_location = []
-        for r in raw_images:
-            key = r["service"]["key"]
-            self.marker_location.append(r['location'])
-            url = self.image_urls.get(key, None)
-            raw_image_name = re.sub(":", "_", key.split("/")[-1])
-            save_path = os.path.join(self.images_dir, raw_image_name)
-            self.image_paths.append(save_path)
-            t = threading.Thread(target=self.download_image, args=(url, save_path))
-            t.start()
-        # Only join the last download thread to the main thread
-        if raw_images:
-            t.join()
-            self.image_index = 0
-            self.change_image_index(0)
+
+        download_inputs = [self, raw_images]
+        download_img = QgsTask.fromFunction("Get image urls", download_images, download_inputs )
+        QgsApplication.taskManager().addTask(download_img)
+        download_img.statusChanged.connect(lambda download_img_status: self.download_img_callback(download_img_status, download_img))
+
+    def download_img_callback(self, download_img_status, download_img):
+        if download_img_status != 3:
+            return None
         # Connecting signal again
         self.connect_signal()
+        self.image_index = 0
+        self.change_image_index(0)
+
+        
 
     def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
         if not int(x) and not int(y):
@@ -275,6 +274,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         qImg = QImage(self.painted_image.data, width, height, bytesPerLine, QImage.Format_RGB888).rgbSwapped()
         img = QtGui.QPixmap(qImg)
         self.photo_viewer.setPhoto(img)
+        
 
     def change_image_index(self, change):
         self.image_index += change

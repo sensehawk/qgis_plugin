@@ -28,7 +28,7 @@ from datetime import datetime
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsVectorLayer, QgsApplication, QgsTask, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat, Qgis, QgsField, QgsTextBufferSettings
-from PyQt5.QtCore import QVariant
+from PyQt5.QtCore import QVariant, QPoint 
 
 from PyQt5.QtGui import QImage, QColor, QFont
 from PyQt5 import QtCore, QtGui, QtWidgets 
@@ -142,6 +142,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.viewer.photoClicked.connect(self.photoClicked)
         self.image_layout.addWidget(self.viewer)
         self.image_tagged_info = {}
+        self.x, self.y = 0, 0 
         #select folder path
         self.folder_path.clicked.connect(self.folderpath)
         # # Navigation buttons
@@ -157,6 +158,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.temp_patch_y.setText('30')
         self.max_percentile.setText('95')
         self.min_percentile.setText('10')
+        self.temp_patch_x.textChanged.connect(self.photoClicked)
+        self.temp_patch_y.textChanged.connect(self.photoClicked)
+        self.max_percentile.textChanged.connect(self.photoClicked)
+        self.min_percentile.textChanged.connect(self.photoClicked)
         self.temperature_toggle.stateChanged.connect(lambda x: self.toggle_temperature_fields(x))
         #marker and tag button
         self.pan_toggle.stateChanged.connect(lambda x: self.pixInfo(x))
@@ -215,18 +220,19 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             degree_map = b / np.log(r1 / (r2 * (raw_obj + o)) + f) - 273.15
         return degree_map
 
-    def extract_temperature(self, pos, image_w=640, image_h=512):
-        x, y = int(pos.x()), int(pos.y())
-        temp_patch_x = int(self.temp_patch_x.text())
-        temp_patch_y = int(self.temp_patch_y.text())
-        min_x = max(0, int(x-temp_patch_x/2))
-        max_x = min(image_w, int(x+temp_patch_x/2))
-        min_y = max(0, int(y-temp_patch_y/2))
-        max_y = min(image_h, int(y+temp_patch_y/2))
-        temp_patch = self.temperature_map[min_y:max_y, min_x:max_x]
-        self.max_temp = np.percentile(temp_patch, int(self.max_percentile.text()))
-        self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text()))
-        self.delta_temp.setText("{:.2f}".format(self.max_temp-self.min_temp))
+    def extract_temperature(self, image_w=640, image_h=512):
+        x, y = self.x , self.y
+        temp_patch_x = int(self.temp_patch_x.text().strip() or 1)
+        temp_patch_y = int(self.temp_patch_y.text().strip() or 1)
+        if temp_patch_x and temp_patch_y:
+            min_x = max(0, int(x-temp_patch_x/2))
+            max_x = min(image_w, int(x+temp_patch_x/2))
+            min_y = max(0, int(y-temp_patch_y/2))
+            max_y = min(image_h, int(y+temp_patch_y/2))
+            temp_patch = self.temperature_map[min_y:max_y, min_x:max_x]
+            self.max_temp = np.percentile(temp_patch, int(self.max_percentile.text().strip() or 1))
+            self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text().strip() or 1))
+            self.delta_temp.setText("{:.2f}".format(self.max_temp-self.min_temp))
     
     def sort_task_callback(self, sort_task_status, image_sort_task):
         if sort_task_status != 3:
@@ -348,21 +354,26 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
         return image
     
-    def photoClicked(self, pos):
+    def photoClicked(self, pos=None):
         if self.viewer.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
-            print(pos.x(), pos.y())
-            self.marker_info.setText('%d, %d' % (pos.x(), pos.y()))
-            self.markerlocation = [pos.x(),pos.y()]
-            x = pos.x()
-            y = pos.y() 
-            w = int(self.temp_patch_x.text())
-            h = int(self.temp_patch_y.text())
-            self.painted_image = self.draw_box(self.image.copy(), x, y, w, h)
-            qImg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-            self.current_image = QtGui.QPixmap(qImg)
-            self.viewer.setPhoto(self.current_image)
-            if self.temperature_toggle.isChecked():
-                self.extract_temperature(pos)
+            if isinstance(pos, QPoint):
+                self.marker_info.setText('%d, %d' % (pos.x(), pos.y()))
+                self.markerlocation = [pos.x(),pos.y()]
+                self.x = pos.x()
+                self.y = pos.y() 
+            else:
+                self.marker_info.setText('%d, %d' % (self.x, self.y))
+                self.markerlocation = [self.x, self.y]
+            
+            w = int(self.temp_patch_x.text().strip() or 1)
+            h = int(self.temp_patch_y.text().strip() or 1)
+            if w and h:
+                self.painted_image = self.draw_box(self.image.copy(), self.x, self.y, w, h)
+                qImg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+                self.current_image = QtGui.QPixmap(qImg)
+                self.viewer.setPhoto(self.current_image)
+                if self.temperature_toggle.isChecked():
+                    self.extract_temperature()
         
     def tag_image(self):
         self.project.vlayer.startEditing()
@@ -370,6 +381,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         if self.project.vlayer.selectedFeatures():
             sfeature = self.project.vlayer.selectedFeatures()[-1]
         else:
+            self.project.vlayer.commitChanges()
+            self.project.vlayer.startEditing()
             *_, sfeature = self.project.vlayer.getFeatures()
         self.project.vlayer.removeSelection()
 
@@ -397,10 +410,13 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             except KeyError:
                 fields_validator(self.required_fields, self.project.vlayer)
                 num_images_tagged = sfeature['num_images_tagged']
+            # Make num_images_tagged to zero if issue is copy pasted or freshly created   
+            if not sfeature_image_tagged_info :
+                sfeature['num_images_tagged'] = 0
             if not num_images_tagged:
                 sfeature['num_images_tagged'] = 1
             else:
-                sfeature['num_images_tagged'] = (sfeature['num_images_tagged']) + 1
+                sfeature['num_images_tagged'] = int(sfeature['num_images_tagged']) + 1
 
         # If the same marker location and the same image exists, don't add it again
         if sfeature_image_tagged_info.get(image_path, [0, 0]) != self.markerlocation:        
