@@ -230,9 +230,13 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             min_y = max(0, int(y-temp_patch_y/2))
             max_y = min(image_h, int(y+temp_patch_y/2))
             temp_patch = self.temperature_map[min_y:max_y, min_x:max_x]
-            self.max_temp = np.percentile(temp_patch, int(self.max_percentile.text().strip() or 1))
-            self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text().strip() or 1))
-            self.delta_temp.setText("{:.2f}".format(self.max_temp-self.min_temp))
+            try:
+                self.max_temp = np.percentile(temp_patch, int(self.max_percentile.text().strip() or 1))
+                self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text().strip() or 1))
+                self.delta_temp.setText("{:.2f}".format(self.max_temp-self.min_temp))
+            except Exception as e:
+                self.canvas_logger(str(e), level=Qgis.Warning)
+                return None
     
     def sort_task_callback(self, sort_task_status, image_sort_task):
         if sort_task_status != 3:
