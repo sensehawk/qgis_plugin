@@ -63,9 +63,9 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home_button = QPushButton(self)
         self.home_button.setText('🏡 Home')
         self.home_button.setStyleSheet('QPushButton {background-color: #dcf7ea; color: #3d3838;}')
-        self.home_button.clicked.connect(lambda: self.clear_loaded_projects(next_window=self.home))
+        self.home_button.clicked.connect(lambda: self.clear_loaded_projects(next_window=self.home, message="All loaded projects will be closed. Are you sure?"))
 
-        homeobj.dock_widget.closeEvent = lambda x: self.clear_loaded_projects(event=x)
+        homeobj.dock_widget.closeEvent = lambda x: self.clear_loaded_projects(event=x, message="Closing Sensehawk Plugin. Are you sure?")
 
         # self.group_text = QLabel(self)
         # self.group_text.setText('Groups:')
@@ -172,19 +172,23 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         QgsApplication.taskManager().addTask(load_task)
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
-    def clear_loaded_projects(self, event=None, next_window=None):
+    def clear_loaded_projects(self, event=None, next_window=None, message=""):
         # Ignore the event for now until the confimation message is replied to
-        message = QtGui.QMessageBox()
-        message.setIcon(QtGui.QMessageBox.Warning)
-        message.setWindowTitle('Sensehawk Plugin')
-        message.setText("Closing Sensehawk Plugin, are you sure?")
-        message.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
-        ret = message.exec_()
-        if ret == QtGui.QMessageBox.Ok:
-            event.accept()
+        message_box = QtWidgets.QMessageBox()
+        message_box.setIcon(QtWidgets.QMessageBox.Warning)
+        message_box.setWindowTitle('Sensehawk Plugin')
+        message_box.setText(message)
+        message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        ret = message_box.exec_()
+        if event:
+            if ret == QtWidgets.QMessageBox.Ok:
+                event.accept()
+                self.change_window(window=None)
+            else:
+                event.ignore()
+
+        if ret == QtWidgets.QMessageBox.Ok:
             self.change_window(window=next_window)
-        else:
-            event.ignore()
 
     def change_window(self, window=None):
         #remove loaded projects

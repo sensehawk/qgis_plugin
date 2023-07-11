@@ -485,6 +485,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         """
         Make only the selected project layers visible and zoom to layer
         """
+        if self.active_project:
+            self.active_project.docktool_widget.hide()
         # Get the project_uid and project object
         try:
             project_uid = self.project_uids[self.project_tabs_widget.currentIndex()]
