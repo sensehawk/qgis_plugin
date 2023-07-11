@@ -16,7 +16,8 @@ from .keyboard_settings import ShortcutSettings
 import random 
 import string
 import re
-
+import tempfile
+import shutil
 
 class Project:
     def __init__(self, load_task_result):
@@ -32,6 +33,7 @@ class Project:
                            'temperature_max':QVariant.Double,
                            'temperature_difference':QVariant.Double, 
                            'uid':QVariant.String,
+                           'num_images_tagged':QVariant.Double,
                            'string_number':QVariant.String, 
                            'table_row':QVariant.Double,
                            'table_column':QVariant.Double, 
@@ -442,10 +444,10 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Add uid to a list to track tab index
         self.project_uids.append(project.project_details["uid"])
         self.projects_loaded[project.project_details["uid"]] = project
-        # Activate project
-        self.activate_project()
         #get docktool_widget
         self.docktool_widget = project.docktool_widget
+        # Activate project
+        self.activate_project()
 
     def save_project(self):
         if not self.active_project:
@@ -499,6 +501,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                     iface.actionZoomToLayer().trigger()
             else:
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
+        
 
     def close_project(self):
         if not self.active_project:
@@ -523,9 +526,13 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             self.qgis_project.removeMapLayers([project.rlayer.id(), project.vlayer.id()])
         except Exception as e:
             self.logger(str(e), level=Qgis.Warning)
+        # Remove Project related data
+        project_data_path = os.path.join(tempfile.gettempdir(), self.active_project.project_details["uid"])
+        if os.path.exists(project_data_path):
+            shutil.rmtree(project_data_path)
         # Remove item from projects loaded and project uids list
         self.project_uids.remove(self.active_project.project_details["uid"])
         del self.projects_loaded[self.active_project.project_details["uid"]]
         # Remove project tab
         self.project_tabs_widget.removeTab(self.project_tabs_widget.currentIndex())
-        self.docktool_widget.hide()
+        self.docktool_widget.close()

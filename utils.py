@@ -7,7 +7,7 @@ from urllib.request import urlopen
 import os
 from .sensehawk_apis.core_apis import get_project_geojson
 import json
-from qgis.core import Qgis, QgsDefaultValue, QgsField
+from qgis.core import Qgis, QgsDefaultValue, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling
 from qgis.utils import iface
 from qgis.core import *
 import tempfile
@@ -16,6 +16,7 @@ import tempfile
 from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
 from PyQt5.QtWidgets import  QCompleter
 from qgis.PyQt import QtWidgets
+from PyQt5.QtGui import QImage, QColor, QFont
 from qgis.PyQt.QtCore import Qt
 from .windows.packages.exiftool import ExifToolHelper
 from datetime import datetime
@@ -346,3 +347,27 @@ def download_images(task, inputs):
         
     return {'task':task.description(),
             'status':'Downloaded'}
+
+def create_custom_label(vlayer):
+    num_images_label = QgsPalLayerSettings()
+    num_images_label.fieldName = 'num_images_tagged'
+    num_images_label.enabled = True
+
+    buffer = QgsTextBufferSettings()
+    buffer.setColor(QColor('white'))
+    buffer.setEnabled(True)
+    buffer.setSize(1)
+
+    textformat = QgsTextFormat()
+    textformat.setFont(QFont("Arial", 12))
+    textformat.setColor(QColor(0, 0, 255))
+    textformat.setBuffer(buffer)
+
+    num_images_label.setFormat(textformat)
+    num_images_label.placement = QgsPalLayerSettings.Line
+
+    labeler = QgsVectorLayerSimpleLabeling(num_images_label)
+    labeler.requiresAdvancedEffects()
+    vlayer.setLabelsEnabled(True)
+    vlayer.setLabeling(labeler)
+    vlayer.triggerRepaint()

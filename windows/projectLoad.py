@@ -63,7 +63,9 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home_button = QPushButton(self)
         self.home_button.setText('🏡 Home')
         self.home_button.setStyleSheet('QPushButton {background-color: #dcf7ea; color: #3d3838;}')
-        self.home_button.clicked.connect(self.back_to_home)
+        self.home_button.clicked.connect(lambda: self.clear_loaded_projects(next_window=self.home))
+
+        homeobj.dock_widget.closeEvent = lambda x: self.clear_loaded_projects(event=x)
 
         # self.group_text = QLabel(self)
         # self.group_text.setText('Groups:')
@@ -170,23 +172,27 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         QgsApplication.taskManager().addTask(load_task)
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
-    def back_to_home(self):
-        confirmation_widget = iface.messageBar().createMessage("Are u sure? one or more projects loaded!")
-        yes_button = QtWidgets.QPushButton(confirmation_widget)
-        yes_button.setText("Yes")
-        yes_button.clicked.connect(self.to_home)
-        no_button = QtWidgets.QPushButton(confirmation_widget)
-        no_button.setText("No")
-        no_button.clicked.connect(iface.messageBar().clearWidgets)
-        confirmation_widget.layout().addWidget(yes_button)
-        confirmation_widget.layout().addWidget(no_button)
-        iface.messageBar().pushWidget(confirmation_widget, Qgis.Warning)
-        
+    def clear_loaded_projects(self, event=None, next_window=None):
+        # Ignore the event for now until the confimation message is replied to
+        message = QtGui.QMessageBox()
+        message.setIcon(QtGui.QMessageBox.Warning)
+        message.setWindowTitle('Sensehawk Plugin')
+        message.setText("Closing Sensehawk Plugin, are you sure?")
+        message.setStandardButtons(QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel)
+        ret = message.exec_()
+        if ret == QtGui.QMessageBox.Ok:
+            event.accept()
+            self.change_window(window=next_window)
+        else:
+            event.ignore()
 
-    def to_home(self):
-        iface.messageBar().clearWidgets()
+    def change_window(self, window=None):
+        #remove loaded projects
         try:
             self.project_tabs_widget.qgis_project.removeMapLayers(self.layers_id)
+            #close active tool widget 
+            self.project_tabs_widget.docktool_widget.close()
         except Exception as e:
             self.logger(str(e), level=Qgis.Warning)
-        self.dock_widget.setWidget(self.home)
+        if window:
+            self.dock_widget.setWidget(window)

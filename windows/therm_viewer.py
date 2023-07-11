@@ -14,7 +14,7 @@ import tempfile
 from urllib import request
 import threading
 from .thermliteQc import PhotoViewer
-from ..utils import get_image_urls, download_images
+from ..utils import get_image_urls, download_images, create_custom_label
 import traceback
 import re
 import numpy as np
@@ -99,6 +99,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.editbutton.clicked.connect(self.startediting)
         self.savebutton.clicked.connect(self.savestringnumber)
         self.generate_service_objects()
+        self.trigger_custom_label(self.project.vlayer)
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
         self.images_dir = os.path.join(tempfile.gettempdir(), self.project.project_details["uid"])
         if not os.path.exists(self.images_dir):
@@ -142,6 +143,25 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.project.docktool_widget.hide()
         self.therm_tools.uncheck_all_buttons()
 
+    def generate_num_tagged_rawimages(self):
+        # Get num tagged raw images that already exists in the geojson
+        # features = json.load(open(self.project.geojson_path))["features"]
+        self.num_tagged_rawimages = {}
+        for feature in self.loaded_json["features"]:
+            self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(feature["properties"].get("raw_images", []))
+        # Loop through layer features and add num_tagged_rawimages as a field for labeler
+        features = self.project.vlayer.getFeatures()
+        for feature in features:
+            uid = feature["uid"]
+            feature["num_images_tagged"] = self.num_tagged_rawimages.get(uid, 0)
+            self.project.vlayer.updateFeature(feature)
+            
+    def trigger_custom_label(self, vlayer):
+        #creating custom label for num_images_tagged field
+        create_custom_label(vlayer)
+        #update num_images_tagged field with pre tagged num of images
+        self.generate_num_tagged_rawimages()
+
     def generate_service_objects(self):
         self.canvas_logger('Getting image urls')
         # Initially keep the buttons disabled
@@ -151,8 +171,8 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.uid_map = {}
         self.service_objects = []
         self.image_urls_loaded = False
-        g = json.load(open(self.project.geojson_path))
-        for f in g["features"]:
+        self.loaded_json = json.load(open(self.project.geojson_path))
+        for f in self.loaded_json["features"]:
             raw_images = f["properties"].get("raw_images")
             uid = f["properties"].get("uid")
             if not raw_images and not uid:

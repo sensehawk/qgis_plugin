@@ -35,7 +35,7 @@ import os
 
 class LoginWindow(QtWidgets.QWidget):
 
-    def __init__(self, iface):
+    def __init__(self, iface, dockwidget):
         """Constructor."""
         super(LoginWindow, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'login.ui'), self)
@@ -48,7 +48,7 @@ class LoginWindow(QtWidgets.QWidget):
         self.iface = iface
 
         self.load_window = None
-        self.dock_widget = QtWidgets.QDockWidget()
+        self.dock_widget = dockwidget
         # Add to the left docking area by default
         logo_label = QtWidgets.QLabel(self)
         logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))

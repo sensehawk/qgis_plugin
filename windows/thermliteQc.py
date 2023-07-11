@@ -36,7 +36,7 @@ from qgis.utils import iface
 from .packages.exiftool import ExifToolHelper
 import numpy as np
 import subprocess
-from ..utils import sort_images, upload, combobox_modifier, categorize_layer, get_presigned_post_urls, fields_validator
+from ..utils import sort_images, upload, combobox_modifier, categorize_layer, get_presigned_post_urls, fields_validator, create_custom_label
 import json
 from ..constants import S3_BUCKET, S3_REGION
 
@@ -254,39 +254,20 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def generate_num_tagged_rawimages(self):
         # Get num tagged raw images that already exists in the geojson
         features = json.load(open(self.project.geojson_path))["features"]
-        num_tagged_rawimages = {}
+        self.num_tagged_rawimages = {}
         for feature in features:
-            num_tagged_rawimages[feature["properties"].get("uid", None)] = len(feature["properties"].get("raw_images", []))
+            self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(feature["properties"].get("raw_images", []))
         # Loop through layer features and add num_tagged_rawimages as a field for labeler
         features = self.project.vlayer.getFeatures()
         for feature in features:
             uid = feature["uid"]
-            feature["num_images_tagged"] = num_tagged_rawimages.get(uid, 0)
+            feature["num_images_tagged"] = self.num_tagged_rawimages.get(uid, 0)
             self.project.vlayer.updateFeature(feature)
             
     def trigger_custom_label(self, vlayer):
-        num_images_label = QgsPalLayerSettings()
-        num_images_label.fieldName = 'num_images_tagged'
-        num_images_label.enabled = True
-
-        buffer = QgsTextBufferSettings()
-        buffer.setColor(QColor('white'))
-        buffer.setEnabled(True)
-        buffer.setSize(1)
-
-        textformat = QgsTextFormat()
-        textformat.setFont(QFont("Arial", 12))
-        textformat.setColor(QColor(0, 0, 255))
-        textformat.setBuffer(buffer)
-
-        num_images_label.setFormat(textformat)
-        num_images_label.placement = QgsPalLayerSettings.Line
-        labeler = QgsVectorLayerSimpleLabeling(num_images_label)
-        labeler.requiresAdvancedEffects()
-
-        vlayer.setLabelsEnabled(True)
-        vlayer.setLabeling(labeler)
-        vlayer.triggerRepaint()
+        #creating custom label for num_images_tagged field
+        create_custom_label(vlayer)
+        #update num_images_tagged field with pre tagged num of images
         self.generate_num_tagged_rawimages()
     
 
@@ -411,13 +392,15 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 fields_validator(self.required_fields, self.project.vlayer)
                 num_images_tagged = sfeature['num_images_tagged']
             # Make num_images_tagged to zero if issue is copy pasted or freshly created   
-            if not sfeature_image_tagged_info :
+            if not sfeature_image_tagged_info and not self.num_tagged_rawimages.get(uid, None):
                 sfeature['num_images_tagged'] = 0
-            if not num_images_tagged:
+            if not sfeature['num_images_tagged']:
                 sfeature['num_images_tagged'] = 1
+                self.num_tagged_rawimages[uid] = 1
             else:
                 sfeature['num_images_tagged'] = int(sfeature['num_images_tagged']) + 1
-
+                self.num_tagged_rawimages[uid] = int(sfeature['num_images_tagged']) + 1
+            
         # If the same marker location and the same image exists, don't add it again
         if sfeature_image_tagged_info.get(image_path, [0, 0]) != self.markerlocation:        
             sfeature_image_tagged_info[image_path] = self.markerlocation
@@ -465,8 +448,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             json.dump(file , p)
 
         # Saving tagged images meta data
-        # with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
-        #     json.dump(aws_tagged_images, g)
+        with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
+            json.dump(aws_tagged_images, g)
 
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
