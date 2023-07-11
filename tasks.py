@@ -80,6 +80,7 @@ def clipRequest(task, clip_task_input):
     core_token = clip_task_input['core_token']
     project_type = clip_task_input['project_type'] 
     user_email = clip_task_input['user_email']
+    convert_to_magma = clip_task_input['convert_to_magma']
 
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
@@ -123,7 +124,8 @@ def clipRequest(task, clip_task_input):
                         "geojson": geojson,
                         "clip_boundary_class_name": clip_boundary_class_name,
                         "project_type": project_type,
-                        "email_id": user_email}
+                        "email_id": user_email,
+                        "convert_to_magma": convert_to_magma}
 
         headers = {"Authorization": f"Token {core_token}"}
         response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)

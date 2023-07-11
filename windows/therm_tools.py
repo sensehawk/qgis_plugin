@@ -97,16 +97,31 @@ class ThermToolsWidget(QtWidgets.QWidget):
                 break
 
         if not clip_boundary_exists:
-            self.logger("There are no clip boundaries", level=Qgis.Warning)
+            self.canvas_logger("There are no clip boundaries", level=Qgis.Warning)
             return None
+        
+        # Ask the user whether to convert orthos to magma or not
+        confirmation_widget = self.iface.messageBar().createMessage("Convert clips to magma?")
+        yes_button = QtWidgets.QPushButton(confirmation_widget)
+        yes_button.setText("Yes")
+        yes_button.clicked.connect(lambda: self.start_clip_task(convert_to_magma=True))
+        no_button = QtWidgets.QPushButton(confirmation_widget)
+        no_button.setText("No")
+        no_button.clicked.connect(lambda: self.start_clip_task(convert_to_magma=False))
+        confirmation_widget.layout().addWidget(yes_button)
+        confirmation_widget.layout().addWidget(no_button)
+        self.iface.messageBar().pushWidget(confirmation_widget, Qgis.Info)
+    
+    def start_clip_task(self, convert_to_magma=False):
         clip_task_input = {'project_details':self.project_details,
                              'geojson_path':self.project.geojson_path,
                              'class_maps':self.class_maps,
                              'core_token':self.core_token,
                              'project_type':'therm',
-                             'user_email': self.project.user_email}
+                             'user_email': self.project.user_email,
+                             'convert_to_magma': convert_to_magma}
         
-        clip_task = QgsTask.fromFunction("Clip Raster", clipRequest ,clip_task_input)
+        clip_task = QgsTask.fromFunction("Clip Raster", clipRequest, clip_task_input)
         QgsApplication.taskManager().addTask(clip_task)
         clip_task.statusChanged.connect(lambda clip_status : self.clipraster_callback(clip_status, clip_task))
 
