@@ -97,6 +97,7 @@ class Project:
     def refresh_wms_raster(self, msg, tag, level):
         # If the WMS log is received and it is of level Warning or Critical, then refresh the wms connection for raster layer
         if tag == 'WMS' and level != 0:     #Warnings or Errors (0: Info, 1:Warning, 2:Error)
+            self.rlayer.reload()
             print("WMS error detected!")
             self.rlayer.triggerRepaint()
 
