@@ -340,6 +340,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.active_project = None
         self.iface = iface
         self.setupKeyboardShortcuts() 
+        self.constrain_canvas_zoom()
 
     def setupUi(self):
 
@@ -384,6 +385,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
         Vmain_layout.addLayout(Hmain_layout)
         Vmain_layout.setContentsMargins(10, 15, 0, 10)
+
     def setupKeyboardShortcuts(self):
         # Create gis shortcuts generic to all projects
         self.qgis_shortcuts = {
@@ -538,3 +540,26 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Remove project tab
         self.project_tabs_widget.removeTab(self.project_tabs_widget.currentIndex())
         self.docktool_widget.close()
+    
+    def constrain_canvas_zoom(self):
+        # Set max zoom and min zoom 
+        canvas = self.iface.mapCanvas()
+
+        # Disable mousewheel if you want
+        # QSettings().setValue("/qgis/zoom_factor", 1)
+
+        minScale = 10
+        maxScale = 5000
+
+        def renderStart():
+            scale = canvas.scale()
+            if scale < minScale:
+                canvas.zoomScale(minScale)
+            if scale > maxScale:
+                canvas.zoomScale(maxScale)
+            if scale < minScale or scale > maxScale:
+                self.iface.actionPan().trigger() # Disable zoom in favor of pan
+
+        canvas.renderStarting.connect(renderStart)
+
+        # canvas.renderStarting.disconnect(renderStart)
