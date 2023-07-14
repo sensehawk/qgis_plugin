@@ -60,7 +60,6 @@ class Project:
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
         self.setup_feature_uid()
-        QgsApplication.messageLog().messageReceived.connect(self.refresh_wms_raster)
 
         # Time stamp of last saved
         self.last_saved = str(datetime.now())
@@ -93,13 +92,6 @@ class Project:
                     if not f[attr]:
                         f[attr] = default_values[attr]
             self.vlayer.updateFeature(f)
-
-    def refresh_wms_raster(self, msg, tag, level):
-        # If the WMS log is received and it is of level Warning or Critical, then refresh the wms connection for raster layer
-        if tag == 'WMS' and level != 0:     #Warnings or Errors (0: Info, 1:Warning, 2:Error)
-            self.rlayer.reload()
-            print("WMS error detected!")
-            self.rlayer.triggerRepaint()
 
     def setup_tool_widget(self):
         # Dummy active tool widget and tool dock widget
