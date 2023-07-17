@@ -1,54 +1,70 @@
 from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer, QgsField
 from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
-from .sensehawk_apis.core_apis import get_ortho_tiles_url, core_login, get_project_geojson, get_project_reports, get_project_details
+from .sensehawk_apis.core_apis import get_ortho_tiles_url, get_ortho_url, core_login, get_project_geojson, get_project_reports, get_project_details
 from .sensehawk_apis.scm_apis import detect, approve
-from .utils import load_vectors, file_existent, organization_details
+from .utils import load_vectors, file_existent, organization_details, download_ortho
 import requests
 from .constants import CLIP_FUNCTION_URL
 import json
 import traceback
-
+import os
+import tempfile
+import urllib
 
 def loadTask(task, load_inputs):
-    project_uid = load_inputs.get("project_uid", None)
-    project_type = load_inputs.get("project_type", None)
-    core_token = load_inputs.get("core_token", None)
-    logger = load_inputs.get("logger", None)
-    org_uid = load_inputs.get("org_uid", None)
-    container_uid = load_inputs.get('container_uid', None)
-    # Get project details from core
-    project_details = get_project_details(project_uid, core_token)
-    project_details["project_type"] = project_type
-    # Get the class maps for vectors from terra / therm
-    if project_type == "terra":
-        class_maps, class_groups = get_terra_classmaps(project_details, core_token)
-        existing_files = None
-    elif project_type == "therm":
-        class_maps, class_groups = get_therm_classmaps(core_token, org_uid, container_uid), None
-        org = project_details['organization']['uid']
-        existing_files = file_existent(project_uid,org,core_token)
-
-    # Get base url for ortho tiles
-    base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
-
-    # Get metadata from the base url
-    ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
-    ortho_bounds = ortho_tiles_details["bounds"]
-    bounds = ortho_bounds
-
-    zmax = ortho_tiles_details["maxzoom"]
-    zmin = 1
-
-    orthotiles_url = "type=xyz&url=" + \
-                     base_orthotiles_url + "/{z}/{x}/{y}.png" + \
-                     "&zmax={}&zmin={}".format(zmax, zmin)
-    print(orthotiles_url)
-    # Load ortho tiles from url
-    rlayer = QgsRasterLayer(orthotiles_url, project_uid + "_ortho", 'wms')
-    
-    # Load vectors
     try:
+        project_uid = load_inputs.get("project_uid", None)
+        project_type = load_inputs.get("project_type", None)
+        core_token = load_inputs.get("core_token", None)
+        logger = load_inputs.get("logger", None)
+        org_uid = load_inputs.get("org_uid", None)
+        container_uid = load_inputs.get('container_uid', None)
+        # Get project details from core
+        project_details = get_project_details(project_uid, core_token)
+        project_details["project_type"] = project_type
+        # Get the class maps for vectors from terra / therm
+        if project_type == "terra":
+            class_maps, class_groups = get_terra_classmaps(project_details, core_token)
+            existing_files = None
+        elif project_type == "therm":
+            class_maps, class_groups = get_therm_classmaps(core_token, org_uid, container_uid), None
+            org = project_details['organization']['uid']
+            existing_files = file_existent(project_uid,org,core_token)
+
+####################################
+        # Load orthotiles
+        # Get base url for ortho tiles
+        base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
+
+        # Get metadata from the base url
+        ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
+        ortho_bounds = ortho_tiles_details["bounds"]
+        bounds = ortho_bounds
+
+        # zmax = ortho_tiles_details["maxzoom"]
+        # zmin = 1
+
+        # orthotiles_url = "type=xyz&url=" + \
+        #                  base_orthotiles_url + "/{z}/{x}/{y}.png" + \
+        #                  "&zmax={}&zmin={}".format(zmax, zmin)
+        # print(orthotiles_url)
+        # # Load ortho tiles from url
+        # rlayer = QgsRasterLayer(orthotiles_url, project_uid + "_ortho", 'wms')
+########################################   
+
+        # Load Rasters
+        ortho_url = get_ortho_url(project_uid, org, core_token)["ortho"]
+        ortho_path = os.path.join(tempfile.gettempdir(), project_details['name']+'.tiff')
+        ortho_size = urllib.request.urlopen(ortho_url)
+        if not os.path.exists(ortho_path) or os.path.getsize(ortho_path) != ortho_size:
+            logger(f"Downloading {project_details['name']} ortho ...")
+            download_ortho(ortho_url, ortho_path)
+
+        rlayer = QgsRasterLayer(ortho_path, project_details['name'] + "_ortho")
+
+        # Load vectors
+    
         geojson_path = load_vectors(project_details,
                                             project_type,
                                             bounds,

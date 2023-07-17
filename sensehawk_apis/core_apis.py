@@ -38,6 +38,11 @@ def get_ortho_tiles_url(project_uid, token):
     orthotiles_url = MAP_SERVER_URL + orthotiles_uid
     return orthotiles_url
 
+def get_ortho_url(project_uid, org, token):
+    url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    projetJson = requests.get(url, headers=headers)
+    return projetJson.json()
 
 def get_project_geojson(project_uid, token, project_type):
     project_details = get_project_details(project_uid, token)
