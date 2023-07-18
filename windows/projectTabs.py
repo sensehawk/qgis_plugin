@@ -333,7 +333,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.active_project = None
         self.iface = iface
         self.setupKeyboardShortcuts() 
-        self.constrain_canvas_zoom()
+        # self.constrain_canvas_zoom()
 
     def setupUi(self):
 
