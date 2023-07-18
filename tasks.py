@@ -57,7 +57,7 @@ def loadTask(task, load_inputs):
         ortho_url = get_ortho_url(project_uid, org, core_token)["ortho"]
         ortho_path = os.path.join(tempfile.gettempdir(), project_details['name']+'.tiff')
         ortho_size = urllib.request.urlopen(ortho_url)
-        if not os.path.exists(ortho_path) or os.path.getsize(ortho_path) != ortho_size:
+        if not os.path.exists(ortho_path) or os.path.getsize(ortho_path) != ortho_size.length:
             logger(f"Downloading {project_details['name']} ortho ...")
             download_ortho(ortho_url, ortho_path)
 
