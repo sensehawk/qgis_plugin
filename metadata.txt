@@ -8,9 +8,9 @@ qgisMinimumVersion=3.0
 description=This plugin will load and save SenseHawk projects needing quality check.
 version=1.10
 author=SenseHawk
-email=kiranh@sensehawk.com
+email=kiranh@sensehawk.com, ganesh@sensehawk.com
 
-about=This plugin will take in projectUID from SenseHawk app and load the orthotiles and the vectors. Post quality check, you can save the changes and post directly to SenseHawk app and overwrite the saved vectors.
+about=This plugin can be used for GIS QC work for SenseHawk Solar Digitization Platform.
 
 tracker=https://github.com/sensehawk/qgis_plugin/issues
 repository=https://github.com/sensehawk/qgis_plugin
@@ -21,10 +21,10 @@ repository=https://github.com/sensehawk/qgis_plugin
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=fix: re-rendering hidden categories on class change or layer save | memory leak fix on ortho tiles load
+changelog=fix: Multi project support, Therm Viewer, ManualTag, TemperatureExtraction, AutoTag, StringNumbering, ClipRaster
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=solar, construction, thermal analysis, terrain analysis, sensehawk
 
 homepage=https://github.com/sensehawk/qgis_plugin
 category=Vector
