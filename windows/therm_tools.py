@@ -139,6 +139,8 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.active_docktool_widget = self.thermlite_tagging_widget
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
+        self.thermlite_tagging_widget.trigger_custom_label(self.project.vlayer)
+        
     
     def therm_viewer(self):
         self.project.active_tool_widget.hide()
@@ -153,6 +155,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.active_docktool_widget = self.therm_viewer_widget
         self.therm_viewer_widget.connect_signal()
         self.project.docktool_widget.visibilityChanged.connect(lambda x: self.therm_viewer_widget.toggle_signal_connection(x))
+        self.therm_viewer_widget.trigger_custom_label(self.project.vlayer)
 
     def string_numbering(self):
         self.project.active_tool_widget.hide()
@@ -165,6 +168,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.StringNumberButton.setChecked(True)
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
+        self.project.vlayer.setLabelsEnabled(False)
     
     def ImageTagging(self):
         self.project.active_tool_widget.hide()
@@ -177,6 +181,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.imagetaggingButton.setChecked(True)
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
+        self.project.vlayer.setLabelsEnabled(False)
 
     def uncheck_all_buttons(self):
         for button in self.findChildren(QtWidgets.QPushButton):

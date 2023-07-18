@@ -195,7 +195,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         metadata = self.et.get_metadata(image_path)[0]
         camera = metadata["EXIF:Model"]
         if "MAVIC2-ENTERPRISE-ADVANCED" in camera or "H20T" in camera or "M3T" in camera:
-            os.system(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp.exe')} -s {image_path} -a measure -o temp.raw")
+            subprocess.run(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp.exe')} -s {image_path} -a measure -o temp.raw", shell=True)
             degree_map = np.empty((512, 640), np.int16)
             degree_map.data = open(os.path.join(os.getcwd(), "temp.raw"), "rb").read()
             os.remove(os.path.join(os.getcwd(), "temp.raw"))
@@ -482,7 +482,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         # trigger cutom label for freshly loaded vlayer
         self.project.vlayer = qclayer
         fields_validator(self.required_fields, self.project.vlayer)
-        self.trigger_custom_label(self.project.vlayer)
         self.initiate_upload_process()
 
     def upload_callback(self, upload_task_status, upload_task):
