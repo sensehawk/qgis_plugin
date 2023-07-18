@@ -129,7 +129,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
                 self.canvas_logger('Visual Project_uid field is empty....',level=Qgis.Warning)
             else:
                 json = {'projectUid': self.project_uid, 'method':2, 'VprojectUid': self.projectUid.text(), 'org':org,
-                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':None}
+                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
                 self.api(json)
          
         elif self.imagetaggingType.currentText() == 'Thermal Tagging':
@@ -144,7 +144,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             
         elif self.imagetaggingType.currentText() == 'SiteMap Tagging':
             json ={'projectUid': self.project_uid, 'method':3, 'VprojectUid': None,'org':org,
-                   'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':None}
+                   'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
             self.api(json) 
         
         elif self.imagetaggingType.currentText() == 'Temp Extraction':
