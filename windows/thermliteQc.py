@@ -260,7 +260,9 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         features = json.load(open(self.project.geojson_path))["features"]
         self.num_tagged_rawimages = {}
         for feature in features:
-            self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(feature["properties"].get("raw_images", []))
+            raw_images = feature["properties"].get("raw_images", [])
+            if type(raw_images) in [str, type(None)]: raw_images = []
+            self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(raw_images)
         # Loop through layer features and add num_tagged_rawimages as a field for labeler
         features = self.project.vlayer.getFeatures()
         for feature in features:
