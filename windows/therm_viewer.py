@@ -99,7 +99,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.editbutton.clicked.connect(self.startediting)
         self.savebutton.clicked.connect(self.savestringnumber)
         self.generate_service_objects()
-        self.trigger_custom_label(self.project.vlayer)
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
         self.images_dir = os.path.join(tempfile.gettempdir(), self.project.project_details["uid"])
         if not os.path.exists(self.images_dir):

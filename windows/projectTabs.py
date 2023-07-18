@@ -38,6 +38,10 @@ class Project:
                            'table_row':QVariant.Double,
                            'table_column':QVariant.Double, 
                            'row':QVariant.Double,
+                           'idx':QVariant.Double,
+                           'total_num_modules':QVariant.Double,
+                           'num_modules_horizontal':QVariant.Double,
+                           'num_modules_vertical':QVariant.Double,
                            'column':QVariant.Double, 
                            'timestamp':QVariant.String, 
                            'center':QVariant.String, 
@@ -108,11 +112,23 @@ class Project:
         self.docktool_widget.hide()
 
     def import_geojson(self, geojson_path):
+        # Merge with existing geojson and reload from there
         if geojson_path:
-            import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
-            imported_features = [feature for feature in import_layer.getFeatures()]
-            self.vlayer.dataProvider().addFeatures(imported_features)
             self.vlayer.commitChanges()
+            with open(geojson_path, 'r') as g:
+                imported_geojson = json.load(g)
+            with open(self.geojson_path , 'r') as g:
+                existing_geojson = json.load(g)
+            existing_geojson["features"] += imported_geojson["features"] 
+            with open(self.geojson_path, "w") as fi:
+                json.dump(existing_geojson, fi)
+            # import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
+            # imported_features = [feature for feature in import_layer.getFeatures()]
+            # self.vlayer.dataProvider().addFeatures(imported_features)
+            self.qgis_project.removeMapLayers([self.vlayer.id()])
+            merged_layer = QgsVectorLayer(self.geojson_path, self.geojson_path, "ogr")
+            self.qgis_project.addMapLayer(merged_layer)
+            self.vlayer = merged_layer
             categorize_layer(self)
             self.load_feature_count()
 
