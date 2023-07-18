@@ -5,6 +5,7 @@ from .sensehawk_apis.core_apis import get_ortho_tiles_url, get_ortho_url, core_l
 from .sensehawk_apis.scm_apis import detect, approve
 from .utils import load_vectors, file_existent, organization_details, download_ortho
 import requests
+from pathlib import Path
 from .constants import CLIP_FUNCTION_URL
 import json
 import traceback
@@ -55,11 +56,18 @@ def loadTask(task, load_inputs):
 
         # Load Rasters
         ortho_url = get_ortho_url(project_uid, org, core_token)["ortho"]
-        ortho_path = os.path.join(tempfile.gettempdir(), project_details['name']+'.tiff')
         ortho_size = urllib.request.urlopen(ortho_url)
+        dpath = str(Path.home() / "Downloads")
+        rpath = os.path.join(dpath+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
+        number_of_threads = 20
+        # check for folder existent
+        if not os.path.exists(rpath):
+            os.makedirs(rpath)
+        ortho_path = os.path.join(rpath+'\\'+project_details['name']+'.tiff')
+
         if not os.path.exists(ortho_path) or os.path.getsize(ortho_path) != ortho_size.length:
             logger(f"Downloading {project_details['name']} ortho ...")
-            download_ortho(ortho_url, ortho_path)
+            download_ortho(ortho_size.length, number_of_threads, ortho_path, ortho_url)
 
         rlayer = QgsRasterLayer(ortho_path, project_details['name'] + "_ortho")
 
