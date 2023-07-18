@@ -400,17 +400,19 @@ def download_ortho(file_size, number_of_threads, file_name, ortho_url):
     fp.write(b'\0')
     fp.close()
 
+    threads = []
     for i in range(number_of_threads):
         start = part * i
         end = start + part
-        threads = []
         # create a Thread with start and end locations
         t = threading.Thread(target=Handler,
              kwargs={'start': start, 'end': end, 'url': ortho_url, 'filename': file_name})
-        t.setDaemon(True)
+        # t.setDaemon(True)
         threads.append(t)
-        t.start()
+        # t.start()
 
+    for x in threads:
+        x.start()
     # main_thread = threading.current_thread()
     for x in threads:
         x.join()

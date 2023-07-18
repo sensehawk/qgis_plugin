@@ -59,7 +59,7 @@ def loadTask(task, load_inputs):
         ortho_size = urllib.request.urlopen(ortho_url)
         dpath = str(Path.home() / "Downloads")
         rpath = os.path.join(dpath+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
-        number_of_threads = 20
+        number_of_threads = 15
         # check for folder existent
         if not os.path.exists(rpath):
             os.makedirs(rpath)
