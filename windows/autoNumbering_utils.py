@@ -126,8 +126,8 @@ def update_issue_Row_column(project_uid, featuresobjlist, Vlayer, Height, Width,
             y = (leftTop_y-IssueObj.utm_y)/Height
             column = ceil(x)
             row = ceil(y)
-            if row < (Height+abjy): row = 1
-            if column < (Width+abjx): column =1
+            if row < abjy: row = 1
+            if column < abjx: column =1
             IssueObj.feature['row']= row 
             IssueObj.feature['column'] = column
             IssueObj.feature['uid'] = f"{project_uid}:{IssueObj.feature['table_row']}:{IssueObj.feature['table_column']}~{issue_num}"

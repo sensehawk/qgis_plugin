@@ -78,7 +78,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         # Updating row and column to issuesObj 
         update_issue_Row_column(self.projectuid , featuresobjlist, Vlayer, module_height, module_width, angle) 
             
-     
+        Vlayer.startEditing()
         """String NUmbering"""
         if self.stringnum_type.currentText() == 'Basic' or self.stringnum_type.currentText() == 'Basic+module':
             for featureobj in featuresobjlist:
@@ -92,15 +92,13 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                         try:
                             featureobj.feature['string_number'] = basic_number.strip('-')
                         except KeyError:
-                            Vlayer.commitChanges()
-                            Vlayer.startEditing()
-                            featureobj.feature['string_number'] = basic_number.strip('-')
+                            self.canvas_logger("String number field does not exist!", level=Qgis.Warning)
                         Vlayer.updateFeature(featureobj.feature)
                     elif self.stringnum_type.currentText() == 'Basic+module':
                         basicModule_number = f"{Prefix}-R{Trow}-T{Tcolumn}-R{Irow}-C{Icolumn}-{Suffix}"
                         featureobj.feature['string_number'] = basicModule_number.strip('-')
                         Vlayer.updateFeature(featureobj.feature)
-
+                    
         elif self.stringnum_type.currentText() == 'Existing+module':
             for featureobj in featuresobjlist:
                 if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
@@ -118,4 +116,5 @@ class ThermNumberingWidget(QtWidgets.QWidget):
 
         endTime = time()
         duration = int(round((endTime - startTime) * 1000))
-        self.canvas_logger(f'<b>String_numbeirng</b> done in {duration} s.', level=Qgis.Success)
+        Vlayer.commitChanges()
+        self.canvas_logger(f'<b>String_numbeirng</b> done in {duration}ms.', level=Qgis.Success)
