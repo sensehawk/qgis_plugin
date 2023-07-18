@@ -79,7 +79,7 @@ class Project:
     def clean_fields(self):
         # Clean wrongly formatted fields (center, raw_images, attachments) in case they exist
         self.vlayer.startEditing()
-        default_values = {"raw_images": NULL, "attachments": NULL, "center": NULL}
+        default_values = {"raw_images": NULL, "attachments": NULL, "center": NULL, "temperature_max": NULL, "temperature_min": NULL, "temperature_difference": NULL}
 
         for f in self.vlayer.getFeatures():
             for attr in default_values.keys():
