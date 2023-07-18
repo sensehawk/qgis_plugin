@@ -393,29 +393,36 @@ def Handler(start, end, url, filename):
         fp.write(r.content)
 
 def download_ortho(file_size, number_of_threads, file_name, ortho_url):
+    with requests.get(ortho_url, stream=True) as r:
+        r.raise_for_status()
+        with open(file_name, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192): 
+                # If you have chunk encoded response uncomment if
+                # and set chunk_size parameter to None.
+                #if chunk: 
+                f.write(chunk)
 
-    part = int(file_size) / number_of_threads
-    fp = open(file_name, "wb")
-    fp.seek(file_size-1)
-    fp.write(b'\0')
-    fp.close()
+    # part = int(file_size) / number_of_threads
+    # fp = open(file_name, "wb")
+    # fp.seek(file_size-1)
+    # fp.write(b'\0')
+    # fp.close()
 
-    for i in range(number_of_threads):
-        start = part * i
-        end = start + part
-        threads = []
-        # create a Thread with start and end locations
-        t = threading.Thread(target=Handler,
-             kwargs={'start': start, 'end': end, 'url': ortho_url, 'filename': file_name})
-        t.setDaemon(True)
-        threads.append(t)
-        t.start()
+    # threads = []
+    # for i in range(number_of_threads):
+    #     start = part * i
+    #     end = start + part
+    #     # create a Thread with start and end locations
+    #     t = threading.Thread(target=Handler,
+    #          kwargs={'start': start, 'end': end, 'url': ortho_url, 'filename': file_name})
+    #     # t.setDaemon(True)
+    #     threads.append(t)
+    #     # t.start()
 
-    # main_thread = threading.current_thread()
-    for x in threads:
-        x.join()
-    # for t in threading.enumerate():
-    #     if t is main_thread:
-    #         continue
-    #     t.join()
+    # for x in threads:
+    #     x.start()
+
+    # for x in threads:
+    #     x.join()
+ 
 

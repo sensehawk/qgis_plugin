@@ -43,33 +43,33 @@ def loadTask(task, load_inputs):
         ortho_bounds = ortho_tiles_details["bounds"]
         bounds = ortho_bounds
 
-        # zmax = ortho_tiles_details["maxzoom"]
-        # zmin = 1
+        zmax = ortho_tiles_details["maxzoom"]
+        zmin = 1
 
-        # orthotiles_url = "type=xyz&url=" + \
-        #                  base_orthotiles_url + "/{z}/{x}/{y}.png" + \
-        #                  "&zmax={}&zmin={}".format(zmax, zmin)
-        # print(orthotiles_url)
-        # # Load ortho tiles from url
+        orthotiles_url = "type=xyz&url=" + \
+                         base_orthotiles_url + "/{z}/{x}/{y}.png" + \
+                         "&zmax={}&zmin={}".format(zmax, zmin)
+        print(orthotiles_url)
+        # Load ortho tiles from url
         # rlayer = QgsRasterLayer(orthotiles_url, project_uid + "_ortho", 'wms')
 ########################################   
 
-        # Load Rasters
-        ortho_url = get_ortho_url(project_uid, org, core_token)["ortho"]
-        ortho_size = urllib.request.urlopen(ortho_url)
-        dpath = str(Path.home() / "Downloads")
-        rpath = os.path.join(dpath+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
-        number_of_threads = 20
-        # check for folder existent
-        if not os.path.exists(rpath):
-            os.makedirs(rpath)
-        ortho_path = os.path.join(rpath+'\\'+project_details['name']+'.tiff')
+        ## Load Rasters
+        # ortho_url = get_ortho_url(project_uid, org, core_token)["ortho"]
+        # ortho_size = urllib.request.urlopen(ortho_url)
+        # dpath = str(Path.home() / "Downloads")
+        # rpath = os.path.join(dpath+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
+        # number_of_threads = 15
+        # # check for folder existent
+        # if not os.path.exists(rpath):
+        #     os.makedirs(rpath)
+        # ortho_path = os.path.join(rpath+'\\'+project_details['name']+'.tiff')
 
-        if not os.path.exists(ortho_path) or os.path.getsize(ortho_path) != ortho_size.length:
-            logger(f"Downloading {project_details['name']} ortho ...")
-            download_ortho(ortho_size.length, number_of_threads, ortho_path, ortho_url)
+        # if not os.path.exists(ortho_path) or os.path.getsize(ortho_path) != ortho_size.length:
+        #     logger(f"Downloading {project_details['name']} ortho ...")
+        #     download_ortho(ortho_size.length, number_of_threads, ortho_path, ortho_url)
 
-        rlayer = QgsRasterLayer(ortho_path, project_details['name'] + "_ortho")
+        # rlayer = QgsRasterLayer(ortho_path, project_details['name'] + "_ortho")
 
         # Load vectors
     
@@ -84,7 +84,7 @@ def loadTask(task, load_inputs):
         logger(str(tb), level=Qgis.Warning)
         return False
 
-    return {'rlayer': rlayer,
+    return {'rlayer_url': orthotiles_url,
             'project_uid': project_uid,
             'class_maps': class_maps,
             'class_groups': class_groups,

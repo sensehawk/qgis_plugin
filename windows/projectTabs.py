@@ -1,7 +1,7 @@
 from qgis.PyQt.QtCore import Qt, QVariant, QSize
 import os
 from PyQt5 import QtGui, QtWidgets, uic
-from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer, QgsField, NULL
+from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer, QgsField, NULL, QgsRasterLayer
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
 from ..event_filters import KeypressFilter, KeypressEmitter
@@ -45,7 +45,8 @@ class Project:
 
         fields_validator(required_fields, self.vlayer)
 
-        self.rlayer = load_task_result['rlayer']
+        self.rlayer_url = load_task_result['rlayer_url']
+        self.rlayer = QgsRasterLayer(self.rlayer_url, self.project_details['name'] + "_ortho", "wms")
         self.class_maps = load_task_result['class_maps']
         self.class_groups = load_task_result['class_groups']
         self.existing_files = load_task_result['existing_files']
