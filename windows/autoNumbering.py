@@ -62,6 +62,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
     def string_numbering(self):
         startTime = time()
         Vlayer = self.iface.activeLayer()
+        Vlayer.startEditing()
         Vfeatures = Vlayer.getFeatures()
         module_width, module_height, angle, Prefix, Suffix = self.stringNumber_configuration()
         featureslist = [feature for feature in Vfeatures] #QgsfeatureIterator[] => Qgsfeatures

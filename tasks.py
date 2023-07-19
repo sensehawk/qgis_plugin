@@ -49,7 +49,7 @@ def loadTask(task, load_inputs):
         orthotiles_url = "type=xyz&url=" + \
                          base_orthotiles_url + "/{z}/{x}/{y}.png" + \
                          "&zmax={}&zmin={}".format(zmax, zmin)
-        print(orthotiles_url)
+        
         # Load ortho tiles from url
         # rlayer = QgsRasterLayer(orthotiles_url, project_uid + "_ortho", 'wms')
 ########################################   

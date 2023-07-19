@@ -154,10 +154,11 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     # Download vectors
     geojson = get_project_geojson(project_uid, core_token, project_type=project_type)
+    
     if "features" not in geojson:
         logger(str(geojson), level=Qgis.Warning)
 
-    if not geojson["features"]:
+    if not geojson.get('features', None):
         # Create an extent feature if no feature exists
         extent_geometry = json.loads(QgsGeometry.fromRect(QgsRectangle(raster_bounds[0],
                                                                        raster_bounds[1],
@@ -214,7 +215,7 @@ def asset_details(task ,org, token): # fetching asset and org_container details
     for asset in asset_details:
         asset_list[asset['name']] = asset['uid']
     
-    container_url = CORE_URL + f'/api/v1/containers/?groups=true&page=1&page_size=10&organization={org}'
+    container_url = CORE_URL + f'/api/v1/containers/?groups=true&page=1&page_size=1000&organization={org}'
     container_response = requests.get(container_url, headers=headers)
     org_contianer_details = container_response.json()['results']
 
