@@ -8,7 +8,7 @@ from ..event_filters import KeypressFilter, KeypressEmitter
 from .therm_tools import ThermToolsWidget
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
-from ..utils import fields_validator, categorize_layer
+from ..utils import fields_validator, categorize_layer, save_edits
 import pandas as pd
 import qgis
 import json
@@ -18,6 +18,7 @@ import string
 import re
 import tempfile
 import shutil
+import pprint
 
 class Project:
     def __init__(self, load_task_result):
@@ -29,26 +30,22 @@ class Project:
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
 
         #validate fields and create if not there
-        required_fields = {'temperature_min':QVariant.Double,
-                           'temperature_max':QVariant.Double,
-                           'temperature_difference':QVariant.Double, 
-                           'uid':QVariant.String,
-                           'num_images_tagged':QVariant.Double,
-                           'string_number':QVariant.String, 
-                           'table_row':QVariant.Double,
-                           'table_column':QVariant.Double, 
-                           'row':QVariant.Double,
-                           'idx':QVariant.Double,
-                           'total_num_modules':QVariant.Double,
-                           'num_modules_horizontal':QVariant.Double,
-                           'num_modules_vertical':QVariant.Double,
-                           'column':QVariant.Double, 
-                           'timestamp':QVariant.String, 
-                           'center':QVariant.String, 
-                           'raw_images':QVariant.String}
+        self.required_fields = {'temperature_min':QVariant.Double,'temperature_max':QVariant.Double,
+                           'temperature_difference':QVariant.Double,'uid':QVariant.String,
+                           'projectUid':QVariant.String,'groupUid':QVariant.String,
+                           'num_images_tagged':QVariant.Double,'string_number':QVariant.String, 
+                           'table_row':QVariant.Double,'table_column':QVariant.Double, 
+                           'row':QVariant.Double,'idx':QVariant.Double,
+                           'total_num_modules':QVariant.Double,'column':QVariant.Double, 
+                           'num_modules_horizontal':QVariant.Double,'timestamp':QVariant.String, 
+                           'num_modules_vertical':QVariant.Double,'center':QVariant.String, 
+                           'raw_images':QVariant.String,'attachments':QVariant.String,
+                           'parent_uid':QVariant.String}
 
-        fields_validator(required_fields, self.vlayer)
-
+        fields_validator(self.required_fields, self.vlayer)
+        #initialize and update parent_uid field 
+        self.initialize_parentUid()
+        self.collect_list_Type_dataFields()
         self.rlayer_url = load_task_result['rlayer_url']
         self.rlayer = QgsRasterLayer(self.rlayer_url, self.project_details['name'] + "_ortho", "wms")
         self.class_maps = load_task_result['class_maps']
@@ -80,12 +77,78 @@ class Project:
                 i: self.class_maps[i]["properties"]["color"].replace("rgb(", "").replace(")", "").replace(" ", "").split(",")
                 for i in self.class_maps}
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
+    
+    # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
+    def save_and_parse_listType_dataFields(self):
+        self.vlayer.commitChanges()
+        #disconnect any single added to existing vlayer
+        self.vlayer.selectionChanged.disconnect()
+        # remove and add updated json 
+        self.qgis_project.removeMapLayers([self.vlayer.id()])
+
+        save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
+                                                                                      'listType_dataFields':self.listType_dataFields})
+        QgsApplication.taskManager().addTask(save_edits_task)
+        save_edits_task.statusChanged.connect(lambda save_edits_status : self.save_edits_callback(save_edits_status, save_edits_task))
+    
+    def save_edits_callback(self, save_edits_status, save_edits_task):
+        if save_edits_status != 3:
+            return None
+        result = save_edits_task.returned_values
+        if result:
+            #Initializing Vlayer features
+            self.initialize_vlayer()
+            self.canvas_logger(f'{self.project_details.get("name", None)} Geojson Saved...', level=Qgis.Success)
+            
+    # Initialize Vlayer 
+    def initialize_vlayer(self):
+        #loaded updated layer
+        updated_vlayer = QgsVectorLayer(self.geojson_path, self.geojson_path, "ogr")
+        self.qgis_project.addMapLayer(updated_vlayer)
+        self.vlayer = updated_vlayer
+        categorize_layer(self)
+        self.load_feature_count()   
+        self.vlayer.startEditing()
+        #validate and create fields if not exits
+        fields_validator(self.required_fields, self.vlayer)
+        #connect pre-defined singles 
+        self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
+        self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
+
+    # Since Qgis won't support list type fields data in copy-pasted issues, 
+    # collecting list type data with Parentuid as key and list type data as value 
+    def collect_list_Type_dataFields(self):
+        self.listType_dataFields = {}
+        features = json.load(open(self.geojson_path))['features']
+        for feature in features:
+            if feature['properties']['class_name'] != 'table':
+                center = feature['properties'].get('center', None)
+                raw_images = feature['properties'].get('raw_images', None)
+                parentUid = feature['properties'].get('parent_uid', None)
+                if type(center) == list :
+                    center_value = self.listType_dataFields.get(parentUid, {})
+                    center_value['center'] = center
+                    self.listType_dataFields[parentUid] = center_value
+
+                if type(raw_images) == list :
+                    rawimage_value = self.listType_dataFields.get(parentUid, {})
+                    rawimage_value['raw_images'] = raw_images
+                    self.listType_dataFields[parentUid] = rawimage_value
+
+
+    def initialize_parentUid(self):
+        self.vlayer.startEditing()
+        for feature in self.vlayer.getFeatures():
+            feature['parent_uid'] = feature['uid']
+            feature['num_images_tagged'] = 0
+            self.vlayer.updateFeature(feature)
+        self.vlayer.commitChanges()
 
     def clean_fields(self):
+        print('cleaning the fields')
         # Clean wrongly formatted fields (center, raw_images, attachments) in case they exist
         self.vlayer.startEditing()
         default_values = {"raw_images": NULL, "attachments": NULL, "center": NULL, "temperature_max": NULL, "temperature_min": NULL, "temperature_difference": NULL}
-
         for f in self.vlayer.getFeatures():
             for attr in default_values.keys():
                 try:   
@@ -97,6 +160,7 @@ class Project:
                     if not f[attr]:
                         f[attr] = default_values[attr]
             self.vlayer.updateFeature(f)
+        self.vlayer.commitChanges()
 
     def setup_tool_widget(self):
         # Dummy active tool widget and tool dock widget
@@ -116,21 +180,20 @@ class Project:
         if geojson_path:
             self.vlayer.commitChanges()
             with open(geojson_path, 'r') as g:
-                imported_geojson = json.load(g)
+                imported_geojson = json.load(g)['features']
             with open(self.geojson_path , 'r') as g:
                 existing_geojson = json.load(g)
-            existing_geojson["features"] += imported_geojson["features"] 
+            existing_geojson['features'] += imported_geojson
+            #disconnect any single added to existing vlayer
+            self.vlayer.selectionChanged.disconnect()
+            # Remove existing Vlayer  
+            self.qgis_project.removeMapLayers([self.vlayer.id()])
+            #save merged_geojson 
             with open(self.geojson_path, "w") as fi:
                 json.dump(existing_geojson, fi)
-            # import_layer = QgsVectorLayer(geojson_path, geojson_path, "ogr")
-            # imported_features = [feature for feature in import_layer.getFeatures()]
-            # self.vlayer.dataProvider().addFeatures(imported_features)
-            self.qgis_project.removeMapLayers([self.vlayer.id()])
-            merged_layer = QgsVectorLayer(self.geojson_path, self.geojson_path, "ogr")
-            self.qgis_project.addMapLayer(merged_layer)
-            self.vlayer = merged_layer
-            categorize_layer(self)
-            self.load_feature_count()
+            #Initialize Vlayer features
+            self.initialize_vlayer()
+            self.canvas_logger('Selected Geojson Imported...', level=Qgis.Success)
 
     def export_geojson(self, save_path):
         if save_path:
@@ -212,6 +275,8 @@ class Project:
         self.feature_shortcut_settings_widget = ShortcutSettings(self)
         self.project_details_widget.toolButton.clicked.connect(self.feature_shortcut_settings_widget.show)
         self.project_details_widget.toolButton.setStyleSheet("background-color:#dcf7ea;")
+        self.project_details_widget.save_edits.clicked.connect(self.save_and_parse_listType_dataFields)
+        self.project_details_widget.save_edits.setStyleSheet("background-color:#dcf7ea;")
         self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(QtWidgets.QFileDialog.getOpenFileName(None, "Title", "", "JSON (*.json)")[0]))
         self.project_details_widget.importButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
         self.project_details_widget.exportButton.clicked.connect(lambda: self.export_geojson(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "JSON (*.json)")[0]))
@@ -400,13 +465,13 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Create gis shortcuts generic to all projects
         self.qgis_shortcuts = {
             "E": "self.active_project.vlayer.startEditing()",
-            "Return": "self.active_project.vlayer.removeSelection()\n"
+            "A": "self.active_project.vlayer.removeSelection()\n"
                       "self.active_project.vlayer.commitChanges()",
             "F": "self.active_project.vlayer.startEditing()\n"
                  "iface.actionAddFeature().trigger()",
             "S": "iface.actionSelect().trigger()",
             "Z": "iface.actionZoomToLayer().trigger()",
-            "P": "iface.showAttributeTable(self.active_project.vlayer)",
+            "O": "iface.showAttributeTable(self.active_project.vlayer)",
             "D": "iface.actionCopyFeatures().trigger()"
         }
         # Create a key emitter that sends the key presses
@@ -427,10 +492,12 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             self.active_project.vlayer.startEditing()
             feature_change_name = self.active_project.feature_shortcuts.get(key, None)
             self.active_project.change_feature_type(feature_change_name)
+            self.iface.actionAddFeature().trigger()
         elif key in self.qgis_shortcuts:
             qgis_shortcut_function = self.qgis_shortcuts[key]
             exec(compile(qgis_shortcut_function, "<string>", "exec"))
-
+            
+            
     def back_to_load(self):
         self.load_window.dock_widget.setWidget(self.load_window)
         if self.active_project:
@@ -467,7 +534,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         if not self.active_project:
             return None
         self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
-        self.active_project.clean_fields()
+        # self.active_project.clean_fields()
         self.active_project.vlayer.commitChanges()
         self.active_project.last_saved = str(datetime.now())
 

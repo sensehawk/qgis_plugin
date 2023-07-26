@@ -92,7 +92,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.dock_widget = homeobj.dock_widget
         # self.dock_widget.setFixedSize(330, 830)
         self.dock_widget.setMinimumSize(QSize(200, 380))
-        self.dock_widget.setMaximumSize(QSize(500,800))
+        self.dock_widget.setMaximumSize(QSize(350,800))
         self.dock_widget.setWidget(self)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
 

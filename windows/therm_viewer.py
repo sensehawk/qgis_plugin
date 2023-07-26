@@ -120,6 +120,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
     def connect_signal(self):
         if not self.signal_connected:
             self.project.vlayer.selectionChanged.connect(self.signal_slot)
+            self.trigger_custom_label(self.project.vlayer)
         self.signal_connected = True
 
     def disconnect_signal(self):
@@ -129,7 +130,10 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         except RuntimeError:
             return None
         if self.signal_connected:
-            self.project.vlayer.selectionChanged.disconnect(self.signal_slot)
+            try:
+                self.project.vlayer.selectionChanged.disconnect(self.signal_slot)
+            except TypeError:
+                self.signal_connected = False
         self.signal_connected = False
     
     def toggle_signal_connection(self, visibility):

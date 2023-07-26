@@ -39,7 +39,7 @@ class LoginWindow(QtWidgets.QWidget):
         """Constructor."""
         super(LoginWindow, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'login.ui'), self)
-        self.loginButton.setText('👉🏼 Login')
+        self.loginButton.setText('🗝️ Login')
         self.loginButton.setStyleSheet("background-color:#dcf6f7;")
         self.loginButton.clicked.connect(self.start_login_task)
         self.user_email = None

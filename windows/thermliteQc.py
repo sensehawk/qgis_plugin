@@ -233,7 +233,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             try:
                 self.max_temp = np.percentile(temp_patch, int(self.max_percentile.text().strip() or 1))
                 self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text().strip() or 1))
-                self.delta_temp.setText("{:.2f}".format(self.max_temp-self.min_temp))
+                self.delta_temp.setText("{:.2f}".format(float(self.max_temp-self.min_temp)))
             except Exception as e:
                 self.canvas_logger(str(e), level=Qgis.Warning)
                 return None
@@ -271,6 +271,9 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             self.project.vlayer.updateFeature(feature)
             
     def trigger_custom_label(self, vlayer):
+        self.required_fields = {'num_images_tagged':QVariant.Double, 
+                                'timestamp':QVariant.String,}
+        fields_validator(self.required_fields, self.project.vlayer)
         #creating custom label for num_images_tagged field
         create_custom_label(vlayer)
         #update num_images_tagged field with pre tagged num of images
@@ -278,9 +281,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     
 
     def folderpath(self):
-        self.required_fields = {'num_images_tagged':QVariant.Double, 
-                                'timestamp':QVariant.String}
-        fields_validator(self.required_fields, self.project.vlayer)
         self.images_dir = os.path.realpath(QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder'))
         self.logger(f"Images dir selected: {self.images_dir}")
         if not self.images_dir:
@@ -386,10 +386,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         if self.temperature_toggle.isChecked():
             dt = unicode(self.sorted_timestamps[self.image_index].replace(microsecond=0))
             sfeature['timestamp'] = dt
-            sfeature['temperature_difference'] = float(self.delta_temp.text())
+            sfeature['temperature_difference'] = float(format(self.max_temp-self.min_temp, ".2f"))
             sfeature['temperature_min']  = float(self.min_temp)
             sfeature['temperature_max'] = float(self.max_temp)
-
+            print(sfeature['temperature_difference'])
         # Update num images tagged if the image does not already exist in the feature tagged info
         if image_path not in sfeature_image_tagged_info:
             try:
@@ -453,7 +453,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         with open(self.images_dir+f'\\{self.projectUid}_tagged.json', 'w') as p:
             json.dump(file , p)
 
-        # Saving tagged images meta data
+        # Saving tagged images meta data for backup
         with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
             json.dump(aws_tagged_images, g)
 
@@ -465,7 +465,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 geojson['features'].append(feature)
                 continue
             raw_images = feature['properties']['raw_images']
-            if isinstance(raw_images, type("")):
+            if isinstance(raw_images, type('')) or not raw_image:
                 feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
             else:
                 feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
@@ -473,18 +473,19 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 feature['properties'].pop('num_images_tagged')
             geojson['features'].append(feature)
 
+        #remove exiting vlayer and add tagged vlayer
         self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])
         
         with open(self.project.geojson_path, 'w') as f:
             json.dump(geojson, f)
-        qclayer = QgsVectorLayer(self.project.geojson_path, self.project.geojson_path, "ogr")
-        self.project.qgis_project.addMapLayer(qclayer)
-        # Reload layer styles
-        categorize_layer(self.project)
-        # trigger cutom label for freshly loaded vlayer
-        self.project.vlayer = qclayer
-        fields_validator(self.required_fields, self.project.vlayer)
+        
+        # Add updated vlayer and Initialize features
+        self.project.initialize_vlayer()
+        #Upload tagged images to S3 Bucket
         self.initiate_upload_process()
+        fields_validator(self.required_fields, self.project.vlayer)
+        self.trigger_custom_label(self.project.vlayer)
+        
 
     def upload_callback(self, upload_task_status, upload_task):
         if upload_task_status != 3:
@@ -492,6 +493,9 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         result = upload_task.returned_values
         print(f"{result['num_images']} uploaded")
         self.project.project_tabs_window.save_project()
+        #clear image_tagged info to avoid re-tagging already tagged ones
+        self.image_tagged_info.clear()
+        self.project.vlayer.startEditing()
         self.canvas_logger("Project geojson saved in SenseHawk App", level=Qgis.Success)
         # Reload service object urls if viewer exists
         if self.therm_tools.therm_viewer_widget:

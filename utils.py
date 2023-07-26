@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import traceback
 import re
+from pathlib import Path
 
 def sort_images(task, images_dir, logger, reverse=False):
     try:
@@ -170,7 +171,12 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
         geojson["features"] += [extent_feature]
 
     # Save geojson
-    geojson_path = os.path.join(tempfile.gettempdir(), "{}.geojson".format(project_uid))
+    d_path = str(Path.home() / "Downloads")
+    rpath = os.path.join(d_path+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
+    geojson_path = os.path.join(rpath+'\\'+project_details['name']+'.geojson')
+    if not os.path.exists(rpath):
+        os.makedirs(rpath)
+    # geojson_path = os.path.join(tempfile.gettempdir(), "{}.geojson".format(project_uid))
     with open(geojson_path, "w") as fi:
         json.dump(geojson, fi)
 
@@ -403,27 +409,39 @@ def download_ortho(file_size, number_of_threads, file_name, ortho_url):
                 #if chunk: 
                 f.write(chunk)
 
-    # part = int(file_size) / number_of_threads
-    # fp = open(file_name, "wb")
-    # fp.seek(file_size-1)
-    # fp.write(b'\0')
-    # fp.close()
+def save_edits(task, save_inputs):
+    json_path = save_inputs['json_path']
+    listType_dataFields = save_inputs['listType_dataFields']
 
-    # threads = []
-    # for i in range(number_of_threads):
-    #     start = part * i
-    #     end = start + part
-    #     # create a Thread with start and end locations
-    #     t = threading.Thread(target=Handler,
-    #          kwargs={'start': start, 'end': end, 'url': ortho_url, 'filename': file_name})
-    #     # t.setDaemon(True)
-    #     threads.append(t)
-    #     # t.start()
-
-    # for x in threads:
-    #     x.start()
-
-    # for x in threads:
-    #     x.join()
- 
-
+    features = json.load(open(json_path))['features']
+    cleaned_json = {"type":"FeatureCollection","features":[]}
+    for feature in features:
+        uid = feature['properties'].get('uid', None)
+        center = feature['properties'].get('center', None)
+        raw_image = feature['properties'].get('raw_images', None)
+        parentUid = feature['properties'].get('parent_uid', None)
+        attachment = feature['properties'].get('attachments', None)
+        if feature['properties']['class_name'] != 'table' :
+            if parentUid in listType_dataFields and uid != parentUid:
+                try:
+                    Parent_center = listType_dataFields.get(parentUid, [])['center']
+                    Parent_rawimages = listType_dataFields.get(parentUid, [])['raw_image']
+                except KeyError:
+                    Parent_center = [] 
+                    Parent_rawimages = []
+                if type(center) == list:pass
+                else:feature['properties']['center'] = Parent_center
+                if type(raw_image) == list:pass
+                else:
+                    feature['properties']['raw_images'] = Parent_rawimages
+                    feature['properties']['attachments'] = Parent_rawimages
+            else:
+                if type(center) == str or not center:feature['properties']['center'] = []
+                if type(raw_image) == str or not raw_image:feature['properties']['raw_images'] = []
+                if type(attachment) == str or not attachment:feature['properties']['attachments'] = []
+        
+        cleaned_json["features"].append(feature)
+    with open(json_path, "w") as fi:
+        json.dump(cleaned_json, fi)
+        
+    return {'json_path':json_path, 'task':task.description()}
