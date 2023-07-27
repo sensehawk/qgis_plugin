@@ -6,7 +6,7 @@
 name=SenseHawk QC
 qgisMinimumVersion=3.0
 description=This plugin will load and save SenseHawk projects needing quality check.
-version=1.10
+version=1.10.1
 author=SenseHawk
 email=kiranh@sensehawk.com, ganesh@sensehawk.com
 
@@ -41,7 +41,7 @@ deprecated=False
 # plugin_dependencies=
 
 Category of the plugin: Raster, Vector, Database or Web
-# category=
+# category=Thermal Analysis, GIS
 
 # If the plugin can run on QGIS Server.
 server=False
