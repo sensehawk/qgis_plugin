@@ -146,9 +146,9 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         #select folder path
         self.folder_path.clicked.connect(self.folderpath)
         # # Navigation buttons
-        self.nxt_img.setShortcut('d')
+        # self.nxt_img.setShortcut('left')
         self.nxt_img.clicked.connect(self.load_nxtimg)
-        self.previous_img.setShortcut('a')
+        # self.previous_img.setShortcut('right')
         self.previous_img.clicked.connect(self.load_previous)
         # Initially keep the buttons disabled
         for b in [self.nxt_img, self.previous_img]:

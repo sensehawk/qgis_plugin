@@ -276,6 +276,7 @@ class Project:
         self.project_details_widget.toolButton.clicked.connect(self.feature_shortcut_settings_widget.show)
         self.project_details_widget.toolButton.setStyleSheet("background-color:#dcf7ea;")
         self.project_details_widget.save_edits.clicked.connect(self.save_and_parse_listType_dataFields)
+        self.project_details_widget.save_edits.setShortcut('a')
         self.project_details_widget.save_edits.setStyleSheet("background-color:#dcf7ea;")
         self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(QtWidgets.QFileDialog.getOpenFileName(None, "Title", "", "JSON (*.json)")[0]))
         self.project_details_widget.importButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
@@ -465,8 +466,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Create gis shortcuts generic to all projects
         self.qgis_shortcuts = {
             "E": "self.active_project.vlayer.startEditing()",
-            "A": "self.active_project.vlayer.removeSelection()\n"
-                      "self.active_project.vlayer.commitChanges()",
+            # "A": "self.active_project.vlayer.removeSelection()\n"
+            #           "self.active_project.vlayer.commitChanges()",
             "F": "self.active_project.vlayer.startEditing()\n"
                  "iface.actionAddFeature().trigger()",
             "S": "iface.actionSelect().trigger()",

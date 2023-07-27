@@ -19,100 +19,6 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QLineEdit" name="marker_info">
-   <property name="geometry">
-    <rect>
-     <x>62</x>
-     <y>610</y>
-     <width>111</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="temp_patch_x">
-   <property name="geometry">
-    <rect>
-     <x>412</x>
-     <y>600</y>
-     <width>41</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="patch_y">
-   <property name="geometry">
-    <rect>
-     <x>480</x>
-     <y>600</y>
-     <width>16</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>H:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="temp_patch_y">
-   <property name="geometry">
-    <rect>
-     <x>498</x>
-     <y>600</y>
-     <width>41</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="delta_temp">
-   <property name="geometry">
-    <rect>
-     <x>432</x>
-     <y>670</y>
-     <width>115</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="max_percentile">
-   <property name="geometry">
-    <rect>
-     <x>412</x>
-     <y>630</y>
-     <width>41</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="max_percentile_text">
-   <property name="geometry">
-    <rect>
-     <x>372</x>
-     <y>630</y>
-     <width>31</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Max:</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="save_tagged_data">
    <property name="geometry">
     <rect>
@@ -130,19 +36,6 @@
    </property>
    <property name="text">
     <string>Save tagged data</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="marker_txt">
-   <property name="geometry">
-    <rect>
-     <x>2</x>
-     <y>610</y>
-     <width>51</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Marker:</string>
    </property>
   </widget>
   <widget class="QLabel" name="temp_patch_txt">
@@ -176,13 +69,16 @@
    <property name="text">
     <string>&gt;</string>
    </property>
+   <property name="shortcut">
+    <string>Right</string>
+   </property>
   </widget>
   <widget class="QCheckBox" name="pan_toggle">
    <property name="geometry">
     <rect>
-     <x>66</x>
+     <x>30</x>
      <y>654</y>
-     <width>91</width>
+     <width>127</width>
      <height>23</height>
     </rect>
    </property>
@@ -204,29 +100,6 @@
    </property>
    <property name="checked">
     <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="temp_txt">
-   <property name="geometry">
-    <rect>
-     <x>292</x>
-     <y>660</y>
-     <width>131</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Delta temperature:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="min_percentile">
-   <property name="geometry">
-    <rect>
-     <x>498</x>
-     <y>630</y>
-     <width>41</width>
-     <height>21</height>
-    </rect>
    </property>
   </widget>
   <widget class="QLabel" name="percentile_text">
@@ -261,22 +134,6 @@
     <string>Tag Feature</string>
    </property>
   </widget>
-  <widget class="QComboBox" name="current_loaded_img">
-   <property name="geometry">
-    <rect>
-     <x>106</x>
-     <y>528</y>
-     <width>441</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-  </widget>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
@@ -301,19 +158,6 @@
     <enum>Qt::Vertical</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="timestamp_label">
-   <property name="geometry">
-    <rect>
-     <x>8</x>
-     <y>564</y>
-     <width>81</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Timestamp:</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="folder_path">
    <property name="geometry">
     <rect>
@@ -325,19 +169,6 @@
    </property>
    <property name="text">
     <string>Select Image Folder</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="patch_x">
-   <property name="geometry">
-    <rect>
-     <x>392</x>
-     <y>600</y>
-     <width>16</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>W:</string>
    </property>
   </widget>
   <widget class="QPushButton" name="previous_img">
@@ -358,51 +189,212 @@
    <property name="text">
     <string>&lt;</string>
    </property>
+   <property name="shortcut">
+    <string>Left</string>
+   </property>
   </widget>
-  <widget class="QLineEdit" name="timestamp">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>108</x>
-     <y>564</y>
-     <width>241</width>
-     <height>25</height>
+     <x>372</x>
+     <y>600</y>
+     <width>165</width>
+     <height>55</height>
     </rect>
    </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="readOnly">
-    <bool>true</bool>
-   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="patch_x">
+      <property name="text">
+       <string>W:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="temp_patch_x"/>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLabel" name="patch_y">
+      <property name="text">
+       <string>H:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="3">
+     <widget class="QLineEdit" name="temp_patch_y"/>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="max_percentile_text">
+      <property name="text">
+       <string>Max:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="max_percentile"/>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLabel" name="min_percentile_text">
+      <property name="text">
+       <string>Min:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3">
+     <widget class="QLineEdit" name="min_percentile"/>
+    </item>
+   </layout>
   </widget>
-  <widget class="QLabel" name="min_percentile_text">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>462</x>
-     <y>630</y>
-     <width>31</width>
-     <height>20</height>
+     <x>234</x>
+     <y>666</y>
+     <width>309</width>
+     <height>22</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Min:</string>
-   </property>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <item row="0" column="1">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>88</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="temp_txt">
+      <property name="text">
+       <string>Delta temperature:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLineEdit" name="delta_temp">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
-  <widget class="QLabel" name="image_txt">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>6</x>
      <y>528</y>
-     <width>81</width>
-     <height>20</height>
+     <width>541</width>
+     <height>21</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Image Path:</string>
+   <layout class="QFormLayout" name="formLayout">
+    <item row="0" column="0">
+     <widget class="QLabel" name="image_txt">
+      <property name="text">
+       <string>Image Path:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QComboBox" name="current_loaded_img">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>8</x>
+     <y>564</y>
+     <width>307</width>
+     <height>21</height>
+    </rect>
    </property>
+   <layout class="QFormLayout" name="formLayout_2">
+    <item row="0" column="0">
+     <widget class="QLabel" name="timestamp_label">
+      <property name="text">
+       <string>Timestamp:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="timestamp">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>12</x>
+     <y>606</y>
+     <width>175</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_3">
+    <item row="0" column="0">
+     <widget class="QLabel" name="marker_txt">
+      <property name="text">
+       <string>Marker:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <spacer name="horizontalSpacer_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>34</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLineEdit" name="marker_info">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>

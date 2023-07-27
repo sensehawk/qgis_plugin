@@ -34,14 +34,14 @@
   <widget class="QPushButton" name="nxt_img">
    <property name="geometry">
     <rect>
-     <x>558</x>
-     <y>12</y>
-     <width>21</width>
-     <height>461</height>
+     <x>324</x>
+     <y>480</y>
+     <width>225</width>
+     <height>25</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -54,25 +54,28 @@
    </property>
    <property name="maximumSize">
     <size>
-     <width>21</width>
+     <width>400</width>
      <height>461</height>
     </size>
    </property>
    <property name="text">
     <string>&gt;</string>
    </property>
+   <property name="shortcut">
+    <string>Right</string>
+   </property>
   </widget>
   <widget class="QPushButton" name="previous_img">
    <property name="geometry">
     <rect>
-     <x>8</x>
-     <y>12</y>
-     <width>21</width>
-     <height>461</height>
+     <x>36</x>
+     <y>480</y>
+     <width>225</width>
+     <height>25</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -85,20 +88,23 @@
    </property>
    <property name="maximumSize">
     <size>
-     <width>21</width>
+     <width>400</width>
      <height>461</height>
     </size>
    </property>
    <property name="text">
     <string>&lt;</string>
    </property>
+   <property name="shortcut">
+    <string>Left</string>
+   </property>
   </widget>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>38</x>
+     <x>20</x>
      <y>12</y>
-     <width>511</width>
+     <width>547</width>
      <height>461</height>
     </rect>
    </property>
@@ -114,8 +120,8 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>610</y>
+     <x>18</x>
+     <y>618</y>
      <width>541</width>
      <height>31</height>
     </rect>
@@ -211,8 +217,8 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>499</y>
+     <x>24</x>
+     <y>516</y>
      <width>541</width>
      <height>91</height>
     </rect>

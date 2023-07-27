@@ -118,4 +118,5 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         endTime = time()
         duration = int(round((endTime - startTime) * 1000))
         Vlayer.commitChanges()
+        Vlayer.startEditing()
         self.canvas_logger(f'<b>String_numbeirng</b> done in {duration}ms.', level=Qgis.Success)
