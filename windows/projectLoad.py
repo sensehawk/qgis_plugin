@@ -64,7 +64,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.home_button.setText('🏡 Home')
         self.home_button.setStyleSheet('QPushButton {background-color: #dcf7ea; color: #3d3838;}')
         self.home_button.clicked.connect(lambda: self.clear_loaded_projects(next_window=self.home, message="All loaded projects will be closed. Are you sure?"))
-
+        
         homeobj.dock_widget.closeEvent = lambda x: self.clear_loaded_projects(event=x, message="Closing Sensehawk Plugin. Are you sure?")
 
         # self.group_text = QLabel(self)
@@ -142,12 +142,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_tabs_widget.show()
         self.show_projects_loaded()
         # collect loaded project layers id's
-        self.layers_id_collect()
-        
-    def layers_id_collect(self):
-        self.layers_id.append(self.project_tabs_widget.rlayer_id)
-        self.layers_id.append(self.project_tabs_widget.vlayer_id)
-       
+
 
     def start_project_load(self, project_uid, project_type, project_name):
         if not project_uid:
@@ -173,6 +168,11 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
 
     def clear_loaded_projects(self, event=None, next_window=None, message=""):
+        active_layers = [i for i in self.project_tabs_widget.projects_loaded.values()]
+        self.layers_id = []
+        for i in active_layers:
+            self.layers_id.append(i.vlayer.id())
+            self.layers_id.append(i.rlayer.id())
         # Ignore the event for now until the confimation message is replied to
         message_box = QtWidgets.QMessageBox()
         message_box.setIcon(QtWidgets.QMessageBox.Warning)

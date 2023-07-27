@@ -17,6 +17,7 @@ from .thermliteQc import PhotoViewer
 from ..utils import get_image_urls, download_images, create_custom_label
 import traceback
 import re
+import math
 import numpy as np
 
 THERM_VIEWER, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'therm_viewer.ui'))
@@ -285,9 +286,12 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         x2 = min(int(x+w/2), image_w)
         y2 = min(int(y+h/2), image_h)
         image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [255, 206, 85], 2, 1)
-        if x or y:   
+        if x and y: 
+            x = math.trunc(x)
+            y = math.trunc(y)  
             image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
-        return image
+
+        return image    
     
     def show_image(self, image_path, marker):
         x = marker[0]
