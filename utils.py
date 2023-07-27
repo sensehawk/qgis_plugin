@@ -423,12 +423,9 @@ def save_edits(task, save_inputs):
         attachment = feature['properties'].get('attachments', None)
         if feature['properties']['class_name'] != 'table' :
             if parentUid in listType_dataFields and uid != parentUid:
-                try:
-                    Parent_center = listType_dataFields.get(parentUid, [])['center']
-                    Parent_rawimages = listType_dataFields.get(parentUid, [])['raw_image']
-                except KeyError:
-                    Parent_center = [] 
-                    Parent_rawimages = []
+                Parent_rawimages = listType_dataFields[parentUid].get('raw_images',[])
+                Parent_center = listType_dataFields[parentUid].get('center', [])
+
                 if type(center) == list:pass
                 else:feature['properties']['center'] = Parent_center
                 if type(raw_image) == list:pass
@@ -439,8 +436,9 @@ def save_edits(task, save_inputs):
                 if type(center) == str or not center:feature['properties']['center'] = []
                 if type(raw_image) == str or not raw_image:feature['properties']['raw_images'] = []
                 if type(attachment) == str or not attachment:feature['properties']['attachments'] = []
-        
+
         cleaned_json["features"].append(feature)
+
     with open(json_path, "w") as fi:
         json.dump(cleaned_json, fi)
         

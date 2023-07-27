@@ -83,7 +83,7 @@ class Project:
         self.vlayer.commitChanges()
         #disconnect any single added to existing vlayer
         self.vlayer.selectionChanged.disconnect()
-        # remove and add updated json 
+        # remove existing json 
         self.qgis_project.removeMapLayers([self.vlayer.id()])
 
         save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
@@ -96,7 +96,7 @@ class Project:
             return None
         result = save_edits_task.returned_values
         if result:
-            #Initializing Vlayer features
+            #Add and Initializing Vlayer features
             self.initialize_vlayer()
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson Saved...', level=Qgis.Success)
             
@@ -197,8 +197,8 @@ class Project:
 
     def export_geojson(self, save_path):
         if save_path:
+            self.save_and_parse_listType_dataFields()
             real_path = os.path.realpath(save_path)
-            self.vlayer.commitChanges()
             current_layer = json.load(open(self.geojson_path))
             json.dump(current_layer, open(real_path, "w"))
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson exported...', level=Qgis.Success)
@@ -533,15 +533,21 @@ class ProjectTabsWidget(QtWidgets.QWidget):
     def save_project(self):
         if not self.active_project:
             return None
-        self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
-        # self.active_project.clean_fields()
-        self.active_project.vlayer.commitChanges()
         self.active_project.last_saved = str(datetime.now())
+        self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
 
         def save_task(task, save_task_input):
             geojson_path, core_token, project_uid, project_type = save_task_input
             with open(geojson_path, 'r') as fi:
                 geojson = json.load(fi)
+
+            features = []
+            for feature in geojson['features']:
+                feature['properties'].pop('parent_uid', None)
+                feature['properties'].pop('num_images_tagged', None)
+                features.append(feature)
+            
+            geojson['features'] = features
             #Upload vectors
             print("Uploading")
             saved = save_project_geojson(geojson, project_uid, core_token,
