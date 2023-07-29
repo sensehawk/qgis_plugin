@@ -294,8 +294,12 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         return image    
     
     def show_image(self, image_path, marker):
-        x = marker[0]
-        y = marker[1]
+        if marker:
+            x = marker[0]
+            y = marker[1]
+        else:
+            x = 0
+            y = 0
         image = cv2.imread(image_path)
         height, width, _ = image.shape
         bytesPerLine = 3 * width
