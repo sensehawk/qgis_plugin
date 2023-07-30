@@ -11,17 +11,17 @@ from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, M
 
 class ProjectForm:
     def __init__(self, project_list, project_selection_layout, project_selection_window):
-        project_groupbox = QtWidgets.QGroupBox('Projects:')
-        myform = QtWidgets.QFormLayout()
+        self.project_groupbox = QtWidgets.QGroupBox('Projects:')
+        self.myform = QtWidgets.QFormLayout()
         for project in project_list:
             button = QtWidgets.QPushButton(f'{project}')
             button.clicked.connect(project_selection_window.load_project_layers)
-            myform.addRow(button)
+            self.myform.addRow(button)
 
-        project_groupbox.setLayout(myform)
+        self.project_groupbox.setLayout(self.myform)
 
         self.scroll_widget = QtWidgets.QScrollArea()
-        self.scroll_widget.setWidget(project_groupbox)
+        self.scroll_widget.setWidget(self.project_groupbox)
         self.scroll_widget.setWidgetResizable(True)
         self.scroll_widget.setFixedHeight(400)
         # Replace the scroll widget if it exists
@@ -116,17 +116,19 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         clicked_button = self.sender()
         project_uid = self.project_details[clicked_button.text()]
         project_type = app_dict[self.associated_group_app]
-        self.start_project_load(project_uid, project_type, clicked_button.text())
+        self.start_project_load(project_uid, project_type, clicked_button)
 
-    def load_callback(self, load_task_status, load_task):
+    def load_callback(self, load_task_status, load_task, clicked_butotn):
         new_project_index = len(self.project_tabs_widget.project_uids)
         if load_task_status != 3:
             return None
         result = load_task.returned_values
         if not result:
             self.logger("Load failed...", level=Qgis.Warning)
+            clicked_butotn.setEnabled(True)
             return None
         # Create a project object from the callback result
+        clicked_butotn.setEnabled(True)
         project = Project(result)
         project.user_email = self.user_email
         project.canvas_logger = self.canvas_logger
@@ -144,13 +146,16 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         # collect loaded project layers id's
 
 
-    def start_project_load(self, project_uid, project_type, project_name):
+    def start_project_load(self, project_uid, project_type, clicked_button):
+        project_name = clicked_button.text()
+        clicked_button.setEnabled(False)
         if not project_uid:
             self.logger("No project uid given", level=Qgis.Warning)
             return None
         # Load only if it is not already present in project tabs
         if project_uid in self.project_tabs_widget.projects_loaded:
             self.logger("Project loaded already!")
+            clicked_button.setEnabled(True)
             project_index = self.project_tabs_widget.project_uids.index(project_uid)
             self.project_tabs_widget.project_tabs_widget.setCurrentIndex(project_index)
             self.project_tabs_widget.activate_project()
@@ -165,7 +170,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
                             "logger": self.logger}
         load_task = QgsTask.fromFunction(f"{project_name} Project Load", loadTask, load_task_inputs)
         QgsApplication.taskManager().addTask(load_task)
-        load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task))
+        load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task, clicked_button))
 
     def clear_loaded_projects(self, event=None, next_window=None, message=""):
         active_layers = [i for i in self.project_tabs_widget.projects_loaded.values()]
