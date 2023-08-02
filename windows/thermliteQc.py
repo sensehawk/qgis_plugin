@@ -25,6 +25,7 @@ import os
 import cv2
 import glob
 from datetime import datetime
+from pathlib import Path
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsVectorLayer, QgsApplication, QgsTask, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsTextFormat, Qgis, QgsField, QgsTextBufferSettings
@@ -194,11 +195,13 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def get_temperature_map(self, image_path):
         metadata = self.et.get_metadata(image_path)[0]
         camera = metadata["EXIF:Model"]
-        if "MAVIC2-ENTERPRISE-ADVANCED" in camera or "H20T" in camera or "M3T" in camera:
-            subprocess.run(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp.exe')} -s {image_path} -a measure -o temp.raw", shell=True)
+        if "MAVIC2-ENTERPRISE-ADVANCED" in camera or "H20T" in camera or "M3T" in camera or "M30T" in camera:
+            download_path = str(Path.home() / "Downloads")
+            temp_raw_path = os.path.join(download_path+'\\'+'temp.raw')
+            subprocess.run(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp.exe')} -s {image_path} -a measure -o {temp_raw_path}", shell=True)
             degree_map = np.empty((512, 640), np.int16)
-            degree_map.data = open(os.path.join(os.getcwd(), "temp.raw"), "rb").read()
-            os.remove(os.path.join(os.getcwd(), "temp.raw"))
+            degree_map.data = open(temp_raw_path, "rb").read()
+            os.remove(temp_raw_path)
             degree_map = degree_map / 10
         else:
             os.system('{} -RawThermalImage -b "{}" > raw.dat'.format(exiftool_path, image_path))

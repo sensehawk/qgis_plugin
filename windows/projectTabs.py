@@ -18,7 +18,7 @@ import string
 import re
 import tempfile
 import shutil
-import pprint
+import traceback
 
 class Project:
     def __init__(self, load_task_result):
@@ -539,20 +539,24 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
         def save_task(task, save_task_input):
             geojson_path, core_token, project_uid, project_type = save_task_input
+         
             with open(geojson_path, 'r') as fi:
                 geojson = json.load(fi)
+            cleaned_json = {"type":"FeatureCollection","features":[]}
 
             features = []
             for feature in geojson['features']:
                 feature['properties'].pop('parent_uid', None)
                 feature['properties'].pop('num_images_tagged', None)
                 features.append(feature)
-            
-            geojson['features'] = features
+                
+            cleaned_json['features'] = features
             #Upload vectors
             print("Uploading")
-            saved = save_project_geojson(geojson, project_uid, core_token,
+
+            saved = save_project_geojson(cleaned_json, project_uid, core_token,
                                          project_type=project_type)
+                
             return {'status': str(saved), 'task': task.description()}
         
         def callback(task, logger):
