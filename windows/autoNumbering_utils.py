@@ -52,7 +52,7 @@ def row_wise_sortedTables(tableslist, top, bottom):
             sorted_row.append(table)
     return sorted_row
 
-def update_TableRowAndColumn(sorted_row, Vlayer,current_row):
+def update_TableRowAndColumn(sorted_row, Vlayer, current_row, projectuid):
     x_sorted = sorted(sorted_row, key=lambda x: x.utm_x, reverse=False)
     t_column = 1
     t_row = current_row
@@ -67,11 +67,14 @@ def update_TableRowAndColumn(sorted_row, Vlayer,current_row):
             rs_tables.feature['table_column'] = t_column
             rs_tables.feature['row'] = t_row
             rs_tables.feature['column'] = t_column
+        rs_tables.feature['uid'] = f"{projectuid}-{rs_tables.feature['table_row']}:{rs_tables.feature['table_column']}"
+        rs_tables.feature['name'] = f"{projectuid}-{rs_tables.feature['table_row']}:{rs_tables.feature['table_column']}"
+        rs_tables.feature['idx'] = t_column
         t_column += 1
         Vlayer.updateFeature(rs_tables.feature) 
 
 
-def table_numbering(featuresobjlist, Vlayer):
+def table_numbering(featuresobjlist, Vlayer, projectuid):
     tableslist = [table for table in featuresobjlist if table.feature['class_name'] == 'table' ]
     current_row = 1
     while len(tableslist) > 0:
@@ -80,7 +83,7 @@ def table_numbering(featuresobjlist, Vlayer):
         N_top = np.max(np.array(topmost_table.utm_coords), axis=0)[1] 
         N_bottom = np.min(np.array(topmost_table.utm_coords), axis=0)[1] 
         sorted_row = row_wise_sortedTables(tableslist, N_top, N_bottom)
-        update_TableRowAndColumn(sorted_row, Vlayer, current_row)
+        update_TableRowAndColumn(sorted_row, Vlayer, current_row, projectuid)
         current_row += 1
         for usedObj in sorted_row:
             tableslist.remove(usedObj)
@@ -130,7 +133,9 @@ def update_issue_Row_column(project_uid, featuresobjlist, Vlayer, Height, Width,
             if column < abjx: column =1
             IssueObj.feature['row']= row 
             IssueObj.feature['column'] = column
-            IssueObj.feature['uid'] = f"{project_uid}:{IssueObj.feature['table_row']}:{IssueObj.feature['table_column']}~{issue_num}"
+            IssueObj.feature['uid'] = f"{project_uid}-{IssueObj.feature['table_row']}:{IssueObj.feature['table_column']}~{issue_num}"
+            IssueObj.feature['name'] = f"{project_uid}-{IssueObj.feature['table_row']}:{IssueObj.feature['table_column']}~{issue_num}"
+            IssueObj.feature['idx'] = issue_num
             issue_num += 1
             Vlayer.updateFeature(IssueObj.feature)
 

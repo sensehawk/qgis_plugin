@@ -24,7 +24,7 @@
 
 from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import Qgis, QgsVectorLayer, QgsProject, QgsTask, QgsApplication, QgsMessageLog
+from qgis.core import Qgis
 from ..constants import THERMAL_TAGGING_URL
 
 import os
@@ -71,8 +71,10 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         headers = {'Authorization': f'Token {self.core_token}'}
         imagetag = requests.post(url, json=json, headers=headers)
         if imagetag.status_code == 200:
+            self.runButton.setChecked(False)
             self.canvas_logger('Queued Successfully.',level=Qgis.Success)
         else:
+            self.runButton.setChecked(False)
             self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
 
 
@@ -116,6 +118,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         print("combobox changed", value)
 
     def image_tagging(self): 
+        self.runButton.setChecked(True)
         if self.MagmaConversion.isChecked():magma_image = True
         else : magma_image = False
         if self.IssueCropImage.isChecked():crop_image = True

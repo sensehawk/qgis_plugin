@@ -42,6 +42,11 @@
     <widget class="QComboBox" name="stringnum_type">
      <item>
       <property name="text">
+       <string>UID</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
        <string>Basic</string>
       </property>
      </item>

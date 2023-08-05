@@ -27,6 +27,7 @@ import numpy as np
 import traceback
 import re
 from pathlib import Path
+from qgis.PyQt.QtCore import Qt, QVariant
 
 def sort_images(task, images_dir, logger, reverse=False):
     try:
@@ -156,6 +157,17 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     # Download vectors
     geojson = get_project_geojson(project_uid, core_token, project_type=project_type)
     
+    #To make qgis support temperature_difference field as decimal Qvariant type
+    loop = True
+    count = 0
+    while loop:
+        feature = geojson['features'][count]
+        if feature['properties']['class_name'] == 'table':
+            feature['properties']['temperature_difference'] = 0.67
+            loop = False
+        else:
+            count += 1
+
     if "features" not in geojson:
         logger(str(geojson), level=Qgis.Warning)
 
@@ -325,11 +337,15 @@ def fields_validator(required_fields, layer):
         for field in fname:
             variant = required_fields[field]
             if layer.fields().indexFromName(field) == -1:
-                fieldz = QgsField(field , variant)
+                if field == 'temperature_min' or field == 'temperature_max' or field == 'temperature_difference':# creating decimal supporting fields type
+                    fieldz = QgsField(field , variant, "double", 10, 2)
+                else:
+                     fieldz = QgsField(field , variant)
                 layer.dataProvider().addAttributes([fieldz])
                 layer.updateFields() # update layer fields after creating new one
         layer.commitChanges()
         layer.startEditing()
+
 
 def download_images(task, inputs):
     threads = []

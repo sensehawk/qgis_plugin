@@ -73,13 +73,15 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         # Adding rotated utm_coords as a attribute to featureObj
         update_rotated_coords(featuresobjlist, anchor_point, angle) 
          #Adding Table_row and Table_column numbers to tableObj
-        table_numbering(featuresobjlist, Vlayer)
+        table_numbering(featuresobjlist, Vlayer, self.projectuid)
         #Grouping issues falling in Parent table and updating Parent Trow and Tcolumn number to issuesObj 
         update_issue_tRow_tColumn(featuresobjlist, Vlayer) 
         # Updating row and column to issuesObj 
         update_issue_Row_column(self.projectuid , featuresobjlist, Vlayer, module_height, module_width, angle) 
             
         Vlayer.startEditing()
+
+
         """String NUmbering"""
         if self.stringnum_type.currentText() == 'Basic' or self.stringnum_type.currentText() == 'Basic+module':
             for featureobj in featuresobjlist:
@@ -114,6 +116,11 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                         print(basicModule_number)
                         issue_obj.feature['string_number'] = basicModule_number.strip('-')
                         Vlayer.updateFeature(issue_obj.feature)
+        
+        elif self.stringnum_type.currentText() == 'UID':
+            pass
+            # for issue in featuresobjlist:
+            #     if issue 
 
         endTime = time()
         duration = int(round((endTime - startTime) * 1000))

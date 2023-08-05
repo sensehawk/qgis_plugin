@@ -468,7 +468,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 geojson['features'].append(feature)
                 continue
             raw_images = feature['properties']['raw_images']
-            if isinstance(raw_images, type('')) or not raw_image:
+            if isinstance(raw_images, type('')) or len(raw_images) == 0:
                 feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
             else:
                 feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])

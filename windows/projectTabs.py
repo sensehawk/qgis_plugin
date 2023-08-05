@@ -40,7 +40,8 @@ class Project:
                            'num_modules_horizontal':QVariant.Double,'timestamp':QVariant.String, 
                            'num_modules_vertical':QVariant.Double,'center':QVariant.String, 
                            'raw_images':QVariant.String,'attachments':QVariant.String,
-                           'parent_uid':QVariant.String}
+                           'parent_uid':QVariant.String,'name':QVariant.String,
+                           'idx':QVariant.Double}
 
         fields_validator(self.required_fields, self.vlayer)
         #initialize and update parent_uid field 
@@ -278,7 +279,7 @@ class Project:
         self.project_details_widget.save_edits.clicked.connect(self.save_and_parse_listType_dataFields)
         self.project_details_widget.save_edits.setShortcut('a')
         self.project_details_widget.save_edits.setStyleSheet("background-color:#dcf7ea;")
-        self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(QtWidgets.QFileDialog.getOpenFileName(None, "Title", "", "JSON (*.json)")[0]))
+        self.project_details_widget.importButton.clicked.connect(lambda: self.import_geojson(QtWidgets.QFileDialog.getOpenFileName(None, "Title", "", "JSON (*.json *.geojson)")[0]))
         self.project_details_widget.importButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
         self.project_details_widget.exportButton.clicked.connect(lambda: self.export_geojson(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "JSON (*.json)")[0]))
         self.project_details_widget.exportButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
@@ -545,10 +546,16 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             cleaned_json = {"type":"FeatureCollection","features":[]}
 
             features = []
+            duplicate_geometries = []
             for feature in geojson['features']:
-                feature['properties'].pop('parent_uid', None)
-                feature['properties'].pop('num_images_tagged', None)
-                features.append(feature)
+                if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries:
+                    feature['properties'].pop('parent_uid', None)
+                    feature['properties'].pop('num_images_tagged', None)
+                    feature['properties'].pop('table_row', None)
+                    feature['properties'].pop('table_column', None)
+                    feature['properties'].pop('idx', None)
+                    duplicate_geometries.append(feature['geometry'])
+                    features.append(feature)
                 
             cleaned_json['features'] = features
             #Upload vectors
