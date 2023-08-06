@@ -200,8 +200,10 @@ class Project:
         if save_path:
             self.save_and_parse_listType_dataFields()
             real_path = os.path.realpath(save_path)
-            current_layer = json.load(open(self.geojson_path))
-            json.dump(current_layer, open(real_path, "w"))
+            with open(self.geojson_path, 'r') as g:
+                current_layer = json.load(g)
+            with open(real_path, 'w') as f:
+                json.dump(current_layer, f)
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson exported...', level=Qgis.Success)
             del current_layer # to aviod ram overload
 

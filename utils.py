@@ -29,6 +29,14 @@ import re
 from pathlib import Path
 from qgis.PyQt.QtCore import Qt, QVariant
 
+def project_data_existent(task, input):
+    projectUid, org, token = input
+    url  = f'{THERM_URL}/projects/{projectUid}/data?organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    projetJson = requests.get(url, headers=headers)
+    return{'projectjson':projetJson.json(),
+           'task':task.description()} 
+
 def sort_images(task, images_dir, logger, reverse=False):
     try:
         logger('Started sorting images using DateTimeOriginal exif tag')
@@ -158,15 +166,16 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     geojson = get_project_geojson(project_uid, core_token, project_type=project_type)
     
     #To make qgis support temperature_difference field as decimal Qvariant type
-    loop = True
-    count = 0
-    while loop:
-        feature = geojson['features'][count]
-        if feature['properties']['class_name'] == 'table':
-            feature['properties']['temperature_difference'] = 0.67
-            loop = False
-        else:
-            count += 1
+    if geojson.get('features', None):
+        loop = True
+        count = 0
+        while loop:
+            feature = geojson['features'][count]
+            if feature['properties']['class_name'] == 'table':
+                feature['properties']['temperature_difference'] = 0.67
+                loop = False
+            else:
+                count += 1
 
     if "features" not in geojson:
         logger(str(geojson), level=Qgis.Warning)

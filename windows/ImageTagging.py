@@ -24,11 +24,12 @@
 
 from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt import QtWidgets, uic
-from qgis.core import Qgis
+from qgis.core import Qgis, QgsTask, QgsApplication
 from ..constants import THERMAL_TAGGING_URL
+from ..utils import project_data_existent
 
 import os
-import tempfile
+import pprint
 import requests
 
 
@@ -49,7 +50,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.core_token = self.project.core_token
         self.project_uid = self.project.project_details["uid"]
         self.canvas =self.iface.mapCanvas()
-
+        
+        self.project_details_button.clicked.connect(self.get_project_details)
         self.runButton.clicked.connect(self.image_tagging)
         self.imagetaggingType.currentTextChanged.connect(self.current_type)
         self.MagmaConversion.setChecked(True)
@@ -61,6 +63,60 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.No_images.setMaximum(4)
         self.No_images.setMinimum(1)
 
+    def get_project_details_callback(self, get_project_detials_task_status, get_details):
+        if get_project_detials_task_status != 3:
+            return None
+        result = get_details.returned_values
+        dsm = result['projectjson'].get('dsm', None)
+        ortho = result['projectjson'].get('ortho', None)
+        rawimage = self.project_details.get('no_of_images', None)
+        reflectance = result['projectjson'].get('reflectance', None)
+        calibratedParameters = result['projectjson'].get('calibratedParameters', None)
+        externalCalibratedParameters = result['projectjson'].get('externalCalibratedParameters', None)
+        if dsm : 
+            self.get_dsm.setChecked(True)
+            self.get_dsm.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : lightgreen;" "}")
+        else:self.get_dsm.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : red;" "}")
+        if ortho : 
+            self.get_ortho.setChecked(True)
+            self.get_ortho.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : lightgreen;" "}")
+        else: self.get_ortho.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : red;" "}")
+        if reflectance : 
+            self.get_reflectance.setChecked(True)
+            self.get_reflectance.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : lightgreen;" "}")
+        else:self.get_reflectance.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : red;" "}")
+        if rawimage : 
+            self.get_rawimage.setChecked(True)
+            self.get_rawimage.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : lightgreen;" "}")
+        else : self.get_rawimage.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : red;" "}")
+        if calibratedParameters : 
+            self.get_calibration.setChecked(True)
+            self.get_calibration.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : lightgreen;" "}")
+        else : self.get_calibration.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : red;" "}")
+        if externalCalibratedParameters : 
+            self.get_externalcalibration.setChecked(True)
+            self.get_externalcalibration.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : lightgreen;" "}")
+        else: self.get_externalcalibration.setStyleSheet("QCheckBox::indicator"
+                               "{" "background-color : red;" "}")
+
+
+    def get_project_details(self):
+        org = self.project_details['organization']['uid']
+        project_info = [self.project_uid, org, self.core_token]
+        get_details = QgsTask.fromFunction("Get image urls", project_data_existent, project_info)
+        QgsApplication.taskManager().addTask(get_details)
+        get_details.statusChanged.connect(lambda get_project_detials_task_status: self.get_project_details_callback(get_project_detials_task_status, get_details))
 
     def api(self, json):
         canvas  = self.canvas

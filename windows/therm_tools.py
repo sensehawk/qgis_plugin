@@ -175,7 +175,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if not self.imagetagging_widget:
             self.imagetagging_widget = ThermImageTaggingWidget(self, self.iface)
         self.project.docktool_widget.setWidget(self.imagetagging_widget)
-        self.project.docktool_widget.setFixedSize(250, 355)   
+        self.project.docktool_widget.setFixedSize(250, 500)   
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.imagetaggingButton.setChecked(True)
