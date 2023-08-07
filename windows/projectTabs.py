@@ -491,7 +491,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         rot = self.iface.mapCanvas().rotation()
         if rot == 360:
             self.iface.mapCanvas().setRotation(90)
-        self.iface.mapCanvas().setRotation(rot + 90)
+        else:
+            self.iface.mapCanvas().setRotation(rot + 90)
     
     def key_eater(self, x):
         # Connect to active projects feature shortcuts and qgis shortcuts
