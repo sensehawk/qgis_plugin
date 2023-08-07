@@ -487,11 +487,19 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Install key press filter to iface's map canvas
         self.iface.mapCanvas().installEventFilter(self.keypress_filter)
     
+    def change_rotation(self):
+        rot = self.iface.mapCanvas().rotation()
+        if rot == 360:
+            self.iface.mapCanvas().setRotation(90)
+        self.iface.mapCanvas().setRotation(rot + 90)
+    
     def key_eater(self, x):
         # Connect to active projects feature shortcuts and qgis shortcuts
         key = QtGui.QKeySequence(x).toString()
         if not self.active_project:
             return None
+        if key == 'R':
+            self.change_rotation()
         if key in self.active_project.feature_shortcuts:
             self.active_project.vlayer.startEditing()
             feature_change_name = self.active_project.feature_shortcuts.get(key, None)
