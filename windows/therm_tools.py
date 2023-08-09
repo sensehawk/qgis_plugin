@@ -145,15 +145,16 @@ class ThermToolsWidget(QtWidgets.QWidget):
     def therm_viewer(self):
         self.project.active_tool_widget.hide()
         if not self.therm_viewer_widget:
-            self.therm_viewer_widget = ThermViewerDockWidget(self, self.project)
+            self.therm_viewer_widget = ThermViewerDockWidget(self, self.iface)
         self.project.docktool_widget.setWidget(self.therm_viewer_widget)
-        self.project.docktool_widget.setFixedSize(585, 700)
+        self.project.docktool_widget.setFixedSize(585, 780)
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.viewer_button.setChecked(True)
         # Setup selection changed signal
         self.project.active_docktool_widget = self.therm_viewer_widget
         self.therm_viewer_widget.connect_signal()
+        self.therm_viewer_widget.reload_required_data()
         self.project.docktool_widget.visibilityChanged.connect(lambda x: self.therm_viewer_widget.toggle_signal_connection(x))
         self.therm_viewer_widget.trigger_custom_label(self.project.vlayer)
 

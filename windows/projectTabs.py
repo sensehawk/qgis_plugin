@@ -18,7 +18,7 @@ import string
 import re
 import tempfile
 import shutil
-import traceback
+import numpy as np
 
 class Project:
     def __init__(self, load_task_result):
@@ -45,6 +45,7 @@ class Project:
 
         fields_validator(self.required_fields, self.vlayer)
         #initialize and update parent_uid field 
+        self.listType_dataFields = {}
         self.initialize_parentUid()
         self.collect_list_Type_dataFields()
         self.rlayer_url = load_task_result['rlayer_url']
@@ -105,8 +106,8 @@ class Project:
     def initialize_vlayer(self):
         #loaded updated layer
         updated_vlayer = QgsVectorLayer(self.geojson_path, self.geojson_path, "ogr")
-        self.qgis_project.addMapLayer(updated_vlayer)
         self.vlayer = updated_vlayer
+        self.qgis_project.addMapLayer(updated_vlayer)
         categorize_layer(self)
         self.load_feature_count()   
         self.vlayer.startEditing()
@@ -115,27 +116,26 @@ class Project:
         #connect pre-defined singles 
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
+        #Re-collecting list type data fields after parsing list type data field to copy pasted one
+        self.initialize_parentUid()
+        self.collect_list_Type_dataFields()
+        self.vlayer.startEditing()
 
     # Since Qgis won't support list type fields data in copy-pasted issues, 
     # collecting list type data with Parentuid as key and list type data as value 
     def collect_list_Type_dataFields(self):
-        self.listType_dataFields = {}
+        self.listType_dataFields.clear()
         features = json.load(open(self.geojson_path))['features']
         for feature in features:
             if feature['properties']['class_name'] != 'table':
-                center = feature['properties'].get('center', None)
                 raw_images = feature['properties'].get('raw_images', None)
                 parentUid = feature['properties'].get('parent_uid', None)
-                if type(center) == list :
-                    center_value = self.listType_dataFields.get(parentUid, {})
-                    center_value['center'] = center
-                    self.listType_dataFields[parentUid] = center_value
-
+                print(type(raw_images))
                 if type(raw_images) == list :
                     rawimage_value = self.listType_dataFields.get(parentUid, {})
                     rawimage_value['raw_images'] = raw_images
                     self.listType_dataFields[parentUid] = rawimage_value
-
+        
 
     def initialize_parentUid(self):
         self.vlayer.startEditing()
@@ -226,6 +226,7 @@ class Project:
         feature['projectUid'] = self.project_details["uid"]
         feature['groupUid'] = self.project_details["group"]["uid"]
         self.vlayer.updateFeature(feature)
+        print(self.listType_dataFields)
 
     # synch  feature count in project table
     def load_feature_count(self, feature_id=None):
@@ -565,6 +566,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                     feature['properties'].pop('table_row', None)
                     feature['properties'].pop('table_column', None)
                     feature['properties'].pop('idx', None)
+                    center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
+                    centroid_x , centroid_y = center
+                    feature['properties']['center'] = [[centroid_x,centroid_y]]
                     duplicate_geometries.append(feature['geometry'])
                     features.append(feature)
                 
@@ -574,7 +578,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
             saved = save_project_geojson(cleaned_json, project_uid, core_token,
                                          project_type=project_type)
-                
+            
             return {'status': str(saved), 'task': task.description()}
         
         def callback(task, logger):

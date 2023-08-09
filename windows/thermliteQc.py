@@ -501,8 +501,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.project.vlayer.startEditing()
         self.canvas_logger("Project geojson saved in SenseHawk App", level=Qgis.Success)
         # Reload service object urls if viewer exists
-        if self.therm_tools.therm_viewer_widget:
-            self.therm_tools.therm_viewer_widget.generate_service_objects()
+        # if self.therm_tools.therm_viewer_widget:
+        #     self.therm_tools.therm_viewer_widget.generate_service_objects()
 
     def upload_task(self, get_urls_task_status, get_urls_task):
         if get_urls_task_status != 3:

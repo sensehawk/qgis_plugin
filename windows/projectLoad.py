@@ -118,17 +118,17 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         project_type = app_dict[self.associated_group_app]
         self.start_project_load(project_uid, project_type, clicked_button)
 
-    def load_callback(self, load_task_status, load_task, clicked_butotn):
+    def load_callback(self, load_task_status, load_task, clicked_button):
         new_project_index = len(self.project_tabs_widget.project_uids)
         if load_task_status != 3:
             return None
         result = load_task.returned_values
         if not result:
             self.logger("Load failed...", level=Qgis.Warning)
-            clicked_butotn.setEnabled(True)
+            clicked_button.setEnabled(True)
             return None
         # Create a project object from the callback result
-        clicked_butotn.setEnabled(True)
+        clicked_button.setEnabled(True)
         project = Project(result)
         project.user_email = self.user_email
         project.canvas_logger = self.canvas_logger

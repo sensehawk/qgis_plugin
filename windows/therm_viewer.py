@@ -4,7 +4,7 @@ import json
 from qgis.PyQt import QtWidgets, uic
 from qgis.utils import iface
 from qgis.core import QgsApplication, QgsTask, Qgis, QgsField
-from PyQt5.QtCore import QVariant
+from PyQt5.QtCore import QVariant, QPoint
 from qgis.PyQt.QtCore import Qt 
 from PyQt5.QtGui import QImage, QIcon
 from PyQt5 import QtCore, QtGui, QtWidgets 
@@ -17,6 +17,7 @@ from .thermliteQc import PhotoViewer
 from ..utils import get_image_urls, download_images, create_custom_label
 import traceback
 import re
+import pprint
 import math
 import numpy as np
 
@@ -26,7 +27,7 @@ THERM_VIEWER, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'therm_
 class PhotoViewer(QtWidgets.QGraphicsView):
     photoClicked = QtCore.pyqtSignal(QtCore.QPoint)
 
-    def __init__(self):
+    def __init__(self, thermveiwer_window):
         super(PhotoViewer, self).__init__()
         self._zoom = 0
         self._empty = True
@@ -40,6 +41,8 @@ class PhotoViewer(QtWidgets.QGraphicsView):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setBackgroundBrush(QtGui.QBrush(QtGui.QColor(30, 30, 30)))
         self.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.thermveiwer_window = thermveiwer_window
+
 
     def hasPhoto(self): 
         return not self._empty
@@ -60,7 +63,11 @@ class PhotoViewer(QtWidgets.QGraphicsView):
 
     def setPhoto(self, pixmap=None):
         self._zoom = 0
-        self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+        if self.thermveiwer_window.change_marker_location.isChecked():
+            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+        else:
+            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+
         if pixmap and not pixmap.isNull():
             self._empty = False
             self._photo.setPixmap(pixmap)
@@ -84,27 +91,38 @@ class PhotoViewer(QtWidgets.QGraphicsView):
             else:
                 self._zoom = 0
 
+    def toggleDragMode(self, switch):
+        if switch:
+            self.setDragMode(QtWidgets.QGraphicsView.NoDrag)
+        else:
+            self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+
+    def mousePressEvent(self, event):
+        if self._photo.isUnderMouse():
+            self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
+        super(PhotoViewer, self).mousePressEvent(event)
+
 class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
-    def __init__(self, therm_tools, project):
+    def __init__(self, therm_tools, iface):
         """Constructor."""
         super(ThermViewerDockWidget, self).__init__()
         self.setupUi(self)
         self.canvas_logger = therm_tools.canvas_logger
         self.logger = therm_tools.logger
         self.therm_tools = therm_tools
-        self.project = project
+        self.project = therm_tools.project
         self.num_raw_images = 0
         self.editbutton.setText('📝')
         self.savebutton.setText('✅')
         self.editbutton.clicked.connect(self.startediting)
         self.savebutton.clicked.connect(self.savestringnumber)
-        self.generate_service_objects()
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
         self.images_dir = os.path.join(tempfile.gettempdir(), self.project.project_details["uid"])
         if not os.path.exists(self.images_dir):
             os.makedirs(self.images_dir)
-        self.photo_viewer = PhotoViewer()
+        self.photo_viewer = PhotoViewer(self)
+        self.photo_viewer.photoClicked.connect(self.photoClicked)
         self.image_layout.addWidget(self.photo_viewer)
         self.previous_img.clicked.connect(lambda: self.change_image_index(-1))
         self.nxt_img.clicked.connect(lambda: self.change_image_index(1))
@@ -113,16 +131,53 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.signal_connected = False
         self.signal_slot = lambda x: self.show_raw_images(x)
         self.connect_signal()
+        
         if self.project.vlayer.fields().indexFromName('string_number') == -1:
                 fieldz = QgsField('string_number', QVariant.String)
                 self.project.vlayer.dataProvider().addAttributes([fieldz])
                 self.project.vlayer.updateFields()
 
+        self.change_marker_location.clicked.connect(self.pixInfo)
+        self.remove_cimage.clicked.connect(self.remove_current_image)
+
+    def remove_current_image(self):
+        message_box = QtWidgets.QMessageBox()
+        message_box.setIcon(QtWidgets.QMessageBox.Warning)
+        message_box.setWindowTitle('Sensehawk Plugin')
+        message_box.setText('Are you sure! removing current image')
+        message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        ret = message_box.exec_()
+        if ret == QtWidgets.QMessageBox.Ok:
+            print('confirmed')
+        else:
+            pass
+
+    def photoClicked(self, pos=None):
+        if self.photo_viewer.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
+            self.change_marker_location.setChecked(False)
+            self.photo_viewer.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
+            if isinstance(pos, QPoint):
+                self.show_image(self.image_paths[self.image_index],[pos.x(), pos.y()])
+                self.marker_location[self.image_index] = [pos.x(), pos.y()]
+                self.project.listType_dataFields[self.sfeature['parent_uid']]['raw_images'][self.image_index]['location'] = [pos.x(), pos.y()]
+                self.uid_map[self.uid][self.image_index]['location'] = [pos.x(), pos.y()]
+                # print(self.project.listType_dataFields[self.sfeature['parent_uid']])
+                print(self.uid_map[self.uid])
+                print(self.sfeature['parent_uid'])
+                print(pos.x(),pos.y())
+
+    def reload_required_data(self):
+        self.generate_service_objects()
+        self.trigger_custom_label(self.project.vlayer)
+
+    def pixInfo(self):
+        self.change_marker_location.setChecked(True)
+        self.photo_viewer.toggleDragMode(True)
+
     def connect_signal(self):
         if not self.signal_connected:
             self.project.vlayer.selectionChanged.connect(self.signal_slot)
-            self.trigger_custom_label(self.project.vlayer)
-        self.signal_connected = True
+            self.signal_connected = True
 
     def disconnect_signal(self):
         # See if vector layer exists
@@ -148,13 +203,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.therm_tools.uncheck_all_buttons()
 
     def generate_num_tagged_rawimages(self):
-        # Get num tagged raw images that already exists in the geojson
-        # features = json.load(open(self.project.geojson_path))["features"]
-        self.num_tagged_rawimages = {}
-        for feature in self.loaded_json["features"]:
-            raw_images = feature["properties"].get("raw_images", [])
-            if type(raw_images) in [str, type(None)]: raw_images = []
-            self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(raw_images)
         # Loop through layer features and add num_tagged_rawimages as a field for labeler
         features = self.project.vlayer.getFeatures()
         for feature in features:
@@ -176,6 +224,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
 
         self.uid_map = {}
         self.service_objects = []
+        self.num_tagged_rawimages = {}
         self.image_urls_loaded = False
         self.loaded_json = json.load(open(self.project.geojson_path))
         for f in self.loaded_json["features"]:
@@ -184,6 +233,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             if not raw_images and not uid:
                 continue
             self.uid_map[uid] = raw_images
+            self.num_tagged_rawimages[uid] = len(raw_images)
             try:
                 self.service_objects +=  [r["service"] for r in raw_images if r]
             except TypeError:
@@ -246,6 +296,8 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         if not self.project.vlayer.fields().indexFromName('temperature_difference') == -1 and self.sfeature['temperature_difference']:  self.delta_temp.setText("{:.2f}".format(float(self.sfeature['temperature_difference'])))
         else: self.delta_temp.setText('N/A')
 
+        
+
         raw_images = self.uid_map.get(self.uid, [])
         self.num_raw_images = len(raw_images)
         print(f"Number of raw images: {len(raw_images)}")
@@ -258,6 +310,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             self.previous_img.setEnabled(False)
             self.nxt_img.setEnabled(False)
             return None
+        
         # Disconnecting signal to avoid rerunning this method while another is in process
         self.disconnect_signal()
         self.image_paths = []
@@ -300,6 +353,9 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         else:
             x = 0
             y = 0
+        self.marker_location_widget.setText(f'{x},{y}')
+        filename = os.path.basename(image_path)
+        self.raw_image_widget.setText(filename)
         image = cv2.imread(image_path)
         height, width, _ = image.shape
         bytesPerLine = 3 * width

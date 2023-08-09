@@ -52,7 +52,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.canvas =self.iface.mapCanvas()
         
         self.project_details_button.clicked.connect(self.get_project_details)
-        self.runButton.clicked.connect(self.image_tagging)
+        self.tag_button.clicked.connect(self.image_tagging)
         self.imagetaggingType.currentTextChanged.connect(self.current_type)
         self.MagmaConversion.setChecked(True)
 
@@ -127,10 +127,10 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         headers = {'Authorization': f'Token {self.core_token}'}
         imagetag = requests.post(url, json=json, headers=headers)
         if imagetag.status_code == 200:
-            self.runButton.setEnabled(True)
+            self.tag_button.setChecked(False)
             self.canvas_logger('Queued Successfully.',level=Qgis.Success)
         else:
-            self.runButton.setEnabled(True)
+            self.tag_button.setChecked(False)
             self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
 
 
@@ -174,7 +174,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         print("combobox changed", value)
 
     def image_tagging(self): 
-        self.runButton.setEnabled(False)
+        self.tag_button.setChecked(True)
         if self.MagmaConversion.isChecked():magma_image = True
         else : magma_image = False
         if self.IssueCropImage.isChecked():crop_image = True

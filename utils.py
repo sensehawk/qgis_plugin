@@ -172,6 +172,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
         while loop:
             feature = geojson['features'][count]
             if feature['properties']['class_name'] == 'table':
+                #Assigning one of the table temp_difference with decimal value so that qgis ready this type field as decimal tyep
                 feature['properties']['temperature_difference'] = 0.67
                 loop = False
             else:
@@ -442,23 +443,23 @@ def save_edits(task, save_inputs):
     cleaned_json = {"type":"FeatureCollection","features":[]}
     for feature in features:
         uid = feature['properties'].get('uid', None)
-        center = feature['properties'].get('center', None)
         raw_image = feature['properties'].get('raw_images', None)
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
         if feature['properties']['class_name'] != 'table' :
-            if parentUid in listType_dataFields and uid != parentUid:
-                Parent_rawimages = listType_dataFields[parentUid].get('raw_images',[])
-                Parent_center = listType_dataFields[parentUid].get('center', [])
-
-                if type(center) == list:pass
-                else:feature['properties']['center'] = Parent_center
+            Parent_rawimages = listType_dataFields[parentUid].get('raw_images',[])
+            if parentUid in listType_dataFields and uid == parentUid:
+                if feature['properties']['raw_images'] == Parent_rawimages:
+                    pass
+                else:
+                    feature['properties']['raw_images'] = Parent_rawimages
+                    feature['properties']['attachments'] = Parent_rawimages
+            elif parentUid in listType_dataFields and uid != parentUid:
                 if type(raw_image) == list:pass
                 else:
                     feature['properties']['raw_images'] = Parent_rawimages
                     feature['properties']['attachments'] = Parent_rawimages
             else:
-                if type(center) == str or not center:feature['properties']['center'] = []
                 if type(raw_image) == str or not raw_image:feature['properties']['raw_images'] = []
                 if type(attachment) == str or not attachment:feature['properties']['attachments'] = []
 
