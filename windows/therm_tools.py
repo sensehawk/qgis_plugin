@@ -24,6 +24,7 @@
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtWidgets, uic
+from PyQt5.QtCore import QVariant 
 import qgis
 from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
 
@@ -35,6 +36,7 @@ from ..windows.ImageTagging import ThermImageTaggingWidget
 from ..windows.thermliteQc import ThermliteQcWindow
 from ..windows.therm_viewer import ThermViewerDockWidget
 from ..tasks import clipRequest
+from ..utils import create_custom_label, fields_validator
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QKeySequence
 
@@ -68,7 +70,19 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.thermlite_tagging_widget = None
         self.therm_viewer_widget = None
         self.project.docktool_widget.visibilityChanged.connect(lambda x :self.uncheck_buttons(x))
+        self.field_names = [field.name() for field in self.project.vlayer.fields()]
+        self.custom_label.addItems(self.field_names)
+        self.custom_label.setEditable(True)
+        self.custom_label.lineEdit().setAlignment(Qt.AlignCenter) 
+        self.custom_label.lineEdit().setReadOnly(True)
+        self.custom_label.view().setRowHidden(0, True)
+        self.custom_label.currentIndexChanged.connect(lambda x :self.enable_custom_label(x))
     
+    def enable_custom_label(self, index):
+        field_name = self.custom_label.currentText()
+        create_custom_label(self.project.vlayer, field_name)
+
+
     def uncheck_buttons(self, visibility):
         if visibility :
             pass
@@ -139,8 +153,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.active_docktool_widget = self.thermlite_tagging_widget
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
-        self.thermlite_tagging_widget.trigger_custom_label(self.project.vlayer)
-        
+        self.enable_docktool_custom_labels()
     
     def therm_viewer(self):
         self.project.active_tool_widget.hide()
@@ -153,10 +166,10 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.viewer_button.setChecked(True)
         # Setup selection changed signal
         self.project.active_docktool_widget = self.therm_viewer_widget
-        self.therm_viewer_widget.connect_signal()
-        self.therm_viewer_widget.reload_required_data()
+        self.enable_docktool_custom_labels()
         self.project.docktool_widget.visibilityChanged.connect(lambda x: self.therm_viewer_widget.toggle_signal_connection(x))
-        self.therm_viewer_widget.trigger_custom_label(self.project.vlayer)
+        # self.therm_viewer_widget.connect_signal()
+        # self.therm_viewer_widget.reload_required_data()
 
     def string_numbering(self):
         self.project.active_tool_widget.hide()
@@ -169,7 +182,8 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.StringNumberButton.setChecked(True)
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
-        self.project.vlayer.setLabelsEnabled(False)
+        # self.project.vlayer.setLabelsEnabled(False)
+        self.enable_docktool_custom_labels()
     
     def ImageTagging(self):
         self.project.active_tool_widget.hide()
@@ -183,6 +197,41 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
         self.project.vlayer.setLabelsEnabled(False)
+    
+    def enable_docktool_custom_labels(self):
+        tool_field_map = {'StringNumber':'string_number','ManualTagging':'num_images_tagged','ThermViewer':'num_images_tagged'}
+        for button in self.findChildren(QtWidgets.QPushButton):
+            if button.isCheckable():
+                if button.isChecked():
+                    current_tool =  button.text()
+                    field_name = tool_field_map.get(current_tool, 'id')
+                    if current_tool == 'ThermViewer':
+                        self.therm_viewer_widget.connect_signal()
+                        self.therm_viewer_widget.reload_required_data()
+                    index_field = self.field_names.index(field_name)
+                    if field_name == "num_images_tagged":
+                        self.generate_num_tagged_rawimages()
+                    self.custom_label.setCurrentIndex(index_field)
+                    self.custom_label.setCurrentIndex(index_field+1)
+
+    def generate_num_tagged_rawimages(self):
+        # validate if fields exists if not create one
+        required_fields = {'num_images_tagged':QVariant.Double, 
+                                'timestamp':QVariant.String}
+        fields_validator(required_fields, self.project.vlayer)
+        # Get num tagged raw images that already exists in the geojson
+        features = json.load(open(self.project.geojson_path))["features"]
+        self.num_tagged_rawimages = {}
+        for feature in features:
+            raw_images = feature["properties"].get("raw_images", [])
+            if type(raw_images) in [str, type(None)]: raw_images = []
+            self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(raw_images)
+        # Loop through layer features and add num_tagged_rawimages as a field for labeler
+        features = self.project.vlayer.getFeatures()
+        for feature in features:
+            uid = feature["uid"]
+            feature["num_images_tagged"] = self.num_tagged_rawimages.get(uid, 0)
+            self.project.vlayer.updateFeature(feature)
 
     def uncheck_all_buttons(self):
         for button in self.findChildren(QtWidgets.QPushButton):

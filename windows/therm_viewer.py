@@ -148,9 +148,24 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         ret = message_box.exec_()
         if ret == QtWidgets.QMessageBox.Ok:
-            print('confirmed')
+            self.delete_image()
         else:
             pass
+    
+    def delete_image(self):
+        self.project.listType_dataFields[self.sfeature['parent_uid']]['raw_images'].pop(self.image_index)
+        self.uid_map[self.uid].pop(self.image_index)
+        self.num_raw_images -= 1
+        self.image_paths.pop(self.image_index)
+        self.marker_location.pop(self.image_index)
+        self.sfeature['num_images_tagged'] = self.num_raw_images
+        self.project.vlayer.updateFeature(self.sfeature)
+        if self.num_raw_images != 0:
+            self.change_image_index(-1)
+        else:
+            self.blank_image()
+        # print(self.uid_map[self.uid])
+        # print(self.project.listType_dataFields[self.sfeature['parent_uid']])
 
     def photoClicked(self, pos=None):
         if self.photo_viewer.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
@@ -162,13 +177,9 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
                 self.project.listType_dataFields[self.sfeature['parent_uid']]['raw_images'][self.image_index]['location'] = [pos.x(), pos.y()]
                 self.uid_map[self.uid][self.image_index]['location'] = [pos.x(), pos.y()]
                 # print(self.project.listType_dataFields[self.sfeature['parent_uid']])
-                print(self.uid_map[self.uid])
-                print(self.sfeature['parent_uid'])
-                print(pos.x(),pos.y())
-
+          
     def reload_required_data(self):
         self.generate_service_objects()
-        self.trigger_custom_label(self.project.vlayer)
 
     def pixInfo(self):
         self.change_marker_location.setChecked(True)
@@ -201,20 +212,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
     def hide_widget(self):
         self.project.docktool_widget.hide()
         self.therm_tools.uncheck_all_buttons()
-
-    def generate_num_tagged_rawimages(self):
-        # Loop through layer features and add num_tagged_rawimages as a field for labeler
-        features = self.project.vlayer.getFeatures()
-        for feature in features:
-            uid = feature["uid"]
-            feature["num_images_tagged"] = self.num_tagged_rawimages.get(uid, 0)
-            self.project.vlayer.updateFeature(feature)
-            
-    def trigger_custom_label(self, vlayer):
-        #creating custom label for num_images_tagged field
-        create_custom_label(vlayer)
-        #update num_images_tagged field with pre tagged num of images
-        self.generate_num_tagged_rawimages()
 
     def generate_service_objects(self):
         self.canvas_logger('Getting image urls')
@@ -299,16 +296,13 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         
 
         raw_images = self.uid_map.get(self.uid, [])
+        print(raw_images)
         self.num_raw_images = len(raw_images)
         print(f"Number of raw images: {len(raw_images)}")
         if not raw_images:
             self.canvas_logger("No raw images for this feature")
             # Set photo black image
-            black_pixmap = QtGui.QPixmap(640, 512)
-            black_pixmap.fill(Qt.black)
-            self.photo_viewer.setPhoto(black_pixmap)
-            self.previous_img.setEnabled(False)
-            self.nxt_img.setEnabled(False)
+            self.blank_image()
             return None
         
         # Disconnecting signal to avoid rerunning this method while another is in process
@@ -320,6 +314,14 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         download_img = QgsTask.fromFunction("Get image urls", download_images, download_inputs )
         QgsApplication.taskManager().addTask(download_img)
         download_img.statusChanged.connect(lambda download_img_status: self.download_img_callback(download_img_status, download_img))
+
+    def blank_image(self):
+        black_pixmap = QtGui.QPixmap(640, 512)
+        black_pixmap.fill(Qt.black)
+        self.photo_viewer.setPhoto(black_pixmap)
+        self.previous_img.setEnabled(False)
+        self.nxt_img.setEnabled(False)
+        
 
     def download_img_callback(self, download_img_status, download_img):
         if download_img_status != 3:
@@ -342,7 +344,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         if x and y: 
             x = math.trunc(x)
             y = math.trunc(y)  
-            image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
+            image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 4, 2)
 
         return image    
     

@@ -120,6 +120,9 @@ class Project:
         self.initialize_parentUid()
         self.collect_list_Type_dataFields()
         self.vlayer.startEditing()
+        #if any Tooldockwidget is already opened enable the respective label
+        self.tools_widget.therm_viewer_widget.signal_connected = False
+        self.tools_widget.enable_docktool_custom_labels()
 
     # Since Qgis won't support list type fields data in copy-pasted issues, 
     # collecting list type data with Parentuid as key and list type data as value 

@@ -22,7 +22,7 @@
 #  ***************************************************************************/
 # """
 
-from qgis.PyQt.QtCore import Qt, QCoreApplication
+from qgis.PyQt.QtCore import Qt, QVariant
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis
 from time import time
@@ -45,8 +45,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         self.iface = iface
         self.canvas =self.iface.mapCanvas()
         self.approve.clicked.connect(self.string_numbering)
- 
-
+    
 
     def stringNumber_configuration(self):
         canvas  = self.canvas
@@ -57,7 +56,6 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         else:Angle = -abs(rotation)
 
         return self.Width.value(), self.Height.value(),Angle,self.Prefix.text(),self.Suffix.text()
-
 
     def string_numbering(self):
         startTime = time()

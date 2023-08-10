@@ -381,10 +381,11 @@ def download_images(task, inputs):
     return {'task':task.description(),
             'status':'Downloaded'}
 
-def create_custom_label(vlayer):
+def create_custom_label(vlayer, field_name):
     num_images_label = QgsPalLayerSettings()
-    num_images_label.fieldName = 'num_images_tagged'
+    num_images_label.fieldName = field_name
     num_images_label.enabled = True
+    num_images_label.centroidInside = True
 
     buffer = QgsTextBufferSettings()
     buffer.setColor(QColor('white'))
@@ -397,12 +398,13 @@ def create_custom_label(vlayer):
     textformat.setBuffer(buffer)
 
     num_images_label.setFormat(textformat)
-    num_images_label.placement = QgsPalLayerSettings.Line
+    # num_images_label.placement = QgsPalLayerSettings.Line
 
     labeler = QgsVectorLayerSimpleLabeling(num_images_label)
     labeler.requiresAdvancedEffects()
     vlayer.setLabelsEnabled(True)
     vlayer.setLabeling(labeler)
+    # vlayer.setCustomProperty(field_name, QgsPalLayerSettings.CentroidWhole)
     vlayer.triggerRepaint()
 
 

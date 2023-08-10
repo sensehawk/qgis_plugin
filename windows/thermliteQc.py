@@ -174,7 +174,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.DJI_SDK_PATH = os.path.realpath(os.path.join(os.path.dirname(__file__), "dji_thermal_sdk"))
         self.geojson = json.load(open(self.geojson_path))
         self.project.project_tabs_widget.currentChanged.connect(self.hide_widget)
-
+        self.required_fields = {'num_images_tagged':QVariant.Double, 
+                                'timestamp':QVariant.String}
         #save tagged data
         self.save_tagged_data.clicked.connect(self.parse_tagged_data)
     
@@ -255,34 +256,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         raw_images = [image.split("\\")[-1] for image in self.sorted_images]
         self.image_selector = combobox_modifier(self.current_loaded_img, raw_images)
         self.image_selector.currentIndexChanged.connect(self.change_image)
-        self.trigger_custom_label(self.project.vlayer)
+        # self.trigger_custom_label(self.project.vlayer)
         self.load_image(0)
     
-    def generate_num_tagged_rawimages(self):
-        # Get num tagged raw images that already exists in the geojson
-        features = json.load(open(self.project.geojson_path))["features"]
-        self.num_tagged_rawimages = {}
-        for feature in features:
-            raw_images = feature["properties"].get("raw_images", [])
-            if type(raw_images) in [str, type(None)]: raw_images = []
-            self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(raw_images)
-        # Loop through layer features and add num_tagged_rawimages as a field for labeler
-        features = self.project.vlayer.getFeatures()
-        for feature in features:
-            uid = feature["uid"]
-            feature["num_images_tagged"] = self.num_tagged_rawimages.get(uid, 0)
-            self.project.vlayer.updateFeature(feature)
-            
-    def trigger_custom_label(self, vlayer):
-        self.required_fields = {'num_images_tagged':QVariant.Double, 
-                                'timestamp':QVariant.String,}
-        fields_validator(self.required_fields, self.project.vlayer)
-        #creating custom label for num_images_tagged field
-        create_custom_label(vlayer)
-        #update num_images_tagged field with pre tagged num of images
-        self.generate_num_tagged_rawimages()
     
-
     def folderpath(self):
         self.images_dir = os.path.realpath(QtWidgets.QFileDialog.getExistingDirectory(self, 'Select the images folder'))
         self.logger(f"Images dir selected: {self.images_dir}")
@@ -376,9 +353,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             *_, sfeature = self.project.vlayer.getFeatures()
         self.project.vlayer.removeSelection()
 
-        if not self.delta_temp.text():
-            self.canvas_logger("Invalid image for temperature", level=Qgis.Warning)
-            return None
+        if self.temperature_toggle.isChecked():
+            if not self.delta_temp.text():
+                self.canvas_logger("Invalid image for temperature", level=Qgis.Warning)
+                return None
 
         # Get selected feature details
         uid = sfeature['uid']
@@ -401,14 +379,14 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 fields_validator(self.required_fields, self.project.vlayer)
                 num_images_tagged = sfeature['num_images_tagged']
             # Make num_images_tagged to zero if issue is copy pasted or freshly created   
-            if not sfeature_image_tagged_info and not self.num_tagged_rawimages.get(uid, None):
+            if not sfeature_image_tagged_info and not self.therm_tools.num_tagged_rawimages.get(uid, None):
                 sfeature['num_images_tagged'] = 0
-            if not sfeature['num_images_tagged']:
+            if not num_images_tagged:
                 sfeature['num_images_tagged'] = 1
-                self.num_tagged_rawimages[uid] = 1
+                self.therm_tools.num_tagged_rawimages[uid] = 1
             else:
                 sfeature['num_images_tagged'] = int(sfeature['num_images_tagged']) + 1
-                self.num_tagged_rawimages[uid] = int(sfeature['num_images_tagged']) + 1
+                self.therm_tools.num_tagged_rawimages[uid] = int(sfeature['num_images_tagged']) + 1
             
         # If the same marker location and the same image exists, don't add it again
         if sfeature_image_tagged_info.get(image_path, [0, 0]) != self.markerlocation:        
@@ -486,8 +464,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.project.initialize_vlayer()
         #Upload tagged images to S3 Bucket
         self.initiate_upload_process()
-        fields_validator(self.required_fields, self.project.vlayer)
-        self.trigger_custom_label(self.project.vlayer)
         
 
     def upload_callback(self, upload_task_status, upload_task):
