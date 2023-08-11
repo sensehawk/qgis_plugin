@@ -121,7 +121,11 @@ class Project:
         self.collect_list_Type_dataFields()
         self.vlayer.startEditing()
         #if any Tooldockwidget is already opened enable the respective label
-        self.tools_widget.therm_viewer_widget.signal_connected = False
+        self.tools_widget.custom_label.setCurrentIndex(0)
+        try:
+            self.tools_widget.therm_viewer_widget.signal_connected = False
+        except AttributeError :
+            pass
         self.tools_widget.enable_docktool_custom_labels()
 
     # Since Qgis won't support list type fields data in copy-pasted issues, 
@@ -139,12 +143,10 @@ class Project:
                     rawimage_value['raw_images'] = raw_images
                     self.listType_dataFields[parentUid] = rawimage_value
         
-
     def initialize_parentUid(self):
         self.vlayer.startEditing()
         for feature in self.vlayer.getFeatures():
             feature['parent_uid'] = feature['uid']
-            feature['num_images_tagged'] = 0
             self.vlayer.updateFeature(feature)
         self.vlayer.commitChanges()
 

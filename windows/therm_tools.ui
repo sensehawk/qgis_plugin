@@ -149,7 +149,7 @@
      </property>
      <item>
       <property name="text">
-       <string>***Label***</string>
+       <string>Label</string>
       </property>
      </item>
     </widget>

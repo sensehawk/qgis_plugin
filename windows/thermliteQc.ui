@@ -293,7 +293,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>240</x>
@@ -338,7 +338,7 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>6</x>
@@ -348,6 +348,9 @@
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetFixedSize</enum>
+    </property>
     <item>
      <widget class="QLabel" name="marker_txt">
       <property name="minimumSize">
@@ -406,7 +409,7 @@
     <rect>
      <x>6</x>
      <y>654</y>
-     <width>205</width>
+     <width>192</width>
      <height>30</height>
     </rect>
    </property>

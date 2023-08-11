@@ -147,9 +147,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         #select folder path
         self.folder_path.clicked.connect(self.folderpath)
         # # Navigation buttons
-        # self.nxt_img.setShortcut('left')
         self.nxt_img.clicked.connect(self.load_nxtimg)
-        # self.previous_img.setShortcut('right')
         self.previous_img.clicked.connect(self.load_previous)
         # Initially keep the buttons disabled
         for b in [self.nxt_img, self.previous_img]:
@@ -178,7 +176,12 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                                 'timestamp':QVariant.String}
         #save tagged data
         self.save_tagged_data.clicked.connect(self.parse_tagged_data)
-    
+        self.nearest_image_button.clicked.connect(self.show_nearest_image)
+
+    def show_nearest_image(self):
+        print('Nearest image')
+
+        
     def pixInfo(self, switch):
         self.viewer.toggleDragMode(switch)
         

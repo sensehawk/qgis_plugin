@@ -76,10 +76,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.custom_label.lineEdit().setAlignment(Qt.AlignCenter) 
         self.custom_label.lineEdit().setReadOnly(True)
         self.custom_label.view().setRowHidden(0, True)
-        self.custom_label.currentIndexChanged.connect(lambda x :self.enable_custom_label(x))
+        self.custom_label.currentTextChanged.connect(lambda x :self.enable_custom_label(x))
     
-    def enable_custom_label(self, index):
-        field_name = self.custom_label.currentText()
+    def enable_custom_label(self, field_name):
         create_custom_label(self.project.vlayer, field_name)
 
 
@@ -154,6 +153,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
         self.enable_docktool_custom_labels()
+        self.generate_num_tagged_rawimages()
     
     def therm_viewer(self):
         self.project.active_tool_widget.hide()
@@ -209,10 +209,12 @@ class ThermToolsWidget(QtWidgets.QWidget):
                         self.therm_viewer_widget.connect_signal()
                         self.therm_viewer_widget.reload_required_data()
                     index_field = self.field_names.index(field_name)
-                    if field_name == "num_images_tagged":
+                    if field_name == "num_images_tagged" and current_tool != "ManualTagging":
                         self.generate_num_tagged_rawimages()
-                    self.custom_label.setCurrentIndex(index_field)
-                    self.custom_label.setCurrentIndex(index_field+1)
+                    # self.custom_label.setCurrentIndex(index_field)
+                    # self.custom_label.setCurrentText(field_name)
+                    self.custom_label.setCurrentText(field_name)
+
 
     def generate_num_tagged_rawimages(self):
         # validate if fields exists if not create one
@@ -232,6 +234,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
             uid = feature["uid"]
             feature["num_images_tagged"] = self.num_tagged_rawimages.get(uid, 0)
             self.project.vlayer.updateFeature(feature)
+        self.project.vlayer.commitChanges()
+        self.project.vlayer.startEditing()
+
 
     def uncheck_all_buttons(self):
         for button in self.findChildren(QtWidgets.QPushButton):
