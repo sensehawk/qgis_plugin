@@ -45,9 +45,13 @@ def sort_images(task, images_dir, logger, reverse=False):
         images = [i for i in images if i.endswith(supported_image_formats)]
         with ExifToolHelper() as e:
             time_stamps = []
+            long_lat = []
             for i in images:
                 m = e.get_metadata(i)[0]
                 m = {k.split(":")[-1]: m[k] for k in m}
+                long = m['GPSLongitude']
+                lat = m['GPSLatitude']
+                long_lat.append((long, lat))
                 t = m["DateTimeOriginal"]
                 try:
                     t = datetime.strptime(t, "%Y:%m:%d  %H:%M:%S")
@@ -57,15 +61,17 @@ def sort_images(task, images_dir, logger, reverse=False):
                     except Exception:
                         t = datetime.strptime(t, "%H:%M:%S")
                 time_stamps.append(t)
-        sorted_tuples = sorted(zip(time_stamps, images), reverse=reverse)
+        sorted_tuples = sorted(zip(time_stamps, images, long_lat), reverse=reverse)
         images = [i[1] for i in sorted_tuples]
         timestamps = [i[0] for i in sorted_tuples]
+        long_lats = [i[2] for i in sorted_tuples]
     except Exception as e:
         dt = traceback.format_exc()
         logger(f'Error:{e}')
 
     return {'sorted_images':images,
             'sorted_timestamps':timestamps,
+            'sorted_long_lat':np.array(long_lats),
             'task': task.description()}
 
 

@@ -179,9 +179,17 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.nearest_image_button.clicked.connect(self.show_nearest_image)
 
     def show_nearest_image(self):
-        print('Nearest image')
+        if self.project.vlayer.selectedFeatures():
+            sfeature = self.project.vlayer.selectedFeatures()[-1]
+        else:
+            self.canvas_logger('No feature is selected...')
+            return None
+        sfeature_x, sfeature_y = sfeature.geometry().centroid().asPoint().x(), sfeature.geometry().centroid().asPoint().y()
+        distance = np.linalg.norm(self.long_lat-[sfeature_x, sfeature_y], axis=1)
+        min_index = np.argsort(distance)[:5]
+        self.image_selector.setCurrentIndex(min_index[0])
 
-        
+
     def pixInfo(self, switch):
         self.viewer.toggleDragMode(switch)
         
@@ -249,7 +257,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         if sort_task_status != 3:
             return None
         result = image_sort_task.returned_values
-        self.sorted_images, self.sorted_timestamps = result['sorted_images'], result['sorted_timestamps']
+        self.sorted_images, self.sorted_timestamps, self.long_lat = result['sorted_images'], result['sorted_timestamps'], result['sorted_long_lat']
         if not self.sorted_images:
             self.canvas_logger("No valid images in selected folder", level=Qgis.Warning)
             return None
@@ -276,6 +284,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def change_image(self):
         print(f"Current image index: {self.image_selector.currentIndex()}")
         print(f"Changed image index: {self.sorted_images[self.image_index]}")
+        print(f"Current image coords: {self.long_lat[self.image_index]}")
         self.image_index = self.image_selector.currentIndex()
         self.load_image(self.image_index)
         self.marker_info.setText('')

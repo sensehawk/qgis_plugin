@@ -137,7 +137,6 @@ class Project:
             if feature['properties']['class_name'] != 'table':
                 raw_images = feature['properties'].get('raw_images', None)
                 parentUid = feature['properties'].get('parent_uid', None)
-                print(type(raw_images))
                 if type(raw_images) == list :
                     rawimage_value = self.listType_dataFields.get(parentUid, {})
                     rawimage_value['raw_images'] = raw_images
@@ -231,7 +230,6 @@ class Project:
         feature['projectUid'] = self.project_details["uid"]
         feature['groupUid'] = self.project_details["group"]["uid"]
         self.vlayer.updateFeature(feature)
-        print(self.listType_dataFields)
 
     # synch  feature count in project table
     def load_feature_count(self, feature_id=None):
@@ -556,33 +554,36 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
 
         def save_task(task, save_task_input):
-            geojson_path, core_token, project_uid, project_type = save_task_input
-         
-            with open(geojson_path, 'r') as fi:
-                geojson = json.load(fi)
-            cleaned_json = {"type":"FeatureCollection","features":[]}
+            geojson_path, core_token, project_uid, project_type, logger = save_task_input
+            try:
+                with open(geojson_path, 'r') as fi:
+                    geojson = json.load(fi)
+                cleaned_json = {"type":"FeatureCollection","features":[]}
 
-            features = []
-            duplicate_geometries = []
-            for feature in geojson['features']:
-                if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries:
-                    feature['properties'].pop('parent_uid', None)
-                    feature['properties'].pop('num_images_tagged', None)
-                    feature['properties'].pop('table_row', None)
-                    feature['properties'].pop('table_column', None)
-                    feature['properties'].pop('idx', None)
-                    center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
-                    centroid_x , centroid_y = center
-                    feature['properties']['center'] = [[centroid_x,centroid_y]]
-                    duplicate_geometries.append(feature['geometry'])
-                    features.append(feature)
-                
-            cleaned_json['features'] = features
-            #Upload vectors
-            print("Uploading")
+                features = []
+                duplicate_geometries = []
+                for feature in geojson['features']:
+                    if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries:
+                        feature['properties'].pop('parent_uid', None)
+                        feature['properties'].pop('num_images_tagged', None)
+                        feature['properties'].pop('table_row', None)
+                        feature['properties'].pop('table_column', None)
+                        feature['properties'].pop('idx', None)
+                        center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
+                        centroid_x , centroid_y = center
+                        feature['properties']['center'] = [[centroid_x,centroid_y]]
+                        duplicate_geometries.append(feature['geometry'])
+                        features.append(feature)
+                    
+                cleaned_json['features'] = features
+                #Upload vectors
+                print("Uploading")
+            
 
-            saved = save_project_geojson(cleaned_json, project_uid, core_token,
-                                         project_type=project_type)
+                saved = save_project_geojson(cleaned_json, project_uid, core_token,
+                                            project_type=project_type)
+            except Exception as e:
+                logger(e)
             
             return {'status': str(saved), 'task': task.description()}
         
@@ -596,7 +597,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                                   save_task_input=[self.active_project.geojson_path,
                                                    self.load_window.core_token,
                                                    self.active_project.project_details["uid"],
-                                                   self.active_project.project_details["project_type"]])
+                                                   self.active_project.project_details["project_type"],
+                                                   self.logger])
         QgsApplication.taskManager().addTask(st)
         st.statusChanged.connect(lambda: callback(st, self.logger))
 
