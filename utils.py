@@ -446,7 +446,7 @@ def download_ortho(file_size, number_of_threads, file_name, ortho_url):
 def save_edits(task, save_inputs):
     json_path = save_inputs['json_path']
     listType_dataFields = save_inputs['listType_dataFields']
-
+    logger = save_inputs['logger']
     features = json.load(open(json_path))['features']
     cleaned_json = {"type":"FeatureCollection","features":[]}
     for feature in features:
@@ -455,25 +455,35 @@ def save_edits(task, save_inputs):
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
         if feature['properties']['class_name'] != 'table' :
-            Parent_rawimages = listType_dataFields[parentUid].get('raw_images',[])
-            if parentUid in listType_dataFields and uid == parentUid:
-                if feature['properties']['raw_images'] == Parent_rawimages:
-                    pass
-                else:
-                    feature['properties']['raw_images'] = Parent_rawimages
-                    feature['properties']['attachments'] = Parent_rawimages
-            elif parentUid in listType_dataFields and uid != parentUid:
-                if type(raw_image) == list:pass
-                else:
-                    feature['properties']['raw_images'] = Parent_rawimages
-                    feature['properties']['attachments'] = Parent_rawimages
+            if parentUid:
+                Parent_rawimages = listType_dataFields[parentUid].get('raw_images',[])
             else:
-                if type(raw_image) == str or not raw_image:feature['properties']['raw_images'] = []
-                if type(attachment) == str or not attachment:feature['properties']['attachments'] = []
+               Parent_rawimages = [] 
+            try:
+                if parentUid in listType_dataFields and uid == parentUid:
+                    if feature['properties']['raw_images'] == Parent_rawimages:
+                        print(uid, 'same uid')
+                        pass
+                    else:
+                        feature['properties']['raw_images'] = Parent_rawimages
+                        feature['properties']['attachments'] = Parent_rawimages
+                elif parentUid in listType_dataFields and uid != parentUid:
+                        feature['properties']['raw_images'] = Parent_rawimages
+                        feature['properties']['attachments'] = Parent_rawimages
+                else:
+                    if type(raw_image) == str or not raw_image:
+                        feature['properties']['raw_images'] = []
+                    if type(attachment) == str or not attachment:
+                        feature['properties']['attachments'] = []
+
+            except Exception as e :
+                logger(e)
 
         cleaned_json["features"].append(feature)
 
     with open(json_path, "w") as fi:
         json.dump(cleaned_json, fi)
+
+    
         
     return {'json_path':json_path, 'task':task.description()}

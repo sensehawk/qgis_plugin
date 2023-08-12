@@ -25,7 +25,7 @@ class Project:
 
         self.project_details = load_task_result['project_details']
         self.geojson_path = load_task_result['geojson_path']
-        self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.geojson_path, "ogr")
+        self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
 
@@ -89,16 +89,18 @@ class Project:
         self.qgis_project.removeMapLayers([self.vlayer.id()])
 
         save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
-                                                                                      'listType_dataFields':self.listType_dataFields})
+                                                                                      'listType_dataFields':self.listType_dataFields,
+                                                                                      'logger':self.logger})
         QgsApplication.taskManager().addTask(save_edits_task)
         save_edits_task.statusChanged.connect(lambda save_edits_status : self.save_edits_callback(save_edits_status, save_edits_task))
     
     def save_edits_callback(self, save_edits_status, save_edits_task):
         if save_edits_status != 3:
+            print("Task failed")
             return None
         result = save_edits_task.returned_values
         if result:
-            #Add and Initializing Vlayer features
+            # Add and Initializing Vlayer features
             self.initialize_vlayer()
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson Saved...', level=Qgis.Success)
             
@@ -141,7 +143,7 @@ class Project:
                     rawimage_value = self.listType_dataFields.get(parentUid, {})
                     rawimage_value['raw_images'] = raw_images
                     self.listType_dataFields[parentUid] = rawimage_value
-        
+
     def initialize_parentUid(self):
         self.vlayer.startEditing()
         for feature in self.vlayer.getFeatures():

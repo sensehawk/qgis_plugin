@@ -296,7 +296,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         
 
         raw_images = self.uid_map.get(self.uid, [])
-        print(raw_images)
         self.num_raw_images = len(raw_images)
         print(f"Number of raw images: {len(raw_images)}")
         if not raw_images:
