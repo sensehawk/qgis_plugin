@@ -101,6 +101,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
 
 
     def group_tree(self):
+        print(self.container_uid)
         self.group_uid = self.group_details[self.group.currentText()][0]
         self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
         

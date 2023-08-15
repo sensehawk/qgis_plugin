@@ -29,7 +29,8 @@ def loadTask(task, load_inputs):
             class_maps, class_groups = get_terra_classmaps(project_details, core_token)
             existing_files = None
         elif project_type == "therm":
-            class_maps, class_groups = get_therm_classmaps(core_token, org_uid, container_uid), None
+            class_maps, container_class_map = get_therm_classmaps(core_token, org_uid, container_uid)
+            class_groups = None
             org = project_details['organization']['uid']
             existing_files = file_existent(project_uid,org,core_token)
 
@@ -91,6 +92,7 @@ def loadTask(task, load_inputs):
             'project_details': project_details,
             'geojson_path': geojson_path,
             'existing_files':existing_files,
+            'container_class_map':container_class_map,
             'task': task.description()}
 
 

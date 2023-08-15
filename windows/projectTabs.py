@@ -51,6 +51,7 @@ class Project:
         self.rlayer_url = load_task_result['rlayer_url']
         self.rlayer = QgsRasterLayer(self.rlayer_url, self.project_details['name'] + "_ortho", "wms")
         self.class_maps = load_task_result['class_maps']
+        self.container_class_map = load_task_result['container_class_map']
         self.class_groups = load_task_result['class_groups']
         self.existing_files = load_task_result['existing_files']
         self.iface = iface
@@ -248,8 +249,12 @@ class Project:
         # Populate feature counts
         self.features_table.setRowCount(len(self.feature_counts))
         for i, (feature_type, feature_count) in enumerate(self.feature_counts):
-            feature_type_item = QtWidgets.QTableWidgetItem(str(feature_type))
-            feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
+            if self.container_class_map.get(feature_type, None): 
+                feature_type_item = QtWidgets.QTableWidgetItem(str(self.container_class_map[feature_type]))
+                feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
+            else: 
+                feature_type_item = QtWidgets.QTableWidgetItem(str(feature_type))
+                feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
             feature_count_item = QtWidgets.QTableWidgetItem(str(feature_count))
             self.features_table.setItem(i, 0, feature_type_item)
             self.features_table.setItem(i, 1, feature_count_item)

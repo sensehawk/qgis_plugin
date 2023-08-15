@@ -462,7 +462,6 @@ def save_edits(task, save_inputs):
             try:
                 if parentUid in listType_dataFields and uid == parentUid:
                     if feature['properties']['raw_images'] == Parent_rawimages:
-                        print(uid, 'same uid')
                         pass
                     else:
                         feature['properties']['raw_images'] = Parent_rawimages
