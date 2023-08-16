@@ -444,6 +444,7 @@ def download_ortho(file_size, number_of_threads, file_name, ortho_url):
                 f.write(chunk)
 
 def save_edits(task, save_inputs):
+    print('Started Saving json')
     json_path = save_inputs['json_path']
     listType_dataFields = save_inputs['listType_dataFields']
     logger = save_inputs['logger']
@@ -455,11 +456,14 @@ def save_edits(task, save_inputs):
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
         if feature['properties']['class_name'] != 'table' :
-            if parentUid:
-                Parent_rawimages = listType_dataFields[parentUid].get('raw_images',[])
-            else:
-               Parent_rawimages = [] 
             try:
+                if parentUid:
+                    parent_item = listType_dataFields.get(parentUid, None)
+                    if parent_item:
+                        Parent_rawimages = parent_item.get('raw_images', [])
+                else:
+                    Parent_rawimages = []
+
                 if parentUid in listType_dataFields and uid == parentUid:
                     if feature['properties']['raw_images'] == Parent_rawimages:
                         pass
@@ -472,17 +476,19 @@ def save_edits(task, save_inputs):
                 else:
                     if type(raw_image) == str or not raw_image:
                         feature['properties']['raw_images'] = []
-                    if type(attachment) == str or not attachment:
+                    elif type(attachment) == str or not attachment:
                         feature['properties']['attachments'] = []
 
             except Exception as e :
-                logger(e)
+                    print(e)
+                    tb = traceback.format_exc()
+                    logger(str(tb), level=Qgis.Warning)
+                    pass
 
         cleaned_json["features"].append(feature)
 
     with open(json_path, "w") as fi:
         json.dump(cleaned_json, fi)
 
-    
         
     return {'json_path':json_path, 'task':task.description()}

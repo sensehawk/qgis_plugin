@@ -87,6 +87,7 @@ class Project:
         #disconnect any single added to existing vlayer
         self.vlayer.selectionChanged.disconnect()
         # remove existing json 
+        print('Saving Json')
         self.qgis_project.removeMapLayers([self.vlayer.id()])
 
         save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
@@ -97,7 +98,6 @@ class Project:
     
     def save_edits_callback(self, save_edits_status, save_edits_task):
         if save_edits_status != 3:
-            print("Task failed")
             return None
         result = save_edits_task.returned_values
         if result:
@@ -108,7 +108,7 @@ class Project:
     # Initialize Vlayer 
     def initialize_vlayer(self):
         #loaded updated layer
-        updated_vlayer = QgsVectorLayer(self.geojson_path, self.geojson_path, "ogr")
+        updated_vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
         self.vlayer = updated_vlayer
         self.qgis_project.addMapLayer(updated_vlayer)
         categorize_layer(self)
@@ -123,7 +123,7 @@ class Project:
         self.initialize_parentUid()
         self.collect_list_Type_dataFields()
         self.vlayer.startEditing()
-        #if any Tooldockwidget is already opened enable the respective label
+        #if any Tool-Dockwidget is already opened enable the respective label
         self.tools_widget.custom_label.setCurrentIndex(0)
         try:
             self.tools_widget.therm_viewer_widget.signal_connected = False
@@ -189,8 +189,10 @@ class Project:
             self.vlayer.commitChanges()
             with open(geojson_path, 'r') as g:
                 imported_geojson = json.load(g)['features']
+            
             with open(self.geojson_path , 'r') as g:
                 existing_geojson = json.load(g)
+
             existing_geojson['features'] += imported_geojson
             #disconnect any single added to existing vlayer
             self.vlayer.selectionChanged.disconnect()
@@ -204,15 +206,22 @@ class Project:
             self.canvas_logger('Selected Geojson Imported...', level=Qgis.Success)
 
     def export_geojson(self, save_path):
+        self.vlayer.commitChanges()
+        self.vlayer.startEditing()
+        cleaned_json = {"type":"FeatureCollection","features":[]}
         if save_path:
-            self.save_and_parse_listType_dataFields()
             real_path = os.path.realpath(save_path)
             with open(self.geojson_path, 'r') as g:
-                current_layer = json.load(g)
-            with open(real_path, 'w') as f:
-                json.dump(current_layer, f)
+                features = json.load(g)['features']
+            cleaned_features = []
+            for feat in features:
+                feat['properties'].pop('parent_uid', None)
+                cleaned_features.append(feat)
+            cleaned_json['features'] = cleaned_features
+            with open(real_path, 'w') as f:         
+                json.dump(cleaned_json, f)
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson exported...', level=Qgis.Success)
-            del current_layer # to aviod ram overload
+            del cleaned_json # to aviod ram overload
 
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
@@ -561,6 +570,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
 
         def save_task(task, save_task_input):
+            print('Started Sanitizing')
             geojson_path, core_token, project_uid, project_type, logger = save_task_input
             try:
                 with open(geojson_path, 'r') as fi:
@@ -569,16 +579,20 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
                 features = []
                 duplicate_geometries = []
-                for feature in geojson['features']:
-                    if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries:
+                for feature in geojson['features']: # Vaild Polygon Geometry, remove duplicate geometry, Remove Null geometry
+                    if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
                         feature['properties'].pop('parent_uid', None)
                         feature['properties'].pop('num_images_tagged', None)
                         feature['properties'].pop('table_row', None)
                         feature['properties'].pop('table_column', None)
                         feature['properties'].pop('idx', None)
-                        center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
-                        centroid_x , centroid_y = center
-                        feature['properties']['center'] = [[centroid_x,centroid_y]]
+                        try:
+                            center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
+                            centroid_x , centroid_y = center
+                            feature['properties']['center'] = [[centroid_x,centroid_y]]
+                        except Exception as e:
+                            feature['properties']['center'] = []
+                            pass
                         duplicate_geometries.append(feature['geometry'])
                         features.append(feature)
                     

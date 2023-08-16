@@ -22,8 +22,13 @@ class ShortcutSettings(QtWidgets.QWidget):
 
         i = 0
         for k, v in self.project.feature_shortcuts.items():
-            feature_type_item = QtWidgets.QTableWidgetItem(v)
-            feature_type_item.setBackground(QtGui.QColor(self.project.color_code[v]))
+            # updating keyboard shortcut issue type with respect to container issue class map 
+            if self.project.container_class_map.get(v, None):
+                feature_type_item = QtWidgets.QTableWidgetItem(self.project.container_class_map[v])
+                feature_type_item.setBackground(QtGui.QColor(self.project.color_code[v]))
+            else:
+                feature_type_item = QtWidgets.QTableWidgetItem(v)
+                feature_type_item.setBackground(QtGui.QColor(self.project.color_code[v]))
             self.shortcuts_table.setItem(i, 0, feature_type_item)
             self.shortcuts_table.setItem(i, 1, QtWidgets.QTableWidgetItem(str(k)))
             i += 1
@@ -31,9 +36,15 @@ class ShortcutSettings(QtWidgets.QWidget):
 
     def save_new_shortcuts(self):
         new_shortcuts = {}
+        org_issue_class = list(self.project.container_class_map.keys())
+        container_issue_class = list(self.project.container_class_map.values())
         for row in range(self.shortcuts_table.rowCount()):
             feature_type = self.shortcuts_table.item(row, 0).text()
+            if not self.project.class_maps.get(feature_type, None):
+                position = container_issue_class.index(feature_type)
+                feature_type = org_issue_class[position]
             shortcut = self.shortcuts_table.item(row, 1).text()
             new_shortcuts[shortcut] = feature_type
         self.project.feature_shortcuts = new_shortcuts
+        print(self.project.feature_shortcuts)
         self.hide()
