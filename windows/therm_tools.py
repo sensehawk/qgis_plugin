@@ -152,6 +152,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.active_docktool_widget = self.thermlite_tagging_widget
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
+        #Disabling tables for thermviewer and manual tagging
+        if not self.project.table_features:
+             self.project.project_details_widget.table_checkbox.setChecked(False)
         self.enable_docktool_custom_labels()
         self.generate_num_tagged_rawimages()
     
@@ -168,6 +171,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.active_docktool_widget = self.therm_viewer_widget
         self.enable_docktool_custom_labels()
         self.project.docktool_widget.visibilityChanged.connect(lambda x: self.therm_viewer_widget.toggle_signal_connection(x))
+        #Disabling tables for thermviewer and manual tagging
+        if not self.project.table_features:
+             self.project.project_details_widget.table_checkbox.setChecked(False)
         # self.therm_viewer_widget.connect_signal()
         # self.therm_viewer_widget.reload_required_data()
 
@@ -214,6 +220,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
                     # self.custom_label.setCurrentIndex(index_field)
                     # self.custom_label.setCurrentText(field_name)
                     self.custom_label.setCurrentText(field_name)
+                    
 
 
     def generate_num_tagged_rawimages(self):

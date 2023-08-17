@@ -46,6 +46,7 @@ class Project:
         fields_validator(self.required_fields, self.vlayer)
         #initialize and update parent_uid field 
         self.listType_dataFields = {}
+        self.table_features = []
         self.initialize_parentUid()
         self.collect_list_Type_dataFields()
         self.rlayer_url = load_task_result['rlayer_url']
@@ -84,6 +85,9 @@ class Project:
     # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
     def save_and_parse_listType_dataFields(self):
         self.vlayer.commitChanges()
+        #load collected tables to 
+        if self.table_features:
+            self.project_details_widget.table_checkbox.setChecked(True)
         #disconnect any single added to existing vlayer
         self.vlayer.selectionChanged.disconnect()
         # remove existing json 
@@ -223,6 +227,32 @@ class Project:
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson exported...', level=Qgis.Success)
             del cleaned_json # to aviod ram overload
 
+    def table_checkbox_info(self):
+        if self.project_details_widget.table_checkbox.isChecked():
+            self.enable_tables()
+        else:
+            self.vlayer.startEditing()
+            table_id = []
+            self.table_features.clear()
+            fields_validator(self.required_fields, self.vlayer)
+
+            for feat in self.vlayer.getFeatures():
+                if feat['class_name'] == 'table':
+                    self.table_features.append(feat)
+                    table_id.append(feat.id())
+                    self.vlayer.deleteFeature(feat.id())
+            self.vlayer.commitChanges()
+            self.vlayer.startEditing()
+    
+    def enable_tables(self):    
+        fields_validator(self.required_fields, self.vlayer)
+        self.vlayer.dataProvider().addFeatures(self.table_features)
+        self.vlayer.commitChanges()
+        self.vlayer.startEditing()
+        self.table_features.clear()
+        self.load_feature_count()
+
+        
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
             # get terra tools
@@ -241,6 +271,11 @@ class Project:
         feature['uid'] = self.create_uid()
         feature['projectUid'] = self.project_details["uid"]
         feature['groupUid'] = self.project_details["group"]["uid"]
+        feature['row'] = None
+        feature['column'] = None
+        feature['table_row'] = None
+        feature['table_column'] = None
+        feature['idx'] = None
         self.vlayer.updateFeature(feature)
 
     # synch  feature count in project table
@@ -261,12 +296,25 @@ class Project:
             if self.container_class_map.get(feature_type, None): 
                 feature_type_item = QtWidgets.QTableWidgetItem(str(self.container_class_map[feature_type]))
                 feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
-            else: 
-                feature_type_item = QtWidgets.QTableWidgetItem(str(feature_type))
-                feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
+            else:
+                if feature_type == 'table':
+                    feature_type_item = QtWidgets.QTableWidgetItem(str(feature_type))
+                    # feature_type_item.setText(str(feature_type))
+                    # feature_type_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                    # feature_type_item.setCheckState(Qt.Checked)
+                    # self.features_table.itemClicked.connect(self.diable_table)
+                    feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
+                else:
+                    feature_type_item = QtWidgets.QTableWidgetItem(str(feature_type))
+                    feature_type_item.setBackground(QtGui.QColor(self.color_code.get(str(feature_type), "#000000")))
             feature_count_item = QtWidgets.QTableWidgetItem(str(feature_count))
             self.features_table.setItem(i, 0, feature_type_item)
             self.features_table.setItem(i, 1, feature_count_item)
+
+    def diable_table(self, item):
+        print(self.features_table.rowCount(), self.features_table.columnCount())
+        print(item.row() , item.column())
+        print(item.text())
 
     def create_features_table(self):
         # Create a table of feature counts
@@ -306,6 +354,7 @@ class Project:
         self.project_details_widget.exportButton.clicked.connect(lambda: self.export_geojson(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "JSON (*.json)")[0]))
         self.project_details_widget.exportButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
         self.project_details_widget.project_uid.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.project_details_widget.table_checkbox.stateChanged.connect(self.table_checkbox_info)
 
     def populate_project_tab(self):
         # Simple line widget separator
@@ -525,6 +574,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             self.active_project.vlayer.startEditing()
             feature_change_name = self.active_project.feature_shortcuts.get(key, None)
             self.active_project.change_feature_type(feature_change_name)
+            self.active_project.vlayer.removeSelection()
             self.iface.actionAddFeature().trigger()
         elif key in self.qgis_shortcuts:
             qgis_shortcut_function = self.qgis_shortcuts[key]
@@ -569,6 +619,16 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.active_project.last_saved = str(datetime.now())
         self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
 
+        #Sanitize json
+        for feat in self.active_project.vlayer.getFeatures():
+            if isinstance(feat['num_modules_horizontal'], str):
+                feat['num_modules_horizontal'] = None
+            if isinstance(feat['num_modules_vertical'], str):
+                feat['num_modules_vertical'] = None
+            self.active_project.vlayer.updateFeature(feat)
+        self.active_project.vlayer.commitChanges()
+        self.active_project.vlayer.startEditing()
+
         def save_task(task, save_task_input):
             print('Started Sanitizing')
             geojson_path, core_token, project_uid, project_type, logger = save_task_input
@@ -581,11 +641,11 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                 duplicate_geometries = []
                 for feature in geojson['features']: # Vaild Polygon Geometry, remove duplicate geometry, Remove Null geometry
                     if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
-                        feature['properties'].pop('parent_uid', None)
-                        feature['properties'].pop('num_images_tagged', None)
-                        feature['properties'].pop('table_row', None)
+                        # feature['properties'].pop('idx', None)
+                        # feature['properties'].pop('table_row', None)
+                        # feature['properties'].pop('parent_uid', None)
                         feature['properties'].pop('table_column', None)
-                        feature['properties'].pop('idx', None)
+                        feature['properties'].pop('num_images_tagged', None)
                         try:
                             center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
                             centroid_x , centroid_y = center
@@ -596,7 +656,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                         duplicate_geometries.append(feature['geometry'])
                         features.append(feature)
                     
-                cleaned_json['features'] = features
+                    cleaned_json['features'] = features
                 #Upload vectors
                 print("Uploading")
             

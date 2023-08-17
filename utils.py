@@ -173,16 +173,19 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     
     #To make qgis support temperature_difference field as decimal Qvariant type
     if geojson.get('features', None):
-        loop = True
-        count = 0
-        while loop:
-            feature = geojson['features'][count]
-            if feature['properties']['class_name'] == 'table':
-                #Assigning one of the table temp_difference with decimal value so that qgis ready this type field as decimal tyep
-                feature['properties']['temperature_difference'] = 0.67
-                loop = False
-            else:
-                count += 1
+        try:
+            loop = True
+            count = 0
+            while loop:
+                feature = geojson['features'][count]
+                if feature['properties']['class_name'] == 'table':
+                    #Assigning one of the table temp_difference with decimal value so that qgis ready this type field as decimal tyep
+                    feature['properties']['temperature_difference'] = 0.67
+                    loop = False
+                else:
+                    count += 1
+        except IndexError:
+            geojson['features'][0]['properties']['temperature_min'] = 44.45
 
     if "features" not in geojson:
         logger(str(geojson), level=Qgis.Warning)
