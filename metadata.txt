@@ -6,7 +6,7 @@
 name=SenseHawk QC
 qgisMinimumVersion=3.0
 description=This plugin will load and save SenseHawk projects needing quality check.
-version=1.10.1
+version=1.9.10
 author=SenseHawk
 email=kiranh@sensehawk.com, ganesh@sensehawk.com
 
