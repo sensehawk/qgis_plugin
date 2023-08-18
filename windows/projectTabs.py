@@ -85,9 +85,19 @@ class Project:
     # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
     def save_and_parse_listType_dataFields(self):
         self.vlayer.commitChanges()
+        self.vlayer.startEditing()
         #load collected tables to 
         if self.table_features:
             self.project_details_widget.table_checkbox.setChecked(True)
+        #sanitize
+        for feat in self.vlayer.getFeatures():
+            if isinstance(feat['num_modules_horizontal'], str):
+                feat['num_modules_horizontal'] = None
+            if isinstance(feat['num_modules_vertical'], str):
+                feat['num_modules_vertical'] = None
+            self.vlayer.updateFeature(feat)
+
+        self.vlayer.commitChanges()
         #disconnect any single added to existing vlayer
         self.vlayer.selectionChanged.disconnect()
         # remove existing json 
@@ -116,8 +126,7 @@ class Project:
         self.vlayer = updated_vlayer
         self.qgis_project.addMapLayer(updated_vlayer)
         categorize_layer(self)
-        self.load_feature_count()   
-        self.vlayer.startEditing()
+        self.load_feature_count()  
         #validate and create fields if not exits
         fields_validator(self.required_fields, self.vlayer)
         #connect pre-defined singles 
@@ -150,28 +159,9 @@ class Project:
                     self.listType_dataFields[parentUid] = rawimage_value
 
     def initialize_parentUid(self):
-        self.vlayer.startEditing()
         for feature in self.vlayer.getFeatures():
             feature['parent_uid'] = feature['uid']
             self.vlayer.updateFeature(feature)
-        self.vlayer.commitChanges()
-
-    def clean_fields(self):
-        print('cleaning the fields')
-        # Clean wrongly formatted fields (center, raw_images, attachments) in case they exist
-        self.vlayer.startEditing()
-        default_values = {"raw_images": NULL, "attachments": NULL, "center": NULL, "temperature_max": NULL, "temperature_min": NULL, "temperature_difference": NULL}
-        for f in self.vlayer.getFeatures():
-            for attr in default_values.keys():
-                try:   
-                    attr_value = f[attr]
-                except KeyError:
-                    continue
-                if type(attr_value) in [str, dict]:
-                    f[attr] = re.sub('[{}\n]', '', str(f[attr]))
-                    if not f[attr]:
-                        f[attr] = default_values[attr]
-            self.vlayer.updateFeature(f)
         self.vlayer.commitChanges()
 
     def setup_tool_widget(self):
@@ -228,24 +218,37 @@ class Project:
             del cleaned_json # to aviod ram overload
 
     def table_checkbox_info(self):
+        fields_validator(self.required_fields, self.vlayer)
+        def disable_tables(task, project_obj):
+            project_obj.vlayer.startEditing()
+            table_id = []
+            project_obj.table_features.clear()
+
+            project_obj.vlayer.selectByExpression("\"class_name\"='table'")
+            for feat in project_obj.vlayer.selectedFeatures():
+                    project_obj.table_features.append(feat)
+                    table_id.append(feat.id())
+            project_obj.vlayer.dataProvider().deleteFeatures(table_id)
+            project_obj.vlayer.commitChanges()
+            project_obj.vlayer.startEditing()
+            return {"task": task.description(),
+                    "status":'Tables Removed....'}
+        
+        def callback(task, logger):
+            returned_values = task.returned_values
+            if returned_values:
+                status = returned_values["status"]
+                logger(str(status))
+
         if self.project_details_widget.table_checkbox.isChecked():
             self.enable_tables()
         else:
-            self.vlayer.startEditing()
-            table_id = []
-            self.table_features.clear()
-            fields_validator(self.required_fields, self.vlayer)
+            dt = QgsTask.fromFunction("Disable Tables", disable_tables, self)
+            QgsApplication.taskManager().addTask(dt)
+            dt.statusChanged.connect(lambda: callback(dt, self.logger))
 
-            for feat in self.vlayer.getFeatures():
-                if feat['class_name'] == 'table':
-                    self.table_features.append(feat)
-                    table_id.append(feat.id())
-                    self.vlayer.deleteFeature(feat.id())
-            self.vlayer.commitChanges()
-            self.vlayer.startEditing()
     
     def enable_tables(self):    
-        fields_validator(self.required_fields, self.vlayer)
         self.vlayer.dataProvider().addFeatures(self.table_features)
         self.vlayer.commitChanges()
         self.vlayer.startEditing()
