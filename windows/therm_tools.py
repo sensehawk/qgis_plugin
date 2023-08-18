@@ -198,24 +198,27 @@ class ThermToolsWidget(QtWidgets.QWidget):
             self.therm_viewer_widget.disconnect_signal()
         self.project.vlayer.setLabelsEnabled(False)
     
-    def enable_docktool_custom_labels(self):
+    def enable_docktool_custom_labels(self, onlylabel=None):
         tool_field_map = {'StringNumber':'string_number','ManualTagging':'num_images_tagged','ThermViewer':'num_images_tagged'}
         for button in self.findChildren(QtWidgets.QPushButton):
             if button.isCheckable():
                 if button.isChecked():
                     current_tool =  button.text()
                     field_name = tool_field_map.get(current_tool, 'uid')
-                    index_field = self.field_names.index(field_name)
-                    if field_name == "num_images_tagged" :
-                        self.generate_num_tagged_rawimages()
-                    if current_tool == 'ThermViewer':
-                        self.therm_viewer_widget.connect_signal()
-                        self.therm_viewer_widget.reload_required_data()
-                    self.custom_label.setCurrentText(field_name)
-                    # #Disabling tables for thermviewer and manual tagging
-                    # if not self.project.table_features:
-                    #      self.project.project_details_widget.table_checkbox.setChecked(False)
-                                
+                    if onlylabel:
+                        self.custom_label.setCurrentText(field_name)
+                    else:
+                        # index_field = self.field_names.index(field_name)
+                        if field_name == "num_images_tagged" :
+                            self.generate_num_tagged_rawimages()
+                        if current_tool == 'ThermViewer':
+                            self.therm_viewer_widget.connect_signal()
+                            self.therm_viewer_widget.reload_required_data()
+                        self.custom_label.setCurrentText(field_name)
+                        # #Disabling tables for thermviewer and manual tagging
+                        # if not self.project.table_features:
+                        #      self.project.project_details_widget.table_checkbox.setChecked(False)
+                                    
 
 
     def generate_num_tagged_rawimages(self):

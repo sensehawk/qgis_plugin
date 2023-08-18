@@ -83,33 +83,42 @@ class Project:
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
     
     # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
-    def save_and_parse_listType_dataFields(self):
+    def save_and_parse_listType_dataFields(self):   
         self.vlayer.commitChanges()
         self.vlayer.startEditing()
         #load collected tables to 
         if self.table_features:
             self.project_details_widget.table_checkbox.setChecked(True)
-        #sanitize
-        for feat in self.vlayer.getFeatures():
-            if isinstance(feat['num_modules_horizontal'], str):
-                feat['num_modules_horizontal'] = None
-            if isinstance(feat['num_modules_vertical'], str):
-                feat['num_modules_vertical'] = None
-            self.vlayer.updateFeature(feat)
+        def sanitize_json(task, obj):
+            #sanitize
+            for feat in obj.vlayer.getFeatures():
+                if isinstance(feat['num_modules_horizontal'], str):
+                    feat['num_modules_horizontal'] = None
+                if isinstance(feat['num_modules_vertical'], str):
+                    feat['num_modules_vertical'] = None
+                obj.vlayer.updateFeature(feat)
 
-        self.vlayer.commitChanges()
-        #disconnect any single added to existing vlayer
-        self.vlayer.selectionChanged.disconnect()
-        # remove existing json 
-        print('Saving Json')
-        self.qgis_project.removeMapLayers([self.vlayer.id()])
+            obj.vlayer.commitChanges()
+            #disconnect any single added to existing vlayer
+            obj.vlayer.selectionChanged.disconnect()
+            # remove existing json 
+            obj.qgis_project.removeMapLayers([obj.vlayer.id()])
+            
+            return {"task": task.description(),"status":'Json sanitized'}
+        
+        def callback(task, obj):
+            result = task.returned_values
+            if result:
+                save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':obj.geojson_path,
+                                                                                            'listType_dataFields':obj.listType_dataFields,
+                                                                                            'logger':obj.logger})
+                QgsApplication.taskManager().addTask(save_edits_task)
+                save_edits_task.statusChanged.connect(lambda save_edits_status : obj.save_edits_callback(save_edits_status, save_edits_task))
 
-        save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
-                                                                                      'listType_dataFields':self.listType_dataFields,
-                                                                                      'logger':self.logger})
-        QgsApplication.taskManager().addTask(save_edits_task)
-        save_edits_task.statusChanged.connect(lambda save_edits_status : self.save_edits_callback(save_edits_status, save_edits_task))
-    
+        sj = QgsTask.fromFunction("Sanitize Json", sanitize_json, self)
+        QgsApplication.taskManager().addTask(sj)
+        sj.statusChanged.connect(lambda: callback(sj, self))
+
     def save_edits_callback(self, save_edits_status, save_edits_task):
         if save_edits_status != 3:
             return None
@@ -142,7 +151,7 @@ class Project:
             self.tools_widget.therm_viewer_widget.signal_connected = False
         except AttributeError :
             pass
-        self.tools_widget.enable_docktool_custom_labels()
+        # self.tools_widget.enable_docktool_custom_labels(onlylabel=True)
 
     # Since Qgis won't support list type fields data in copy-pasted issues, 
     # collecting list type data with Parentuid as key and list type data as value 
@@ -234,10 +243,12 @@ class Project:
             return {"task": task.description(),
                     "status":'Tables Removed....'}
         
-        def callback(task, logger):
+        def callback(task, logger, obj):
             returned_values = task.returned_values
             if returned_values:
                 status = returned_values["status"]
+                #reload feature count after removing Tables
+                obj.load_feature_count()
                 logger(str(status))
 
         if self.project_details_widget.table_checkbox.isChecked():
@@ -245,8 +256,7 @@ class Project:
         else:
             dt = QgsTask.fromFunction("Disable Tables", disable_tables, self)
             QgsApplication.taskManager().addTask(dt)
-            dt.statusChanged.connect(lambda: callback(dt, self.logger))
-
+            dt.statusChanged.connect(lambda: callback(dt, self.logger, self))
     
     def enable_tables(self):    
         self.vlayer.dataProvider().addFeatures(self.table_features)

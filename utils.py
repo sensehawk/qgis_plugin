@@ -447,7 +447,6 @@ def download_ortho(file_size, number_of_threads, file_name, ortho_url):
                 f.write(chunk)
 
 def save_edits(task, save_inputs):
-    print('Started Saving json')
     json_path = save_inputs['json_path']
     listType_dataFields = save_inputs['listType_dataFields']
     logger = save_inputs['logger']

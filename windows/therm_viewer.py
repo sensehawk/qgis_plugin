@@ -160,6 +160,8 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
         self.marker_location.pop(self.image_index)
         self.sfeature['num_images_tagged'] = self.num_raw_images
         self.project.vlayer.updateFeature(self.sfeature)
+        # self.project.vlayer.commitChanges()
+        # self.project.vlayer.startEditing()
         if self.num_raw_images != 0:
             self.change_image_index(-1)
         else:
