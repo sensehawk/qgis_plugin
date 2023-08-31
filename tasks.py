@@ -43,7 +43,7 @@ def loadTask(task, load_inputs):
         ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
         ortho_bounds = ortho_tiles_details["bounds"]
         bounds = ortho_bounds
-
+        
         zmax = ortho_tiles_details["maxzoom"]
         zmin = 1
 

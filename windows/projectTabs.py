@@ -25,6 +25,7 @@ class Project:
 
         self.project_details = load_task_result['project_details']
         self.geojson_path = load_task_result['geojson_path']
+        self.table_geojson = self.geojson_path.replace('.geojson', '_table.geojson')
         self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
@@ -86,38 +87,23 @@ class Project:
     def save_and_parse_listType_dataFields(self):   
         self.vlayer.commitChanges()
         self.vlayer.startEditing()
-        #load collected tables to 
-        if self.table_features:
-            self.project_details_widget.table_checkbox.setChecked(True)
-        def sanitize_json(task, obj):
-            #sanitize
-            for feat in obj.vlayer.getFeatures():
-                if isinstance(feat['num_modules_horizontal'], str):
-                    feat['num_modules_horizontal'] = None
-                if isinstance(feat['num_modules_vertical'], str):
-                    feat['num_modules_vertical'] = None
-                obj.vlayer.updateFeature(feat)
+        #load collected tables 
+        # if self.table_features:
+        #     self.canvas_logger('Enables the tables to Save the Changes...', level=Qgis.Warning)
+        #     return None
+            # self.project_details_widget.table_checkbox.setChecked(True)
 
-            obj.vlayer.commitChanges()
-            #disconnect any single added to existing vlayer
-            obj.vlayer.selectionChanged.disconnect()
-            # remove existing json 
-            obj.qgis_project.removeMapLayers([obj.vlayer.id()])
-            
-            return {"task": task.description(),"status":'Json sanitized'}
-        
-        def callback(task, obj):
-            result = task.returned_values
-            if result:
-                save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':obj.geojson_path,
-                                                                                            'listType_dataFields':obj.listType_dataFields,
-                                                                                            'logger':obj.logger})
-                QgsApplication.taskManager().addTask(save_edits_task)
-                save_edits_task.statusChanged.connect(lambda save_edits_status : obj.save_edits_callback(save_edits_status, save_edits_task))
+        #disconnect any single added to existing vlayer
+        self.vlayer.selectionChanged.disconnect()
+        # remove existing json 
+        self.qgis_project.removeMapLayers([self.vlayer.id()])
 
-        sj = QgsTask.fromFunction("Sanitize Json", sanitize_json, self)
-        QgsApplication.taskManager().addTask(sj)
-        sj.statusChanged.connect(lambda: callback(sj, self))
+        save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
+                                                                                    'listType_dataFields':self.listType_dataFields,
+                                                                                    'logger':self.logger})
+        QgsApplication.taskManager().addTask(save_edits_task)
+        save_edits_task.statusChanged.connect(lambda save_edits_status : self.save_edits_callback(save_edits_status, save_edits_task))
+
 
     def save_edits_callback(self, save_edits_status, save_edits_task):
         if save_edits_status != 3:
@@ -151,7 +137,7 @@ class Project:
             self.tools_widget.therm_viewer_widget.signal_connected = False
         except AttributeError :
             pass
-        # self.tools_widget.enable_docktool_custom_labels(onlylabel=True)
+        self.tools_widget.enable_docktool_custom_labels(onlylabel=True)
 
     # Since Qgis won't support list type fields data in copy-pasted issues, 
     # collecting list type data with Parentuid as key and list type data as value 
@@ -219,6 +205,9 @@ class Project:
             cleaned_features = []
             for feat in features:
                 feat['properties'].pop('parent_uid', None)
+                feat['properties'].pop('num_images_tagged', None)
+                feat['properties'].pop('row', None)
+                feat['properties'].pop('column', None)
                 cleaned_features.append(feat)
             cleaned_json['features'] = cleaned_features
             with open(real_path, 'w') as f:         
@@ -227,12 +216,28 @@ class Project:
             del cleaned_json # to aviod ram overload
 
     def table_checkbox_info(self):
-        fields_validator(self.required_fields, self.vlayer)
-        def disable_tables(task, project_obj):
-            project_obj.vlayer.startEditing()
-            table_id = []
-            project_obj.table_features.clear()
 
+        def disable_tables(task, project_obj):
+            project_obj.vlayer.commitChanges()
+            project_obj.vlayer.startEditing()
+            cleaned_json = {"type":"FeatureCollection","features":[]}
+            table_features = []
+            with open(project_obj.geojson_path, 'r') as g:
+                features = json.load(g)['features']
+            
+            for feature in features:
+                if feature['properties']['class_name'] == 'table':
+                    feature['properties'].pop('row', None)
+                    feature['properties'].pop('column', None)
+                    feature['properties'].pop('uid', None)
+                    table_features.append(feature)
+            
+            cleaned_json['features'] = table_features
+            with open(project_obj.table_geojson, 'w') as f:
+                json.dump(cleaned_json, f)
+
+            # project_obj.table_features.clear()
+            table_id = []
             project_obj.vlayer.selectByExpression("\"class_name\"='table'")
             for feat in project_obj.vlayer.selectedFeatures():
                     project_obj.table_features.append(feat)
@@ -240,6 +245,10 @@ class Project:
             project_obj.vlayer.dataProvider().deleteFeatures(table_id)
             project_obj.vlayer.commitChanges()
             project_obj.vlayer.startEditing()
+            
+            del cleaned_json
+            del features
+
             return {"task": task.description(),
                     "status":'Tables Removed....'}
         
@@ -251,20 +260,61 @@ class Project:
                 obj.load_feature_count()
                 logger(str(status))
 
+        def enable_tables(task, project_obj):
+
+            with open(project_obj.table_geojson, 'r') as g:
+                features = json.load(g)['features']
+
+            with open(project_obj.geojson_path, 'r') as k:
+                geojson = json.load(k)
+
+            geojson['features'] += features
+
+            with open(project_obj.geojson_path, 'w') as fi:
+                    json.dump(geojson, fi)
+
+            del geojson
+            del features
+            
+            return {"task": task.description(),
+                    "status":'Tables Added....'}
+
+        def et_callback(task, logger, obj):
+            returned_values = task.returned_values
+            if returned_values:
+                status = returned_values["status"]
+                #reload feature count after removing Tables
+                obj.initialize_vlayer()
+                logger(str(status))
+        
+        def trigger_eanble_table(obj):
+            # self.trigger_table_enable()
+            obj.vlayer.commitChanges()
+            #disconnect any single added to existing vlayer
+            obj.vlayer.selectionChanged.disconnect()
+            #remove vlayer from mapcanva
+            obj.qgis_project.removeMapLayers([obj.vlayer.id()])
+            et = QgsTask.fromFunction("Enable Tables", enable_tables, obj)
+            QgsApplication.taskManager().addTask(et)
+            et.statusChanged.connect(lambda: et_callback(et, obj.logger, obj))
+        
         if self.project_details_widget.table_checkbox.isChecked():
-            self.enable_tables()
-        else:
+            message_box = QtWidgets.QMessageBox()
+            message_box.setIcon(QtWidgets.QMessageBox.Warning)
+            message_box.setWindowTitle('Sensehawk Plugin')
+            message_box.setText('Have you saved the changes? If not, please remember to save them.')
+            message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+            ret = message_box.exec_()
+            if ret == QtWidgets.QMessageBox.Ok:
+                trigger_eanble_table(self)
+            else:
+                self.project_details_widget.table_checkbox.setChecked(Qt.Unchecked)
+                
+        else:   
             dt = QgsTask.fromFunction("Disable Tables", disable_tables, self)
             QgsApplication.taskManager().addTask(dt)
             dt.statusChanged.connect(lambda: callback(dt, self.logger, self))
-    
-    def enable_tables(self):    
-        self.vlayer.dataProvider().addFeatures(self.table_features)
-        self.vlayer.commitChanges()
-        self.vlayer.startEditing()
-        self.table_features.clear()
-        self.load_feature_count()
-
+          
         
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
@@ -289,6 +339,7 @@ class Project:
         feature['table_row'] = None
         feature['table_column'] = None
         feature['idx'] = None
+        self.vlayer.removeSelection()
         self.vlayer.updateFeature(feature)
 
     # synch  feature count in project table
@@ -656,8 +707,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                     if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
                         # feature['properties'].pop('idx', None)
                         # feature['properties'].pop('table_row', None)
-                        # feature['properties'].pop('parent_uid', None)
-                        feature['properties'].pop('table_column', None)
+                        # feature['properties'].pop('table_column', None)
+                        feature['properties'].pop('parent_uid', None)
                         feature['properties'].pop('num_images_tagged', None)
                         try:
                             center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
