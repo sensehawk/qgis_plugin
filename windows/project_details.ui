@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>295</width>
-    <height>118</height>
+    <width>251</width>
+    <height>102</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -30,22 +30,16 @@
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
    <property name="leftMargin">
-    <number>5</number>
+    <number>0</number>
    </property>
    <property name="topMargin">
-    <number>5</number>
+    <number>0</number>
    </property>
    <property name="rightMargin">
-    <number>5</number>
+    <number>0</number>
    </property>
    <property name="bottomMargin">
     <number>0</number>
-   </property>
-   <property name="horizontalSpacing">
-    <number>7</number>
-   </property>
-   <property name="verticalSpacing">
-    <number>5</number>
    </property>
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
@@ -143,9 +137,6 @@
    </item>
    <item row="1" column="0">
     <layout class="QGridLayout" name="gridLayout_2">
-     <property name="horizontalSpacing">
-      <number>8</number>
-     </property>
      <item row="0" column="0">
       <widget class="QToolButton" name="importButton">
        <property name="maximumSize">
@@ -202,15 +193,23 @@
       </spacer>
      </item>
      <item row="0" column="3">
-      <widget class="QCheckBox" name="table_checkbox">
-       <property name="enabled">
-        <bool>true</bool>
+      <widget class="QToolButton" name="table_toggle">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>8</pointsize>
+        </font>
        </property>
        <property name="text">
-        <string>Table</string>
+        <string>🔃 Table</string>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+       <property name="shortcut">
+        <string>Ctrl+E</string>
        </property>
       </widget>
      </item>

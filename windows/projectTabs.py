@@ -67,6 +67,7 @@ class Project:
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
         self.setup_feature_uid()
+        self.table_status = False
 
         # Time stamp of last saved
         self.last_saved = str(datetime.now())
@@ -256,6 +257,8 @@ class Project:
             returned_values = task.returned_values
             if returned_values:
                 status = returned_values["status"]
+                obj.table_status = True
+                obj.project_details_widget.table_toggle.setStyleSheet("background-color:#ffdfd6")
                 #reload feature count after removing Tables
                 obj.load_feature_count()
                 logger(str(status))
@@ -283,6 +286,8 @@ class Project:
             returned_values = task.returned_values
             if returned_values:
                 status = returned_values["status"]
+                obj.table_status = False
+                obj.project_details_widget.table_toggle.setStyleSheet("background-color:#c2fcdc")
                 #reload feature count after removing Tables
                 obj.initialize_vlayer()
                 logger(str(status))
@@ -298,7 +303,7 @@ class Project:
             QgsApplication.taskManager().addTask(et)
             et.statusChanged.connect(lambda: et_callback(et, obj.logger, obj))
         
-        if self.project_details_widget.table_checkbox.isChecked():
+        if self.table_status:
             message_box = QtWidgets.QMessageBox()
             message_box.setIcon(QtWidgets.QMessageBox.Warning)
             message_box.setWindowTitle('Sensehawk Plugin')
@@ -308,7 +313,7 @@ class Project:
             if ret == QtWidgets.QMessageBox.Ok:
                 trigger_eanble_table(self)
             else:
-                self.project_details_widget.table_checkbox.setChecked(Qt.Unchecked)
+                pass
                 
         else:   
             dt = QgsTask.fromFunction("Disable Tables", disable_tables, self)
@@ -418,7 +423,8 @@ class Project:
         self.project_details_widget.exportButton.clicked.connect(lambda: self.export_geojson(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "JSON (*.json)")[0]))
         self.project_details_widget.exportButton.setStyleSheet("background-color:#dce4f7; color: #3d3838;")
         self.project_details_widget.project_uid.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.project_details_widget.table_checkbox.stateChanged.connect(self.table_checkbox_info)
+        self.project_details_widget.table_toggle.clicked.connect(self.table_checkbox_info)
+        self.project_details_widget.table_toggle.setStyleSheet("background-color:#c2fcdc")
 
     def populate_project_tab(self):
         # Simple line widget separator
