@@ -67,7 +67,8 @@ class Project:
         self.feature_shortcuts = {}
         self.setup_feature_shortcuts()
         self.setup_feature_uid()
-        self.table_status = False
+        self.layer_edit_status = True
+        self.toogle_table_status = 'ON'
 
         # Time stamp of last saved
         self.last_saved = str(datetime.now())
@@ -111,6 +112,7 @@ class Project:
             return None
         result = save_edits_task.returned_values
         if result:
+            self.layer_edit_status = True
             # Add and Initializing Vlayer features
             self.initialize_vlayer()
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson Saved...', level=Qgis.Success)
@@ -257,7 +259,8 @@ class Project:
             returned_values = task.returned_values
             if returned_values:
                 status = returned_values["status"]
-                obj.table_status = True
+                self.layer_edit_status = True
+                self.toogle_table_status = 'OFF'
                 obj.project_details_widget.table_toggle.setStyleSheet("background-color:#ffdfd6")
                 #reload feature count after removing Tables
                 obj.load_feature_count()
@@ -286,7 +289,8 @@ class Project:
             returned_values = task.returned_values
             if returned_values:
                 status = returned_values["status"]
-                obj.table_status = False
+                self.toogle_table_status = 'ON'
+                self.layer_edit_status = True
                 obj.project_details_widget.table_toggle.setStyleSheet("background-color:#c2fcdc")
                 #reload feature count after removing Tables
                 obj.initialize_vlayer()
@@ -303,18 +307,11 @@ class Project:
             QgsApplication.taskManager().addTask(et)
             et.statusChanged.connect(lambda: et_callback(et, obj.logger, obj))
         
-        if self.table_status:
-            message_box = QtWidgets.QMessageBox()
-            message_box.setIcon(QtWidgets.QMessageBox.Warning)
-            message_box.setWindowTitle('Sensehawk Plugin')
-            message_box.setText('Have you saved the changes? If not, please remember to save them.')
-            message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-            ret = message_box.exec_()
-            if ret == QtWidgets.QMessageBox.Ok:
+        if self.toogle_table_status == 'OFF':
+            if self.layer_edit_status :
                 trigger_eanble_table(self)
             else:
-                pass
-                
+                self.canvas_logger('Save the changes! Before enabling the tables', level=Qgis.Warning)
         else:   
             dt = QgsTask.fromFunction("Disable Tables", disable_tables, self)
             QgsApplication.taskManager().addTask(dt)
@@ -344,6 +341,7 @@ class Project:
         feature['table_row'] = None
         feature['table_column'] = None
         feature['idx'] = None
+        self.layer_edit_status = False
         self.vlayer.removeSelection()
         self.vlayer.updateFeature(feature)
 
