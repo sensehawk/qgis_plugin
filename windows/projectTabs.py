@@ -687,16 +687,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.active_project.last_saved = str(datetime.now())
         self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
 
-        #Sanitize json
-        for feat in self.active_project.vlayer.getFeatures():
-            if isinstance(feat['num_modules_horizontal'], str):
-                feat['num_modules_horizontal'] = None
-            if isinstance(feat['num_modules_vertical'], str):
-                feat['num_modules_vertical'] = None
-            self.active_project.vlayer.updateFeature(feat)
-        self.active_project.vlayer.commitChanges()
-        self.active_project.vlayer.startEditing()
-
         def save_task(task, save_task_input):
             print('Started Sanitizing')
             geojson_path, core_token, project_uid, project_type, logger = save_task_input
