@@ -211,7 +211,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             if not self.addl_uid :
                 self.canvas_logger('Select the Project to tag Visual images....',level=Qgis.Warning)
             else:
-                json = {'projectUid': self.project_uid, 'method':2, 'Addl_ProjUid': self.addl_uid, 'org':org,
+                json = {'projectUid': self.project_uid, 'method':5, 'VprojectUid': self.addl_uid, 'org':org, 'Addl_ProjUid':self.addl_uid,
                         'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
                 self.api(json)
          
@@ -239,7 +239,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             if not self.addl_uid :
                 self.canvas_logger('Select the Project to tag 3.5GSD images....',level=Qgis.Warning)
             else:
-                json = {'projectUid': self.project_uid, 'method':5, 'Addl_ProjUid': self.addl_uid, 'org':org,
+                json = {'projectUid': self.project_uid, 'method':6, 'Addl_ProjUid': self.addl_uid, 'org':org,
                         'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
                 self.api(json)
 
