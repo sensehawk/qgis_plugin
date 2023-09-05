@@ -5,7 +5,7 @@ from qgis.core import Qgis, QgsApplication, QgsTask, QgsProject, QgsMessageLog
 from ..tasks import loadTask
 from PyQt5.QtWidgets import QLineEdit, QLabel,QCompleter, QVBoxLayout, QPushButton, QComboBox
 from PyQt5.QtCore import QRect
-from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier
+from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier, container_details
 from .projectTabs import ProjectTabsWidget, Project
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 
@@ -34,21 +34,27 @@ class ProjectForm:
 class ProjectLoadWindow(QtWidgets.QWidget):
     def __init__(self, homeobj, iface):
         super().__init__()
-        self.canvas_logger = homeobj.canvas_logger
-        self.logger = homeobj.logger
         self.projects_form = None
         self.iface = iface
         self.home = homeobj
-        self.core_token = self.home.core_token
+        self.logger = homeobj.logger
+        self.org_uid = self.home.org_uid
         self.asset_uid = self.home.asset_uid
         self.user_email = self.home.user_email
-        self.layers_id = []
-            
-        self.org_uid = self.home.org_uid
+        self.core_token = self.home.core_token
+        self.canvas_logger = homeobj.canvas_logger
         self.org_contianer_details = self.home.org_contianer_details
-        self.group_details = group_details(self.asset_uid, self.org_uid, self.core_token) # list of all groups in asset and there respective projects are loaded all at once 
+        self.layers_id = []
 
-        group_list = list(self.group_details.keys())
+        self.container_details = container_details(self.asset_uid, self.org_uid, self.core_token)    
+        container_list = list(self.container_details.keys())
+        self.container_combobox = QComboBox(self)
+        self.container = combobox_modifier(self.container_combobox, container_list)
+        self.container.currentIndexChanged.connect(self.container_tree)
+        print(self.container_details)
+
+        self.group_details = group_details(self.asset_uid, self.org_uid, self.core_token) # list of all groups in asset and there respective projects 
+        group_list = self.container_details[self.container.currentText()]
         self.group_combobox = QComboBox(self) 
         self.group = combobox_modifier(self.group_combobox, group_list)
         self.group_uid = self.group_details[self.group.currentText()][0]
@@ -67,22 +73,36 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         
         homeobj.dock_widget.closeEvent = lambda x: self.clear_loaded_projects(event=x, message="Closing Sensehawk Plugin. Are you sure?")
 
-        # self.group_text = QLabel(self)
-        # self.group_text.setText('Groups:')
+        self.group_text = QLabel(self)
+        self.group_text.setText('<b>Groups &nbsp;&nbsp;&nbsp;&nbsp;:</b>')
+        self.group_text.setFixedWidth(70)
+        self.container_text = QLabel(self)
+        self.container_text.setText('<b>Container :</b>')
+        self.container_text.setFixedWidth(70)
         # self.group_text.setStyleSheet("background-color: white;") 
         
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
         self.project_selection_layout.setContentsMargins(10, 15, 0, 10)
-        # self.project_selection_layout.addWidget(self.group_text,0, Qt.AlignTop)
         self.project_selection_layout.addWidget(self.home_button, 0, Qt.AlignTop)
-        # self.project_selection_layout.addWidget(self.group_text, 0, Qt.AlignTop)
-        # Simple line widget separator
-        line = QtWidgets.QFrame()
-        line.setFrameShape(QtWidgets.QFrame.HLine)
-        self.project_selection_layout.addWidget(line)
-        self.project_selection_layout.addWidget(self.group, 0)
+
+        self.Hlayout_1 = QtWidgets.QHBoxLayout(self)
+        self.Hlayout_2 = QtWidgets.QHBoxLayout(self)
+        self.Hlayout_1.addWidget(self.group_text, 0)
+        self.Hlayout_1.addWidget(self.group, 1)
+        self.Hlayout_2.addWidget(self.container_text, 0)
+        self.Hlayout_2.addWidget(self.container, 1)
+
+        line1 = QtWidgets.QFrame()
+        line1.setFrameShape(QtWidgets.QFrame.HLine)
+        line2 = QtWidgets.QFrame()
+        line2.setFrameShape(QtWidgets.QFrame.HLine)
+        # self.project_selection_layout.addWidget(line1)
+        self.project_selection_layout.addSpacing(20)
+        self.project_selection_layout.addLayout(self.Hlayout_2, 0)
+        self.project_selection_layout.addLayout(self.Hlayout_1, 1)
+        self.project_selection_layout.addSpacing(10)
         self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
-        self.project_selection_layout.addWidget(line)
+        self.project_selection_layout.addWidget(line2)
         projects_loaded_button = QPushButton(self)
         projects_loaded_button.setText('Projects loaded')
         projects_loaded_button.clicked.connect(self.show_projects_loaded)
@@ -90,7 +110,6 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.project_selection_layout.addWidget(projects_loaded_button, 0, Qt.AlignBottom)
 
         self.dock_widget = homeobj.dock_widget
-        # self.dock_widget.setFixedSize(330, 830)
         self.dock_widget.setMinimumSize(QSize(200, 380))
         self.dock_widget.setMaximumSize(QSize(350,800))
         self.dock_widget.setWidget(self)
@@ -99,9 +118,15 @@ class ProjectLoadWindow(QtWidgets.QWidget):
     def show_projects_loaded(self):
         self.dock_widget.setWidget(self.project_tabs_widget)
 
+    def container_tree(self):
+        self.group.clear()
+        group_list = self.container_details[self.container.currentText()]
+        self.group.addItems(group_list)
 
     def group_tree(self):
         print(self.container_uid)
+        if not self.group.currentText():
+            return None
         self.group_uid = self.group_details[self.group.currentText()][0]
         self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
         
@@ -134,6 +159,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         project.user_email = self.user_email
         project.canvas_logger = self.canvas_logger
         project.logger = self.logger
+        project.group_details = self.group_details
         
         # Add project to project tab
         project.project_tab_index = new_project_index

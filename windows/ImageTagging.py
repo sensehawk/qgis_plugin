@@ -26,10 +26,9 @@ from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis, QgsTask, QgsApplication
 from ..constants import THERMAL_TAGGING_URL
-from ..utils import project_data_existent
+from ..utils import project_data_existent, AssetLevelProjects
 
 import os
-import pprint
 import requests
 
 
@@ -46,16 +45,19 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.canvas =self.iface.mapCanvas()
         self.existing_files = self.thermToolobj.existing_files
         self.project = thermtool_obj.project
+        self.group_details = self.project.group_details
         self.project_details = self.project.project_details
         self.core_token = self.project.core_token
         self.project_uid = self.project.project_details["uid"]
         self.canvas =self.iface.mapCanvas()
-        
+        self.addl_uid = None # additional Project uid
+
         self.project_details_button.clicked.connect(self.get_project_details)
         self.tag_button.clicked.connect(self.image_tagging)
         self.imagetaggingType.currentTextChanged.connect(self.current_type)
         self.MagmaConversion.setChecked(True)
-
+        self.assetlevel_projects = AssetLevelProjects(self)
+        self.addl_projectuid_button.clicked.connect(self.assetlevel_projects.show)
         # self.existing_files = self.thermToolobj.existing_files
         # self.temp_option.addItems(self.existing_files)
         self.temp_option.addItems(self.existing_files)
@@ -63,6 +65,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.No_images.setMaximum(4)
         self.No_images.setMinimum(1)
 
+   
     def get_project_details_callback(self, get_project_detials_task_status, get_details):
         if get_project_detials_task_status != 3:
             return None
@@ -110,7 +113,6 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         else: self.get_externalcalibration.setStyleSheet("QCheckBox::indicator"
                                "{" "background-color : red;" "}")
 
-
     def get_project_details(self):
         org = self.project_details['organization']['uid']
         project_info = [self.project_uid, org, self.core_token]
@@ -118,27 +120,13 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         QgsApplication.taskManager().addTask(get_details)
         get_details.statusChanged.connect(lambda get_project_detials_task_status: self.get_project_details_callback(get_project_detials_task_status, get_details))
 
-    def api(self, json):
-        canvas  = self.canvas
-        rotation = canvas.rotation()
-        json['angle'] = rotation
-        print(json)
-        url =  THERMAL_TAGGING_URL + "/tag" # Update depolyed (tagging) api url
-        headers = {'Authorization': f'Token {self.core_token}'}
-        imagetag = requests.post(url, json=json, headers=headers)
-        if imagetag.status_code == 200:
-            self.tag_button.setChecked(False)
-            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
-        else:
-            self.tag_button.setChecked(False)
-            self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
-
-
     def current_type(self, value):
         if value == 'ThermLite Tagging' or value == 'Thermal Tagging':
             self.MagmaConversion.setChecked(True)
             self.IssueCropImage.setChecked(False)
-            self.projectUid.setEnabled(False)
+            self.opt_uid_txt.setText('3.5GSD UID')
+            self.addl_projectuid_button.setEnabled(True)
+            self.addl_projectuid.setEnabled(True)
             self.IssueCropImage.setEnabled(False)
             self.MagmaConversion.setEnabled(True)
             self.temp_option.setEnabled(True)
@@ -147,17 +135,21 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         elif value == 'Visual Tagging':
             self.MagmaConversion.setChecked(False)
             self.IssueCropImage.setChecked(False)
-            self.projectUid.setEnabled(True) 
+            self.opt_uid_txt.setText('VProj UID')
+            self.addl_projectuid_button.setEnabled(True)
+            self.addl_projectuid.setEnabled(True)
             self.IssueCropImage.setEnabled(False)
             self.MagmaConversion.setEnabled(False)
             self.temp_option.setEnabled(False)
             self.No_images.setEnabled(True)
-            self.No_images.setValue(4)
-            self.projectUid.setText('')
+            self.No_images.setValue(2)
+            # self.projectUid.setText('')
         elif value == 'SiteMap Tagging':
             self.MagmaConversion.setChecked(True)
             self.IssueCropImage.setChecked(True)
-            self.projectUid.setEnabled(False)
+            self.opt_uid_txt.setText('3.5GSD UID')
+            self.addl_projectuid_button.setEnabled(False)
+            self.addl_projectuid.setEnabled(False)
             self.IssueCropImage.setEnabled(True)
             self.MagmaConversion.setEnabled(True)
             self.temp_option.setEnabled(False)
@@ -165,13 +157,45 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         elif value == 'Temp Extraction':
             self.MagmaConversion.setChecked(False)
             self.IssueCropImage.setChecked(False)
-            self.projectUid.setEnabled(False)
+            self.opt_uid_txt.setText('3.5GSD UID')
+            self.addl_projectuid_button.setEnabled(False)
+            self.addl_projectuid.setEnabled(False)
             self.IssueCropImage.setEnabled(False)
             self.MagmaConversion.setEnabled(False)
             self.temp_option.setEnabled(True)
             self.No_images.setEnabled(False)
+        elif value == '3.5 GSD Tagging':
+            self.MagmaConversion.setChecked(True)
+            self.IssueCropImage.setChecked(False)
+            self.opt_uid_txt.setText('3.5GSD UID')
+            self.addl_projectuid_button.setEnabled(True)
+            self.addl_projectuid.setEnabled(True)
+            self.IssueCropImage.setEnabled(False)
+            self.MagmaConversion.setEnabled(True)
+            self.temp_option.setEnabled(False)
+            self.No_images.setEnabled(True)
+            self.No_images.setValue(2)
 
         print("combobox changed", value)
+
+    def api(self, json):
+        canvas  = self.canvas
+        rotation = canvas.rotation()
+        json['angle'] = rotation
+        print(json)
+        url =  THERMAL_TAGGING_URL + "/tag" 
+        headers = {'Authorization': f'Token {self.core_token}'}
+        # imagetag = requests.post(url, json=json, headers=headers)
+        # if imagetag.status_code == 200:
+        #     self.tag_button.setChecked(False)
+        #     self.canvas_logger('Queued Successfully.',level=Qgis.Success)
+        # else:
+        #     self.tag_button.setChecked(False)
+        #     self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
+        
+        #clear additional Projectuid let user select it again
+        self.addl_uid = None
+        self.addl_projectuid.setText('N/A')
 
     def image_tagging(self): 
         self.tag_button.setChecked(True)
@@ -184,33 +208,38 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
 
         org = self.project_details['organization']['uid']
         if self.imagetaggingType.currentText() == 'Visual Tagging':
-            if not self.projectUid.text() :
-                self.canvas_logger('Visual Project_uid field is empty....',level=Qgis.Warning)
+            if not self.addl_uid :
+                self.canvas_logger('Select the Project to tag Visual images....',level=Qgis.Warning)
             else:
-                json = {'projectUid': self.project_uid, 'method':2, 'VprojectUid': self.projectUid.text(), 'org':org,
+                json = {'projectUid': self.project_uid, 'method':2, 'Addl_ProjUid': self.addl_uid, 'org':org,
                         'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
                 self.api(json)
          
         elif self.imagetaggingType.currentText() == 'Thermal Tagging':
-            json = {'projectUid': self.project_uid, 'method':1, 'VprojectUid':None,'org':org,
+            json = {'projectUid': self.project_uid, 'method':1, 'Addl_ProjUid':self.addl_uid,'org':org,
                     'magma_image':magma_image,'crop_image':crop_image, 'No_images':no_images, 'temp_file':temp_file}
             self.api(json)
            
         elif self.imagetaggingType.currentText() == 'ThermLite Tagging':
-            json ={'projectUid': self.project_uid, 'method':2, 'VprojectUid':None,'org':org,
+            json ={'projectUid': self.project_uid, 'method':2, 'Addl_ProjUid':self.addl_uid,'org':org,
                    'magma_image':magma_image, 'crop_image':crop_image,'No_images':no_images,'temp_file':temp_file}
             self.api(json)
             
         elif self.imagetaggingType.currentText() == 'SiteMap Tagging':
-            json ={'projectUid': self.project_uid, 'method':3, 'VprojectUid': None,'org':org,
+            json ={'projectUid': self.project_uid, 'method':3, 'Addl_ProjUid': None,'org':org,
                    'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
             self.api(json) 
         
         elif self.imagetaggingType.currentText() == 'Temp Extraction':
-            json ={'projectUid': self.project_uid, 'method':4, 'VprojectUid': None,'org':org,
+            json ={'projectUid': self.project_uid, 'method':4, 'Addl_ProjUid': None,'org':org,
                    'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':temp_file}
             self.api(json) 
 
-
-    
+        elif self.imagetaggingType.currentText() == '3.5 GSD Tagging':
+            if not self.addl_uid :
+                self.canvas_logger('Select the Project to tag 3.5GSD images....',level=Qgis.Warning)
+            else:
+                json = {'projectUid': self.project_uid, 'method':5, 'Addl_ProjUid': self.addl_uid, 'org':org,
+                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
+                self.api(json)
 

@@ -177,7 +177,7 @@ class Project:
 
     def import_geojson(self, geojson_path):
         # Merge with existing geojson and reload from there
-        if geojson_path:
+        if geojson_path and self.layer_edit_status:
             self.vlayer.commitChanges()
             with open(geojson_path, 'r') as g:
                 imported_geojson = json.load(g)['features']
@@ -196,6 +196,8 @@ class Project:
             #Initialize Vlayer features
             self.initialize_vlayer()
             self.canvas_logger('Selected Geojson Imported...', level=Qgis.Success)
+        else:
+            self.canvas_logger('Save Changes before importing...', level=Qgis.Warning)
 
     def export_geojson(self, save_path):
         self.vlayer.commitChanges()

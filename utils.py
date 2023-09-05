@@ -14,7 +14,7 @@ import tempfile
 import random
 import tempfile
 from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
-from PyQt5.QtWidgets import  QCompleter
+from PyQt5.QtWidgets import  QCompleter, QComboBox
 from qgis.PyQt import QtWidgets
 from PyQt5.QtGui import QImage, QColor, QFont
 from qgis.PyQt.QtCore import Qt
@@ -494,3 +494,71 @@ def save_edits(task, save_inputs):
 
         
     return {'json_path':json_path, 'task':task.description()}
+
+
+#asset level projects 
+class ProjectForm:
+    def __init__(self, project_list, project_selection_layout, project_selection_window):
+        self.project_groupbox = QtWidgets.QGroupBox('Projects:')
+        self.myform = QtWidgets.QFormLayout()
+        for project in project_list:
+            button = QtWidgets.QPushButton(f'{project}')
+            button.clicked.connect(project_selection_window.update_selected_project)
+            self.myform.addRow(button)
+
+        self.project_groupbox.setLayout(self.myform)
+
+        self.scroll_widget = QtWidgets.QScrollArea()
+        self.scroll_widget.setWidget(self.project_groupbox)
+        self.scroll_widget.setWidgetResizable(True)
+        self.scroll_widget.setFixedSize(250, 300)
+        # Replace the scroll widget if it exists
+        if project_selection_window.projects_form:
+            project_selection_layout.replaceWidget(project_selection_window.projects_form.scroll_widget, self.scroll_widget)
+        else:
+            project_selection_layout.addWidget(self.scroll_widget, 1, Qt.AlignTop)
+class AssetLevelProjects(QtWidgets.QWidget):
+    def __init__(self, img_tag_obj):
+        super().__init__()
+        self.projects_form = None
+        self.project_selection_layout = QtWidgets.QVBoxLayout(self)
+        self.group_details = img_tag_obj.project.group_details
+        self.img_tag_obj = img_tag_obj
+        group_list = list(self.group_details.keys())
+        self.group_combobox = QComboBox(self) 
+        self.group = combobox_modifier(self.group_combobox, group_list)
+        self.project_selection_layout.addWidget(self.group, 0, Qt.AlignTop)
+        self.group.currentIndexChanged.connect(self.group_tree)
+        self.project_details = self.group_details[self.group.currentText()][1]
+        project_list = list(self.project_details.keys())
+        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+        self.setWindowTitle('Asset...')
+    def group_tree(self):
+        self.group_uid = self.group_details[self.group.currentText()][0]
+        self.project_details = self.group_details[self.group.currentText()][1]
+        project_list = list(self.project_details.keys())
+        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+
+    def update_selected_project(self):
+        clicked_button = self.sender()
+        project_uid = self.project_details[clicked_button.text()]
+        self.img_tag_obj.addl_uid = project_uid
+        self.img_tag_obj.addl_projectuid.setText(f'{clicked_button.text()}')
+        self.img_tag_obj.addl_projectuid.setReadOnly(True)
+        print(self.sender().text(), project_uid)
+        self.hide()
+
+
+def container_details(asset, org, token):
+    url = f'https://core-server.sensehawk.com/api/v1/containers/?asset={asset}&groups=true&labels=true&page=1&page_size=10&search=&users=true&organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    response = requests.get(url, headers=headers)
+    containers = response.json()['results']
+    container_list = {}
+    for container in containers:
+        groups = container['groups']
+        container_list[container['name']] = [group['name'] for group in groups ]
+
+    return container_list
+
+
