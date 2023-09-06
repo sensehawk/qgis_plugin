@@ -51,11 +51,12 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.container_combobox = QComboBox(self)
         self.container = combobox_modifier(self.container_combobox, container_list)
         self.container.currentIndexChanged.connect(self.container_tree)
-        print(self.container_details)
+        print('Container_list: ',self.container_details)
 
         self.group_details = group_details(self.asset_uid, self.org_uid, self.core_token) # list of all groups in asset and there respective projects 
         group_list = self.container_details[self.container.currentText()]
-        self.group_combobox = QComboBox(self) 
+        self.group_combobox = QComboBox(self)
+        print('Group_details:', self.group_details) 
         self.group = combobox_modifier(self.group_combobox, group_list)
         self.group_uid = self.group_details[self.group.currentText()][0]
         self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)

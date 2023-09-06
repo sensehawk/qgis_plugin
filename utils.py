@@ -230,7 +230,7 @@ def project_details( group, org, token):
 
 
 def group_details(asset, org, token):
-    url = CORE_URL + f'/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=10&organization={org}'
+    url = CORE_URL + f'/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=1000&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     group_details = response.json()['results']

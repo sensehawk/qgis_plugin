@@ -211,7 +211,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             if not self.addl_uid :
                 self.canvas_logger('Select the Project to tag Visual images....',level=Qgis.Warning)
             else:
-                json = {'projectUid': self.project_uid, 'method':5, 'VprojectUid': self.addl_uid, 'org':org, 'Addl_ProjUid':self.addl_uid,
+                json = {'projectUid': self.project_uid, 'method':5, 'VprojectUid': self.addl_uid, 'org':org, 'Addl_ProjUid':None,
                         'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
                 self.api(json)
          

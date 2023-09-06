@@ -111,7 +111,6 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                         Irow = issue_obj.feature['row']
                         Icolumn = issue_obj.feature['column']
                         basicModule_number = f"{Prefix}-{Existing_SN}-R{Irow}-C{Icolumn}-{Suffix}"
-                        print(basicModule_number)
                         issue_obj.feature['string_number'] = basicModule_number.strip('-')
                         Vlayer.updateFeature(issue_obj.feature)
         
