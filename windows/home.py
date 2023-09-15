@@ -30,6 +30,7 @@ from ..utils import download_file, load_vectors, categorize_layer , organization
 from ..tasks import loadTask
 
 from ..windows.projectLoad import ProjectLoadWindow
+from ..windows.project_management.workspace import WorkspaceWindow
 
 import os
 import json
@@ -117,11 +118,18 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset_uid = self.asset_details.get(self.asset.currentText(), None)
         print(self.org_uid, self.asset_uid)
 
-    def show_project_load_window(self):
+    # def show_project_load_window(self):
+    #     if not self.asset_uid:
+    #         self.logger("Select Asset", level=Qgis.Warning)
+    #         return None
+    #     self.project_load_window = ProjectLoadWindow(self, self.iface)
+    #     self.project_load_window.show()
+    #     self.hide()
+    def show_asset_workspace(self):
         if not self.asset_uid:
             self.logger("Select Asset", level=Qgis.Warning)
             return None
-        self.project_load_window = ProjectLoadWindow(self, self.iface)
+        self.asset_workspace = WorkspaceWindow(self, self.iface)
         self.project_load_window.show()
         self.hide()
 

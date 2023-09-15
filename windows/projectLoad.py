@@ -51,7 +51,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.container_combobox = QComboBox(self)
         self.container = combobox_modifier(self.container_combobox, container_list)
         self.container.currentIndexChanged.connect(self.container_tree)
-        print('Container_list: ',self.container_details)
+        print('Container_list: ', self.container_details)
 
         self.group_details = group_details(self.asset_uid, self.org_uid, self.core_token) # list of all groups in asset and there respective projects 
         group_list = self.container_details[self.container.currentText()]
