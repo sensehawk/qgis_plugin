@@ -42,7 +42,7 @@ from PyQt5.QtGui import QKeySequence
 
 import os
 import json
-
+import requests
 
 class ThermToolsWidget(QtWidgets.QWidget):
 
@@ -62,6 +62,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
         self.viewer_button.clicked.connect(self.therm_viewer)
         self.clipButton.clicked.connect(self.clip_raster)
+        self.sidv2_detect_button.clicked.connect(self.sid_detection)
         self.class_maps = self.project.class_maps
         self.core_token = self.project.core_token
         self.project_details = self.project.project_details
@@ -78,6 +79,25 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.custom_label.view().setRowHidden(0, True)
         self.custom_label.currentTextChanged.connect(lambda x :self.enable_custom_label(x))
     
+    def sid_detection(self):
+        org_uid = self.project_details['organization'].get('uid', None)
+        url =  f'https://sid.sensehawk.com/detect-solar-issues?organization={org_uid}'
+        headers = {'Authorization': f'Token {self.core_token}', 'email_id':self.project.user_email}
+        payload = {
+                "details": {
+                    "projectUID": self.project_details['uid'],
+                    },
+                    "geojson": {
+                    "features": [],
+                    "type": "FeatureCollection"
+                    }
+                }
+        imagetag = requests.post(url, json=payload, headers=headers)
+        if imagetag.status_code == 200:
+            self.tag_button.setChecked(False)
+            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
+
+
     def enable_custom_label(self, field_name):
         create_custom_label(self.project.vlayer, field_name)
 
@@ -214,7 +234,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
                         if current_tool == 'ThermViewer':
                             self.therm_viewer_widget.connect_signal()
                             self.therm_viewer_widget.reload_required_data()
-                        self.custom_label.setCurrentText(field_name)
+                        
                         # #Disabling tables for thermviewer and manual tagging
                         # if not self.project.table_features:
                         #      self.project.project_details_widget.table_checkbox.setChecked(False)
@@ -246,15 +266,16 @@ class ThermToolsWidget(QtWidgets.QWidget):
             return {"task": task.description(),
                     "status":'Num image tagged generated'}
         
-        def callback(task, logger):
+        def callback(task, logger, obj):
             returned_values = task.returned_values
             if returned_values:
                 status = returned_values["status"]
+                obj.custom_label.setCurrentText("num_images_tagged")
                 logger(str(status))
             
         gnt = QgsTask.fromFunction("Disable Tables", generate_image_count, self)
         QgsApplication.taskManager().addTask(gnt)
-        gnt.statusChanged.connect(lambda: callback(gnt, self.logger))
+        gnt.statusChanged.connect(lambda: callback(gnt, self.logger, self))
 
 
     def uncheck_all_buttons(self):

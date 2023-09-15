@@ -185,13 +185,13 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         print(json)
         url =  THERMAL_TAGGING_URL + "/tag" 
         headers = {'Authorization': f'Token {self.core_token}'}
-        # imagetag = requests.post(url, json=json, headers=headers)
-        # if imagetag.status_code == 200:
-        #     self.tag_button.setChecked(False)
-        #     self.canvas_logger('Queued Successfully.',level=Qgis.Success)
-        # else:
-        #     self.tag_button.setChecked(False)
-        #     self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
+        imagetag = requests.post(url, json=json, headers=headers)
+        if imagetag.status_code == 200:
+            self.tag_button.setChecked(False)
+            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
+        else:
+            self.tag_button.setChecked(False)
+            self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
         
         #clear additional Projectuid let user select it again
         self.addl_uid = None

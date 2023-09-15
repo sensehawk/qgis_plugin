@@ -207,10 +207,11 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def get_temperature_map(self, image_path):
         metadata = self.et.get_metadata(image_path)[0]
         camera = metadata["EXIF:Model"]
+        print(image_path)
         if "MAVIC2-ENTERPRISE-ADVANCED" in camera or "H20T" in camera or "M3T" in camera or "M30T" in camera:
             download_path = str(Path.home() / "Downloads")
             temp_raw_path = os.path.join(download_path+'\\'+'temp.raw')
-            subprocess.run(f"{os.path.join(self.DJI_SDK_PATH, 'dji_irp.exe')} -s {image_path} -a measure -o {temp_raw_path}", shell=True)
+            subprocess.run(f'{os.path.join(self.DJI_SDK_PATH, "dji_irp.exe")} -s "{image_path}" -a measure -o {temp_raw_path}', shell=True)
             degree_map = np.empty((512, 640), np.int16)
             degree_map.data = open(temp_raw_path, "rb").read()
             os.remove(temp_raw_path)

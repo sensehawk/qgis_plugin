@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>210</width>
-    <height>117</height>
+    <width>266</width>
+    <height>133</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -152,6 +152,13 @@
        <string>Label</string>
       </property>
      </item>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QPushButton" name="sidv2_detect_button">
+     <property name="text">
+      <string>Detect</string>
+     </property>
     </widget>
    </item>
   </layout>
