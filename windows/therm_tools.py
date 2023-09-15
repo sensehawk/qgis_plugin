@@ -203,7 +203,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if self.therm_viewer_widget:
             self.therm_viewer_widget.disconnect_signal()
         # self.project.vlayer.setLabelsEnabled(False)
-        self.enable_docktool_custom_labels()
+        self.enable_docktool_custom_labels(onlylabel=True)
     
     def ImageTagging(self):
         self.project.active_tool_widget.hide()
