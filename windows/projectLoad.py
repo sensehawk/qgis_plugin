@@ -43,7 +43,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.user_email = self.home.user_email
         self.core_token = self.home.core_token
         self.canvas_logger = homeobj.canvas_logger
-        self.org_contianer_details = self.home.org_contianer_details
+        self.org_container_details = self.home.org_container_details
         self.layers_id = []
 
         self.container_details = container_details(self.asset_uid, self.org_uid, self.core_token)    
@@ -59,8 +59,8 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         print('Group_details:', self.group_details) 
         self.group = combobox_modifier(self.group_combobox, group_list)
         self.group_uid = self.group_details[self.group.currentText()][0]
-        self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
-        self.container_uid = next((item['uid'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
+        self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_container_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
+        self.container_uid = next((item['uid'] for item in self.org_container_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
         self.group.currentIndexChanged.connect(self.group_tree)
         self.project_details = self.group_details[self.group.currentText()][1]
         project_list = list(self.project_details.keys())
@@ -129,7 +129,8 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         if not self.group.currentText():
             return None
         self.group_uid = self.group_details[self.group.currentText()][0]
-        self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_contianer_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
+        self.associated_group_app = next((item['app_types'][0]['name'] for item in self.org_container_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
+        self.container_uid = next((item['uid'] for item in self.org_container_details if list(filter(lambda group: group['uid'] == self.group_uid, item['groups']))), None)
         
         self.project_details = self.group_details[self.group.currentText()][1]
         project_list = list(self.project_details.keys())

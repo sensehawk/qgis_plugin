@@ -24,18 +24,11 @@
 
 from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
-
-from ..utils import download_file, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details
-
+from ..utils import container_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details
 from ..tasks import loadTask
-
 from ..windows.projectLoad import ProjectLoadWindow
 from ..windows.project_management.workspace import WorkspaceWindow
 
-import os
-import json
-import time
-import json
 
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer, QgsRectangle, QgsFeature, \
@@ -45,8 +38,8 @@ from qgis.gui import QgsMessageBar
 from PyQt5.QtWidgets import QLineEdit, QCompleter
 import qgis
 from qgis.utils import iface
-import time
-import requests
+
+import os
 
 
 class HomeWindow(QtWidgets.QWidget):
@@ -67,9 +60,9 @@ class HomeWindow(QtWidgets.QWidget):
         self.org.currentIndexChanged.connect(self.org_tree)
         self.projectbutton.setText("👉🏼")
         self.projectbutton.setStyleSheet("background-color:#dcf6f7;")
-        self.projectbutton.clicked.connect(self.show_project_load_window)
+        self.projectbutton.clicked.connect(self.show_asset_workspace)
         self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
-        self.asset_uid = None  # Pre loading
+        self.asset_uid = None  
         logo_label = QtWidgets.QLabel(self)
         logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))
         logo = logo.scaled(350, 60, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
@@ -92,8 +85,7 @@ class HomeWindow(QtWidgets.QWidget):
         
         self.org.setEnabled(True)
         self.asset_details = result['asset_list']
-        self.org_contianer_details = result['org_contianer_details']
-        
+
         asset_list = list(self.asset_details.keys())
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
@@ -108,15 +100,39 @@ class HomeWindow(QtWidgets.QWidget):
             return None
         self.org.setEnabled(False)
         self.asset_combobox.setEnabled(False)
+        
         load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
         QgsApplication.taskManager().addTask(load_asset_task)
         load_asset_task.statusChanged.connect(lambda load_asset_task_status: self.asset_info(load_asset_task_status, load_asset_task))
 
-    
+    def container_info(self, asset_container_task_status, asset_container):
+        if asset_container_task_status != 3:
+            return None
+        
+        result = asset_container.returned_values
+        if not 'container_list' in result:
+            return None
+        self.projectbutton.setEnabled(True)
+        self.container_details = result['container_list']
+        
     def asset_tree(self):
+        self.projectbutton.setEnabled(False)
         self.org_uid = self.org_details[self.org.currentText()]
         self.asset_uid = self.asset_details.get(self.asset.currentText(), None)
         print(self.org_uid, self.asset_uid)
+
+        asset_container = QgsTask.fromFunction("Fetching asset level container", container_details, self.asset_uid, self.org_uid, self.core_token)
+        QgsApplication.taskManager().addTask(asset_container)
+        asset_container.statusChanged.connect(lambda asset_container_task_status: self.container_info(asset_container_task_status, asset_container))
+
+
+    def show_asset_workspace(self):
+        if not self.asset_uid:
+            self.logger("Select Asset", level=Qgis.Warning)
+            return None
+        self.asset_workspace = WorkspaceWindow(self, self.iface)
+        self.hide()
+        self.asset_workspace.show()
 
     # def show_project_load_window(self):
     #     if not self.asset_uid:
@@ -125,12 +141,4 @@ class HomeWindow(QtWidgets.QWidget):
     #     self.project_load_window = ProjectLoadWindow(self, self.iface)
     #     self.project_load_window.show()
     #     self.hide()
-    def show_asset_workspace(self):
-        if not self.asset_uid:
-            self.logger("Select Asset", level=Qgis.Warning)
-            return None
-        self.asset_workspace = WorkspaceWindow(self, self.iface)
-        self.project_load_window.show()
-        self.hide()
-
     

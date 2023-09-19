@@ -252,13 +252,13 @@ def asset_details(task ,org, token): # fetching asset and org_container details
     for asset in asset_details:
         asset_list[asset['name']] = asset['uid']
     
-    container_url = CORE_URL + f'/api/v1/containers/?groups=true&page=1&page_size=1000&organization={org}'
-    container_response = requests.get(container_url, headers=headers)
-    org_contianer_details = container_response.json()['results']
+    # container_url = CORE_URL + f'/api/v1/containers/?groups=true&page=1&page_size=1000&organization={org}'
+    # container_response = requests.get(container_url, headers=headers)
+    # org_container_details = container_response.json()['results']
 
     return {'asset_list': asset_list,
-            'org_contianer_details':org_contianer_details,
             'task': task.description()}
+            # 'org_container_details':org_container_details,
 
 
 def organization_details(token):
@@ -517,6 +517,7 @@ class ProjectForm:
             project_selection_layout.replaceWidget(project_selection_window.projects_form.scroll_widget, self.scroll_widget)
         else:
             project_selection_layout.addWidget(self.scroll_widget, 1, Qt.AlignTop)
+            
 class AssetLevelProjects(QtWidgets.QWidget):
     def __init__(self, img_tag_obj):
         super().__init__()
@@ -549,16 +550,19 @@ class AssetLevelProjects(QtWidgets.QWidget):
         self.hide()
 
 
-def container_details(asset, org, token):
-    url = f'https://core-server.sensehawk.com/api/v1/containers/?asset={asset}&groups=true&labels=true&page=1&page_size=10&search=&users=true&organization={org}'
-    headers = {"Authorization": f"Token {token}"}
+def container_details(task, asset_uid, org_uid, core_token):
+    url = f'https://core-server.sensehawk.com/api/v1/containers/?asset={asset_uid}&groups=true&labels=true&page=1&page_size=10&search=&users=true&organization={org_uid}'
+    headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, headers=headers)
     containers = response.json()['results']
     container_list = {}
     for container in containers:
         groups = container['groups']
-        container_list[container['name']] = [group['name'] for group in groups ]
+        container_uid = container['uid']
+        app_info = [app.get('application', None) for app in container['app_types'] ] # dict [{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
+        container_level_groups = [group['name'] for group in groups ]
+        container_list[container['name']] = {'uid':container_uid, 'groups':container_level_groups, 'application_info':app_info}
 
-    return container_list
+    return {'container_list':container_list, 'task':task.description()}
 
 
