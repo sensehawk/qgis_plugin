@@ -5,25 +5,31 @@ class Asset:
         self.uid = uid
         self.org_uid = org_uid
 
+    def update_in_core():
+        pass
 
 class Container:
-    def __init__(self, uid, asset):
+    def __init__(self, uid, name, asset, groups_list, groups_details={}, applications=[]):
         self.uid = uid
-        self.asset = asset
-        self.groups = self.get_groups()
-    
-    def get_groups():
+        self.name = name
+        self.asset = asset 
+        self.groups_list = groups_list
+        self.groups = self.parse_groups(groups_details)
+        self.applications = applications
 
-        return 
+    def parse_groups(self, groups_details): # {'group_name':('group_uid', {'project_name':'project_uid'})}
+        groups = []
+        for group_name, group_details in groups_details.items():
+            groups.append(Group(uid=group_details[0], name=group_name, container=self, projects_details=groups_details[1]))
+        return groups
 
 class Group:
-    def __init__(self, uid, container=None):
+    def __init__(self, uid, name, container=None, projects_details=None):
         self.uid = uid
+        self.name = name
         self.container = container
+        self.projects_details = projects_details
 
-class Project:
-    def __init__(self):
-        pass
 
 
 # asset_uid, org_uid = "", ""

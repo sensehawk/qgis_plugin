@@ -24,7 +24,7 @@
 
 from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
-from ..utils import container_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details
+from ..utils import container_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details, group_details
 from ..tasks import loadTask
 from ..windows.projectLoad import ProjectLoadWindow
 from ..windows.project_management.workspace import WorkspaceWindow
@@ -38,6 +38,7 @@ from qgis.gui import QgsMessageBar
 from PyQt5.QtWidgets import QLineEdit, QCompleter
 import qgis
 from qgis.utils import iface
+from .project_management.datatypes import Asset, Container, Group
 
 import os
 
@@ -125,14 +126,38 @@ class HomeWindow(QtWidgets.QWidget):
         QgsApplication.taskManager().addTask(asset_container)
         asset_container.statusChanged.connect(lambda asset_container_task_status: self.container_info(asset_container_task_status, asset_container))
 
-
+    def parse_containers_info(self):
+        # container details reference {'container_name':{'uid':'container_uid','groups':[], 'application_info':[{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]} , 
+                                     # 'container_name':{}}
+        self.containers_list = []
+        for container_name, details in self.container_details.items():
+            self.containers_list.append(Container(uid=details['uid'], 
+                                                  name=container_name, 
+                                                  asset=self.asset, 
+                                                  groups_list=details['groups'], 
+                                                  applications=[a['name'] for a in details['application_info']],
+                                                  group_details = self.groups_details))
+    
+    def parse_groups_info(self):
+        # def parse_groups(self, groups_details): # {'group_name':('group_uid', {'project_name':'project_uid'})}
+        self.groups_list = []
+        for group_name, group_details in self.groups_details.items():
+            self.groups_list.append(Group(uid=group_details[0], name=group_name, container=self, projects_details=self.groups_details[1]))    
+                                                 
     def show_asset_workspace(self):
         if not self.asset_uid:
             self.logger("Select Asset", level=Qgis.Warning)
             return None
+
+        # list of all the groups in the asset and there respective projects  | {'group_name':('group_uid', {'project_name':'project_uid'})}
+        self.groups_details = group_details(self.asset_uid, self.org_uid, self.core_token)
+        
+        self.asset = Asset(self.asset_uid, self.org_uid)
+        self.containers = self.parse_containers_info()
         self.asset_workspace = WorkspaceWindow(self, self.iface)
         self.hide()
         self.asset_workspace.show()
+    
 
     # def show_project_load_window(self):
     #     if not self.asset_uid:
