@@ -1,7 +1,6 @@
 
 from PyQt5.QtWidgets import QPushButton, QWidget
 
-from ...utils import container_details, group_details
 from ..project_management.datatypes import Asset
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
 from qgis.PyQt.QtCore import Qt
@@ -23,9 +22,8 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.asset_uid = home_window.asset_uid
         self.user_email = home_window.user_email
         self.core_token = home_window.core_token
-        # container details reference {'container_name':{'uid':'container_uid','groups':[], 'application_info':[{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]} , 
-                                     # 'container_name':{}}
-        self.container_details = home_window.container_details 
+       
+        # self.container_details = home_window.container_details 
         self.home_window = home_window
 
         self.dock_widget = home_window.dock_widget
@@ -45,6 +43,6 @@ class WorkspaceWindow(QtWidgets.QWidget):
     
     def load_project_management(self):
         GroupSelectionWidget(self)
-        print(self.container_details)
+        # print(self.container_details)
     def load_group_window(self, group_name):
         pass

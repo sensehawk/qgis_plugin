@@ -5,7 +5,7 @@ from qgis.core import Qgis, QgsApplication, QgsTask, QgsProject, QgsMessageLog
 from ..tasks import loadTask
 from PyQt5.QtWidgets import QLineEdit, QLabel,QCompleter, QVBoxLayout, QPushButton, QComboBox
 from PyQt5.QtCore import QRect
-from ..utils import download_file, load_vectors, categorize_layer , group_details, combobox_modifier, container_details
+from ..utils import download_file, load_vectors, categorize_layer , groups_details, combobox_modifier, containers_details
 from .projectTabs import ProjectTabsWidget, Project
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 
@@ -46,14 +46,14 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.org_container_details = self.home.org_container_details
         self.layers_id = []
 
-        self.container_details = container_details(self.asset_uid, self.org_uid, self.core_token)    
+        self.container_details = containers_details(self.asset_uid, self.org_uid, self.core_token)    
         container_list = list(self.container_details.keys())
         self.container_combobox = QComboBox(self)
         self.container = combobox_modifier(self.container_combobox, container_list)
         self.container.currentIndexChanged.connect(self.container_tree)
         print('Container_list: ', self.container_details)
 
-        self.group_details = group_details(self.asset_uid, self.org_uid, self.core_token) # list of all groups in asset and there respective projects 
+        self.group_details = groups_details(self.asset_uid, self.org_uid, self.core_token) # list of all groups in asset and there respective projects 
         group_list = self.container_details[self.container.currentText()]
         self.group_combobox = QComboBox(self)
         print('Group_details:', self.group_details) 

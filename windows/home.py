@@ -24,7 +24,7 @@
 
 from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
-from ..utils import container_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details, group_details
+from ..utils import containers_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details, groups_details
 from ..tasks import loadTask
 from ..windows.projectLoad import ProjectLoadWindow
 from ..windows.project_management.workspace import WorkspaceWindow
@@ -54,7 +54,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.user_email = login_obj.user_email
         self.iface = iface
         self.org_details = login_obj.org_details
-        org_list = list(self.org_details.keys())
+        org_list = list(self.org_details.values())
         org_combobox = self.organization
         self.asset_combobox = self.asset
         self.org = combobox_modifier(org_combobox, org_list)
@@ -81,89 +81,83 @@ class HomeWindow(QtWidgets.QWidget):
         
         result = load_asset_task.returned_values
         # task response bit slow in few circumstances Dont remove below peice of code 
-        if not 'asset_list' in result:
+        if not 'asset_dict' in result:
             return None
         
         self.org.setEnabled(True)
-        self.asset_details = result['asset_list']
+        self.asset_details = result['asset_dict']
 
-        asset_list = list(self.asset_details.keys())
+        asset_list = list(self.asset_details.values()) #{'uid':'asset_name'}
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
-        self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list)
+        self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list) 
         self.canvas_logger(f'{self.org.currentText()} assets loaded..')
         
 
     def org_tree(self, value):
         try:
-            org = self.org_details[self.org.currentText()]
+            self.org_uid = list(filter(lambda x: self.org_details[x] == self.org.currentText(), self.org_details))[0]
+            print(self.org_uid)
         except KeyError:
             return None
         self.org.setEnabled(False)
         self.asset_combobox.setEnabled(False)
         
-        load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, org, self.core_token)
+        load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, self.org_uid, self.core_token)
         QgsApplication.taskManager().addTask(load_asset_task)
         load_asset_task.statusChanged.connect(lambda load_asset_task_status: self.asset_info(load_asset_task_status, load_asset_task))
 
-    def container_info(self, asset_container_task_status, asset_container):
+    def containers_info(self, asset_container_task_status, asset_container):
         if asset_container_task_status != 3:
             return None
         
         result = asset_container.returned_values
-        if not 'container_list' in result:
+        if not 'containers_dict' in result:
             return None
         self.projectbutton.setEnabled(True)
-        self.container_details = result['container_list']
+        self.containers_details = result['containers_dict']
         
     def asset_tree(self):
         self.projectbutton.setEnabled(False)
-        self.org_uid = self.org_details[self.org.currentText()]
-        self.asset_uid = self.asset_details.get(self.asset.currentText(), None)
+        self.asset_uid = list(filter(lambda x: self.asset_details[x] == self.asset.currentText(), self.asset_details))[0]
+        # self.asset_uid = self.asset_details.get(self.asset.currentText(), None) # {'uid':''}
         print(self.org_uid, self.asset_uid)
 
-        asset_container = QgsTask.fromFunction("Fetching asset level container", container_details, self.asset_uid, self.org_uid, self.core_token)
+        asset_container = QgsTask.fromFunction("Fetching asset level container", containers_details, self.asset_uid, self.org_uid, self.core_token)
         QgsApplication.taskManager().addTask(asset_container)
-        asset_container.statusChanged.connect(lambda asset_container_task_status: self.container_info(asset_container_task_status, asset_container))
+        asset_container.statusChanged.connect(lambda asset_container_task_status: self.containers_info(asset_container_task_status, asset_container))
 
-    def parse_containers_info(self):
-        # container details reference {'container_name':{'uid':'container_uid','groups':[], 'application_info':[{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]} , 
-                                     # 'container_name':{}}
-        self.containers_list = []
-        for container_name, details in self.container_details.items():
-            self.containers_list.append(Container(uid=details['uid'], 
-                                                  name=container_name, 
-                                                  asset=self.asset, 
-                                                  groups_list=details['groups'], 
-                                                  applications=[a['name'] for a in details['application_info']],
-                                                  group_details = self.groups_details))
-    
     def parse_groups_info(self):
-        # def parse_groups(self, groups_details): # {'group_name':('group_uid', {'project_name':'project_uid'})}
-        self.groups_list = []
-        for group_name, group_details in self.groups_details.items():
-            self.groups_list.append(Group(uid=group_details[0], name=group_name, container=self, projects_details=self.groups_details[1]))    
-                                                 
+                                    # Container = {'uid':{'container_name':'container_uid','groups':[], x``,{}]}, 'container_name':{}}
+                                    # Group = {'uid':('Group_name', {'project_name':'uid'}, {'container_name':'uid'})}
+        self.groups_dict = {}
+        for group_uid, group_details in self.groups_details.items():
+            if group_details[2]:
+                group_container_uid = group_details[2].get('uid', None)
+            else:
+                group_container_uid = None
+            self.groups_dict[group_uid] = Group(uid=group_uid,
+                                                name=group_details[0],
+                                                container_uid=group_container_uid,
+                                                containers_dict=self.containers_dict,
+                                                projects_details=group_details[1])
+        
+    def parse_containers_info(self):
+        self.containers_dict = {}
+        for container_uid, container_details in self.containers_details.items():
+            self.containers_dict[container_uid] = Container(container_uid, container_details["name"], self.asset, applications=container_details['application_info'])
+                                                     
     def show_asset_workspace(self):
         if not self.asset_uid:
             self.logger("Select Asset", level=Qgis.Warning)
             return None
 
-        # list of all the groups in the asset and there respective projects  | {'group_name':('group_uid', {'project_name':'project_uid'})}
-        self.groups_details = group_details(self.asset_uid, self.org_uid, self.core_token)
-        
+        # list of all the groups in the asset and there respective projects  | {'group_name':('group_uid', {'project_name':'uid'}, {'container_name':'uid'})}
+        self.groups_details = groups_details(self.asset_uid, self.org_uid, self.core_token)
         self.asset = Asset(self.asset_uid, self.org_uid)
-        self.containers = self.parse_containers_info()
+        self.parse_containers_info()
+        self.parse_groups_info()
         self.asset_workspace = WorkspaceWindow(self, self.iface)
         self.hide()
         self.asset_workspace.show()
-    
-
-    # def show_project_load_window(self):
-    #     if not self.asset_uid:
-    #         self.logger("Select Asset", level=Qgis.Warning)
-    #         return None
-    #     self.project_load_window = ProjectLoadWindow(self, self.iface)
-    #     self.project_load_window.show()
-    #     self.hide()
     

@@ -215,48 +215,48 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     return geojson_path
 
-def project_details( group, org, token):
+def projects_details(group, org, token):
     url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
-    project_details = response.json()['results']
-    project_list = {}
-    for project in project_details:
-        project_list[project['name']] = project['uid']
+    projects_details = response.json()['results']
+    projects_dict = {}
+    for project in projects_details:
+        projects_dict[project['uid']] = project['name']
 
-    return project_list    
+    return projects_dict    
     # return {'project_list':project_list,
             # 'task':task.description()}
 
 
-def group_details(asset, org, token):
+def groups_details(asset, org, token):
     url = CORE_URL + f'/api/v1/groups/?asset={asset}&projects=true&page=1&page_size=1000&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
-    group_details = response.json()['results']
-    group_list = {}
-    for group in group_details:
+    groups_details = response.json()['results']
+    groups_dict = {}
+    for group in groups_details:
         project_details = {}
         for projects in group['projects']:
-            project_details[projects['name']] = projects['uid']
-        group_list[group['name']] = (group['uid'], project_details)
-    return group_list
+            project_details[projects['uid']] = projects['name']
+        groups_dict[group['uid']] = (group['name'], project_details, group['container'])
+    return groups_dict
 
 
-def asset_details(task ,org, token): # fetching asset and org_container details 
-    url = API_SENSEHAWK + f'/v1/assets/?organization={org}'
+def asset_details(task ,org_uid, token): # fetching asset and org_container details 
+    url = API_SENSEHAWK + f'/v1/assets/?organization={org_uid}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     asset_details = response.json()['assets']
-    asset_list = {}
+    asset_dict = {}
     for asset in asset_details:
-        asset_list[asset['name']] = asset['uid']
+        asset_dict[asset['uid']] = asset['name']
     
     # container_url = CORE_URL + f'/api/v1/containers/?groups=true&page=1&page_size=1000&organization={org}'
     # container_response = requests.get(container_url, headers=headers)
     # org_container_details = container_response.json()['results']
 
-    return {'asset_list': asset_list,
+    return {'asset_dict': asset_dict,
             'task': task.description()}
             # 'org_container_details':org_container_details,
 
@@ -268,7 +268,7 @@ def organization_details(token):
     org_details = response.json()['organizations']
     org_list = {}
     for org in org_details:
-        org_list[org['name']] = org['uid']
+        org_list[org['uid']] = org['name']
 
     return org_list
 
@@ -365,7 +365,6 @@ def fields_validator(required_fields, layer):
         layer.commitChanges()
         layer.startEditing()
 
-
 def download_images(task, inputs):
     threads = []
     viewerobj, raw_images = inputs
@@ -415,7 +414,6 @@ def create_custom_label(vlayer, field_name):
     vlayer.setLabeling(labeler)
     # vlayer.setCustomProperty(field_name, QgsPalLayerSettings.CentroidWhole)
     vlayer.triggerRepaint()
-
 
 # The below code is used for each chunk of file handled
 # by each thread for downloading the content from specified 
@@ -550,19 +548,19 @@ class AssetLevelProjects(QtWidgets.QWidget):
         self.hide()
 
 
-def container_details(task, asset_uid, org_uid, core_token):
+def containers_details(task, asset_uid, org_uid, core_token):
     url = f'https://core-server.sensehawk.com/api/v1/containers/?asset={asset_uid}&groups=true&labels=true&page=1&page_size=10&search=&users=true&organization={org_uid}'
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, headers=headers)
     containers = response.json()['results']
-    container_list = {}
+    containers_dict = {}
     for container in containers:
         groups = container['groups']
-        container_uid = container['uid']
+        container_name = container['name']
         app_info = [app.get('application', None) for app in container['app_types'] ] # dict [{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
         container_level_groups = [group['name'] for group in groups ]
-        container_list[container['name']] = {'uid':container_uid, 'groups':container_level_groups, 'application_info':app_info}
+        containers_dict[container['uid']] = {'name':container_name, 'groups':container_level_groups, 'application_info':app_info}
 
-    return {'container_list':container_list, 'task':task.description()}
+    return {'containers_dict':containers_dict, 'task':task.description()}
 
 
