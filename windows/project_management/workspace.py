@@ -42,7 +42,12 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.hide()
     
     def load_project_management(self):
-        GroupSelectionWidget(self)
+        self.group_selection_widget =  GroupSelectionWidget(self)
         # print(self.container_details)
-    def load_group_window(self, group_name):
-        pass
+
+    def load_group_window(self):
+        print(self.sender().text())
+        self.pm_workspace_grid.removeWidget(self.group_selection_widget)
+        self.group_selection_widget.deleteLater()
+        self.group_workspace = uic.loadUi(os.path.join(os.path.dirname(__file__), 'test.ui'))
+        self.pm_workspace_grid.addWidget(self.group_workspace, 0, 1, Qt.AlignTop)

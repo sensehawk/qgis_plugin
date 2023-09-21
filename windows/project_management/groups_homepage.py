@@ -8,7 +8,7 @@ class GroupsForm:
         self.myform = QtWidgets.QFormLayout()
         for group_uid, group_obj in groups_dict.items():
             button = QtWidgets.QPushButton(f'{group_obj.name}')
-            button.clicked.connect(lambda: workspace_window.load_group_window(group_uid))
+            button.clicked.connect(workspace_window.load_group_window)
             self.myform.addRow(button)
             if group_obj.container:
                 print(group_obj.name)
@@ -31,7 +31,6 @@ class GroupsForm:
 class GroupSelectionWidget(QtWidgets.QWidget):
     def __init__(self, workspace_window):
         super().__init__()
-        workspace_window.group_selection_widget = self
         group_selection_layout = QtWidgets.QVBoxLayout(self)
         workspace_window.group_selection_layout = group_selection_layout
         workspace_window.groups_form = GroupsForm(workspace_window.home_window.groups_dict, group_selection_layout, workspace_window)
