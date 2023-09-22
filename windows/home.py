@@ -35,7 +35,6 @@ from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVector
     QgsGeometry, QgsField, QgsCategorizedSymbolRenderer, QgsApplication, QgsTask
 from qgis.PyQt.QtCore import Qt, QVariant, QSize
 from qgis.gui import QgsMessageBar
-from PyQt5.QtWidgets import QLineEdit, QCompleter
 import qgis
 from qgis.utils import iface
 from .project_management.datatypes import Asset, Container, Group
@@ -56,7 +55,6 @@ class HomeWindow(QtWidgets.QWidget):
         self.org_details = login_obj.org_details
         org_list = list(self.org_details.values())
         org_combobox = self.organization
-        self.asset_combobox = self.asset
         self.org = combobox_modifier(org_combobox, org_list)
         self.org.currentIndexChanged.connect(self.org_tree)
         self.projectbutton.setText("👉🏼")
@@ -87,7 +85,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.org.setEnabled(True)
         self.asset_details = result['asset_dict']
 
-        asset_list = list(self.asset_details.values()) #{'uid':'asset_name'}
+        asset_list = list(a["name"] for a in self.asset_details.values()) #{'uid':'asset_name'}
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
         self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list) 
@@ -119,7 +117,7 @@ class HomeWindow(QtWidgets.QWidget):
         
     def asset_tree(self):
         self.projectbutton.setEnabled(False)
-        self.asset_uid = list(filter(lambda x: self.asset_details[x] == self.asset.currentText(), self.asset_details))[0]
+        self.asset_uid = list(filter(lambda x: self.asset_details[x]["name"] == self.asset_combobox.currentText(), self.asset_details))[0]
         # self.asset_uid = self.asset_details.get(self.asset.currentText(), None) # {'uid':''}
         print(self.org_uid, self.asset_uid)
 
@@ -129,11 +127,12 @@ class HomeWindow(QtWidgets.QWidget):
 
     def parse_groups_info(self):
                                     # Container = {'uid':{'container_name':'container_uid','groups':[], x``,{}]}, 'container_name':{}}
-                                    # Group = {'uid':('Group_name', {'project_name':'uid'}, {'container_name':'uid'})}
+                                    # Group = {'uid':('Group_name', {'project_name':'uid', 'project_b': 'uid'}, {'container_name':'uid'})}
         self.groups_dict = {}
         for group_uid, group_details in self.groups_details.items():
             if group_details[2]:
-                group_container_uid = group_details[2].get('uid', None)
+                group_container_dict = group_details[2]
+                group_container_uid = list(group_container_dict.values())[0]
             else:
                 group_container_uid = None
             self.groups_dict[group_uid] = Group(uid=group_uid,
@@ -154,7 +153,8 @@ class HomeWindow(QtWidgets.QWidget):
 
         # list of all the groups in the asset and there respective projects  | {'group_name':('group_uid', {'project_name':'uid'}, {'container_name':'uid'})}
         self.groups_details = groups_details(self.asset_uid, self.org_uid, self.core_token)
-        self.asset = Asset(self.asset_uid, self.org_uid)
+        asset_dict = self.asset_details[self.asset_uid]
+        self.asset = Asset(asset_dict, self.org_uid)
         self.parse_containers_info()
         self.parse_groups_info()
         self.asset_workspace = WorkspaceWindow(self, self.iface)

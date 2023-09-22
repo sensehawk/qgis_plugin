@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 from qgis.PyQt.QtCore import Qt
-
+from functools import partial
 
 class GroupsForm:
     def __init__(self, groups_dict, group_selection_layout, workspace_window):
@@ -8,9 +8,10 @@ class GroupsForm:
         self.myform = QtWidgets.QFormLayout()
         for group_uid, group_obj in groups_dict.items():
             button = QtWidgets.QPushButton(f'{group_obj.name}')
-            button.clicked.connect(workspace_window.load_group_window)
+            button.clicked.connect(partial(workspace_window.load_group_window, group_uid))
             self.myform.addRow(button)
             if group_obj.container:
+                print("From groups homepage")
                 print(group_obj.name)
                 print(group_obj.container.applications)
 

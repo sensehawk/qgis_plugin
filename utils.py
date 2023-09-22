@@ -244,18 +244,14 @@ def groups_details(asset, org, token):
 
 
 def asset_details(task ,org_uid, token): # fetching asset and org_container details 
-    url = API_SENSEHAWK + f'/v1/assets/?organization={org_uid}'
+    url = CORE_URL + f'/api/v1/asset-lists/?page_size=1000&page_number=1&organization={org_uid}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
-    asset_details = response.json()['assets']
+    asset_details = response.json()['results']
     asset_dict = {}
     for asset in asset_details:
-        asset_dict[asset['uid']] = asset['name']
+        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'], "profile_image": asset['properties'].get("profile_image", None)}
     
-    # container_url = CORE_URL + f'/api/v1/containers/?groups=true&page=1&page_size=1000&organization={org}'
-    # container_response = requests.get(container_url, headers=headers)
-    # org_container_details = container_response.json()['results']
-
     return {'asset_dict': asset_dict,
             'task': task.description()}
             # 'org_container_details':org_container_details,
@@ -562,5 +558,4 @@ def containers_details(task, asset_uid, org_uid, core_token):
         containers_dict[container['uid']] = {'name':container_name, 'groups':container_level_groups, 'application_info':app_info}
 
     return {'containers_dict':containers_dict, 'task':task.description()}
-
 

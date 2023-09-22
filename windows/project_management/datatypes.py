@@ -1,9 +1,11 @@
 
 
 class Asset:
-    def __init__(self, uid, org_uid):
-        self.uid = uid
+    def __init__(self, asset_dict, org_uid):
+        self.uid = asset_dict["uid"]
         self.org_uid = org_uid
+        self.name = asset_dict["name"]
+        self.profile_image = asset_dict["profile_image"]
 
     def update_in_core():
         pass
