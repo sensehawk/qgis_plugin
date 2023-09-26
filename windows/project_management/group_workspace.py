@@ -143,12 +143,21 @@ class GroupWorkspace(QtWidgets.QWidget):
                 self.workspace_window.active_widget = self.therm_project_tabs_widget
         elif application_type == 'terra':
             # TODO set active_widget and load terra tab widget
-            pass
+            if not self.workspace_window.terra_project_tabs_widget:
+                self.workspace_window.terra_project_tabs_widget = self.terra_project_tabs_widget
+                self.workspace_window.pm_workspace_grid.addWidget(self.terra_project_tabs_widget, 0,1, Qt.AlignTop)
+                self.workspace_window.active_widget.hide()
+                self.workspace_window.active_widget = self.terra_project_tabs_widget
+            else:
+                self.workspace_window.terra_project_tabs_widget.show()
+                self.workspace_window.active_widget.hide()
+                self.workspace_window.active_widget = self.terra_project_tabs_widget
 
     def project_load_callback(self, load_task_status, load_task, application_type):
         if load_task_status != 3:
             return None
         result = load_task.returned_values
+        self.logger(result)
         if not result:
             self.logger("Load failed...", level=Qgis.Warning)
             return None
@@ -159,7 +168,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         project.logger = self.logger
         project.group_details = self.group_obj
         
-        # Add project to project tab
+        # Add project to therm project tab
         if application_type == 'therm':
             new_project_index = len(self.therm_project_tabs_widget.project_uids)
             project.project_tab_index = new_project_index
@@ -171,8 +180,14 @@ class GroupWorkspace(QtWidgets.QWidget):
             self.show_projects_loaded(application_type)
         elif application_type == 'terra':
             # TODO add terra project in terra tab widget 
-            pass
-        
+            new_project_index = len(self.terra_project_tabs_widget.project_uids)
+            project.project_tab_index = new_project_index
+            self.terra_project_tabs_widget.add_project(project)
+            self.terra_project_tabs_widget.project_tabs_widget.setCurrentIndex(new_project_index)
+            # Apply styling
+            self.categorized_renderer = categorize_layer(project)
+            # self.therm_project_tabs_widget.show()
+            self.show_projects_loaded(application_type)
         
     def load_project(self, project_uid, clicked_button, project_name, application_type):
         if application_type == 'therm':
@@ -185,8 +200,13 @@ class GroupWorkspace(QtWidgets.QWidget):
                 return None
             
         elif application_type == 'terra':
-            self.canvas_logger('Currently not supporting terra projects', level=Qgis.Warning)
-            return None
+            if project_uid in self.terra_project_tabs_widget.projects_loaded:
+                self.logger("Project loaded already!")
+                project_index = self.terra_project_tabs_widget.project_uids.index(project_uid)
+                self.terra_project_tabs_widget.project_tabs_widget.setCurrentIndex(project_index)
+                self.terra_project_tabs_widget.activate_project()
+                self.show_projects_loaded(application_type)
+                return None
         
         load_task_inputs = {"project_uid": project_uid,
                             "project_type": application_type,

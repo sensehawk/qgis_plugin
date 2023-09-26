@@ -25,7 +25,7 @@
 from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
 from ..utils import containers_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details, groups_details
-from ..windows.projectLoad import ProjectLoadWindow
+# from ..windows.projectLoad import ProjectLoadWindow
 from ..windows.project_management.workspace import WorkspaceWindow
 
 

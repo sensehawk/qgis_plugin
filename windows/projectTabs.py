@@ -89,13 +89,7 @@ class Project:
     def save_and_parse_listType_dataFields(self):   
         self.vlayer.commitChanges()
         self.vlayer.startEditing()
-        #load collected tables 
-        # if self.table_features:
-        #     self.canvas_logger('Enables the tables to Save the Changes...', level=Qgis.Warning)
-        #     return None
-            # self.project_details_widget.table_checkbox.setChecked(True)
-
-        #disconnect any single added to existing vlayer
+        # disconnect any single added to existing vlayer
         self.vlayer.selectionChanged.disconnect()
         # remove existing json 
         self.qgis_project.removeMapLayers([self.vlayer.id()])
@@ -701,9 +695,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                 duplicate_geometries = []
                 for feature in geojson['features']: # Vaild Polygon Geometry, remove duplicate geometry, Remove Null geometry
                     if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
-                        # feature['properties'].pop('idx', None)
-                        # feature['properties'].pop('table_row', None)
-                        # feature['properties'].pop('table_column', None)
                         feature['properties'].pop('parent_uid', None)
                         feature['properties'].pop('num_images_tagged', None)
                         try:

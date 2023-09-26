@@ -52,11 +52,11 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.approveButton.clicked.connect(self.start_approve_task)
         self.clipButton.clicked.connect(self.start_clip_task)
         self.requestModelButton.clicked.connect(self.request_model)
-        self.core_token = self.project.project_tabs_widget.load_window.core_token
+        self.core_token = self.project.core_token
         self.project_details = self.project.project_details
         self.class_maps = self.project.class_maps
         self.class_groups = self.project.class_groups
-        self.iface = self.project.project_tabs_widget.iface
+        self.iface = self.project.iface
         self.active_layer = self.project.vlayer
         self.models_dict = {}
         # ML Service Map

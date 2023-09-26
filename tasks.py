@@ -28,13 +28,13 @@ def Project_loadTask(task, load_inputs):
         if project_type == "terra":
             class_maps, class_groups = get_terra_classmaps(project_details, core_token)
             existing_files = None
+            container_class_map = {}
         elif project_type == "therm":
             class_maps, container_class_map = get_therm_classmaps(core_token, org_uid, container_uid)
             class_groups = None
             org = project_details['organization']['uid']
             existing_files = file_existent(project_uid,org,core_token)
 
-    ####################################
         # Load orthotiles
         # Get base url for ortho tiles
         base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
@@ -50,29 +50,6 @@ def Project_loadTask(task, load_inputs):
         orthotiles_url = "type=xyz&url=" + \
                          base_orthotiles_url + "/{z}/{x}/{y}.png" + \
                          "&zmax={}&zmin={}".format(zmax, zmin)
-        
-        # Load ortho tiles from url
-        # rlayer = QgsRasterLayer(orthotiles_url, project_uid + "_ortho", 'wms')
-########################################   
-
-        ## Load Rasters
-        # ortho_url = get_ortho_url(project_uid, org, core_token)["ortho"]
-        # ortho_size = urllib.request.urlopen(ortho_url)
-        # dpath = str(Path.home() / "Downloads")
-        # rpath = os.path.join(dpath+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
-        # number_of_threads = 15
-        # # check for folder existent
-        # if not os.path.exists(rpath):
-        #     os.makedirs(rpath)
-        # ortho_path = os.path.join(rpath+'\\'+project_details['name']+'.tiff')
-
-        # if not os.path.exists(ortho_path) or os.path.getsize(ortho_path) != ortho_size.length:
-        #     logger(f"Downloading {project_details['name']} ortho ...")
-        #     download_ortho(ortho_size.length, number_of_threads, ortho_path, ortho_url)
-
-        # rlayer = QgsRasterLayer(ortho_path, project_details['name'] + "_ortho")
-
-        # Load vectors
     
         geojson_path = load_vectors(project_details,
                                             project_type,
@@ -84,7 +61,7 @@ def Project_loadTask(task, load_inputs):
         tb = traceback.format_exc()
         logger(str(tb), level=Qgis.Warning)
         return False
-
+    
     return {'rlayer_url': orthotiles_url,
             'project_uid': project_uid,
             'class_maps': class_maps,

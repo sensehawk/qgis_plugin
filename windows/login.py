@@ -64,7 +64,7 @@ class LoginWindow(QtWidgets.QWidget):
         self.canvas_logger('Welcome to Sensehawk Qgis plugin')
 
     def logger(self, message, level=Qgis.Info):
-        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
+        QgsMessageLog.logMessage(str(message), 'SenseHawk QC', level=level)
 
     def canvas_logger(self, message, level=Qgis.Info):
         self.iface.messageBar().clearWidgets()
