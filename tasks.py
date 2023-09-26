@@ -13,7 +13,7 @@ import os
 import tempfile
 import urllib
 
-def loadTask(task, load_inputs):
+def Project_loadTask(task, load_inputs):
     try:
         project_uid = load_inputs.get("project_uid", None)
         project_type = load_inputs.get("project_type", None)
@@ -34,7 +34,7 @@ def loadTask(task, load_inputs):
             org = project_details['organization']['uid']
             existing_files = file_existent(project_uid,org,core_token)
 
-####################################
+    ####################################
         # Load orthotiles
         # Get base url for ortho tiles
         base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)

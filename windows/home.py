@@ -25,7 +25,6 @@
 from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
 from ..sensehawk_apis.terra_apis import get_terra_classmaps
 from ..utils import containers_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details, groups_details
-from ..tasks import loadTask
 from ..windows.projectLoad import ProjectLoadWindow
 from ..windows.project_management.workspace import WorkspaceWindow
 
@@ -85,7 +84,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.org.setEnabled(True)
         self.asset_details = result['asset_dict']
 
-        asset_list = list(a["name"] for a in self.asset_details.values()) #{'uid':'asset_name'}
+        asset_list = list(a["name"] for a in self.asset_details.values()) 
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
         self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list) 
@@ -118,7 +117,6 @@ class HomeWindow(QtWidgets.QWidget):
     def asset_tree(self):
         self.projectbutton.setEnabled(False)
         self.asset_uid = list(filter(lambda x: self.asset_details[x]["name"] == self.asset_combobox.currentText(), self.asset_details))[0]
-        # self.asset_uid = self.asset_details.get(self.asset.currentText(), None) # {'uid':''}
         print(self.org_uid, self.asset_uid)
 
         asset_container = QgsTask.fromFunction("Fetching asset level container", containers_details, self.asset_uid, self.org_uid, self.core_token)
@@ -139,6 +137,7 @@ class HomeWindow(QtWidgets.QWidget):
                                                 name=group_details[0],
                                                 container_uid=group_container_uid,
                                                 containers_dict=self.containers_dict,
+                                                org_info = {'uid':self.org_uid, 'name':self.org.currentText()},
                                                 projects_details=group_details[1])
         
     def parse_containers_info(self):

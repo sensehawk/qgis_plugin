@@ -652,9 +652,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             
             
     def back_to_load(self):
-        self.load_window.dock_widget.setWidget(self.load_window)
-        if self.active_project:
-            self.active_project.docktool_widget.hide()
+        self.load_window.workspace_window.active_widget.hide()
+        self.load_window.workspace_window.group_workspace.show()
+        self.load_window.workspace_window.active_widget = self.load_window.workspace_window.group_workspace
 
     def add_project(self, project):
         self.rlayer_id = project.rlayer.id()

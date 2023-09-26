@@ -6,14 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>119</width>
-    <height>639</height>
+    <width>116</width>
+    <height>656</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
@@ -26,80 +29,63 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <item row="0" column="0">
-    <widget class="QGraphicsView" name="asset_label">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>20</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>20</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="2">
+   <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="logo_label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>62</width>
+         <height>62</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>62</width>
+         <height>62</height>
+        </size>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Panel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <property name="text">
+        <string> *LOGO*</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>52</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QLabel" name="logo_label">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>62</width>
-           <height>62</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>62</width>
-           <height>62</height>
-          </size>
-         </property>
-         <property name="text">
-          <string> *LOGO*</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>52</width>
-           <height>25</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
+       <property name="spacing">
+        <number>6</number>
+       </property>
        <item>
         <widget class="QLabel" name="asset_logo">
          <property name="minimumSize">
@@ -117,14 +103,17 @@
          <property name="font">
           <font>
            <family>Times New Roman</family>
-           <pointsize>10</pointsize>
+           <pointsize>18</pointsize>
            <weight>50</weight>
            <bold>false</bold>
            <underline>true</underline>
           </font>
          </property>
          <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
+          <enum>QFrame::Panel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
           <string/>
@@ -141,13 +130,47 @@
         </widget>
        </item>
        <item>
-        <widget class="Line" name="line_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+        <widget class="QLabel" name="asset_label">
+         <property name="minimumSize">
+          <size>
+           <width>62</width>
+           <height>18</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>62</width>
+           <height>18</height>
+          </size>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
       </layout>
+     </item>
+     <item>
+      <widget class="Line" name="line_2">
+       <property name="maximumSize">
+        <size>
+         <width>62</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="project_management_button">
@@ -172,6 +195,9 @@
        <property name="text">
         <string>PM</string>
        </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -189,7 +215,7 @@
        <property name="sizeHint" stdset="0">
         <size>
          <width>70</width>
-         <height>124</height>
+         <height>70</height>
         </size>
        </property>
       </spacer>
@@ -246,8 +272,11 @@
      </item>
     </layout>
    </item>
-   <item row="0" column="3">
+   <item>
     <widget class="Line" name="line_3">
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>

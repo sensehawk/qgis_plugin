@@ -2,7 +2,7 @@ from qgis.PyQt.QtCore import Qt, QSize
 from PyQt5 import QtCore, QtGui, QtWidgets 
 from qgis.utils import iface
 from qgis.core import Qgis, QgsApplication, QgsTask, QgsProject, QgsMessageLog
-from ..tasks import loadTask
+from ..tasks import Project_loadTask
 from PyQt5.QtWidgets import QLineEdit, QLabel,QCompleter, QVBoxLayout, QPushButton, QComboBox
 from PyQt5.QtCore import QRect
 from ..utils import download_file, load_vectors, categorize_layer , groups_details, combobox_modifier, containers_details
@@ -172,7 +172,6 @@ class ProjectLoadWindow(QtWidgets.QWidget):
         self.categorized_renderer = categorize_layer(project)
         self.project_tabs_widget.show()
         self.show_projects_loaded()
-        # collect loaded project layers id's
 
 
     def start_project_load(self, project_uid, project_type, clicked_button):
@@ -197,7 +196,7 @@ class ProjectLoadWindow(QtWidgets.QWidget):
                             "org_uid":self.org_uid,
                             'container_uid':self.container_uid,
                             "logger": self.logger}
-        load_task = QgsTask.fromFunction(f"{project_name} Project Load", loadTask, load_task_inputs)
+        load_task = QgsTask.fromFunction(f"{project_name} Project Load", Project_loadTask, load_task_inputs)
         QgsApplication.taskManager().addTask(load_task)
         load_task.statusChanged.connect(lambda load_task_status: self.load_callback(load_task_status, load_task, clicked_button))
 

@@ -559,3 +559,19 @@ def containers_details(task, asset_uid, org_uid, core_token):
 
     return {'containers_dict':containers_dict, 'task':task.description()}
 
+def download_asset_logo(asset_name, url):
+
+    d_path = str(Path.home() / "Downloads")
+    path = os.path.join(d_path+'\\'+'Sensehawk_plugin'+'\\'+asset_name)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    logo_name = asset_name+'.png'
+    asset_logo_path = os.path.join(path, logo_name)
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    
+    with open(asset_logo_path, 'wb') as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            file.write(chunk)
+
+    return asset_logo_path

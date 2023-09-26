@@ -20,9 +20,10 @@ class Container:
 
 
 class Group:
-    def __init__(self, uid, name, container_uid, containers_dict, projects_details=None):
+    def __init__(self, uid, name, container_uid, containers_dict, org_info, projects_details=None):
         self.uid = uid
         self.name = name
+        self.org_info = org_info
         self.container = containers_dict.get(container_uid, None)
         self.projects_details = projects_details
         # Add group to container object

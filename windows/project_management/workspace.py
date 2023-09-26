@@ -3,11 +3,13 @@ from PyQt5.QtWidgets import QPushButton, QWidget
 
 from ..project_management.datatypes import Asset
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QSize
 from qgis.PyQt import QtCore
 from .groups_homepage import GroupSelectionWidget
 from .group_workspace import GroupWorkspace
+from ...utils import download_asset_logo
 import os
+
 
 
 class WorkspaceWindow(QtWidgets.QWidget):
@@ -32,6 +34,8 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.asset_uid = home_window.asset_uid
         self.user_email = home_window.user_email
         self.core_token = home_window.core_token
+        self.logger = home_window.logger
+        self.canvas_logger = home_window.canvas_logger
        
         # self.container_details = home_window.container_details 
         self.home_window = home_window
@@ -47,39 +51,29 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.dashboard_ui.project_management_button.clicked.connect(self.load_project_management)
         self.group_workspace = None
         self.group_selection_widget = None
+        self.therm_project_tabs_widget = None
+        self.terra_project_tabs_widget = None
+        self.active_widget = None
 
     def set_asset_label(self):
-        # class AssetLabel(QWidget):
-        #     def __init__(self, asset_name):
-        #         super(AssetLabel, self).__init__()
-        #         self.asset_name = asset_name
 
-        #     def paintEvent(self, event):
-        #         painter = QtGui.QPainter(self)
-        #         painter.setPen(Qt.black)
-        #         painter.translate(5, -50)
-        #         painter.rotate(90)
-        #         painter.drawText(0, 0, self.asset_name)
-        #         painter.end()
-        
-        # asset_label = AssetLabel(self.home_window.asset.name)
-        asset_label_scene = QtWidgets.QGraphicsScene()
-        self.dashboard_ui.asset_label.setScene(asset_label_scene)
-        label = QtWidgets.QGraphicsTextItem(self.home_window.asset.name)
-        label.setRotation(-90)
-        asset_label_scene.addItem(label)
-        label.setPos(0, 0)
-        
-        # asset_label.setFixedSize(40,500)
-        # self.dashboard_ui.asset_label_layout.addWidget(asset_label, Qt.AlignTop)
-        # Check if profile photo of the asset exists
+        # Limit length of name to 15 characters
+        if len(self.home_window.asset.name) <= 9:
+            self.dashboard_ui.asset_label.setText(self.home_window.asset.name)
+        else:
+            self.dashboard_ui.asset_label.setText(self.home_window.asset.name[:8]+"..")
+        self.dashboard_ui.asset_label.setAlignment(Qt.AlignCenter)
+        # self.dashboard_ui.asset_label.setStyleSheet("background-color: #d7e1f5;  color: #35373b;")
 
-        # # Limit length of name to 15 characters
-        # if len(self.home_window.asset.name) <= 15:
-        #     self.dashboard_ui.asset_label.setText(self.home_window.asset.name)
-        # else:
-        #     self.dashboard_ui.asset_label.setText(self.home_window.asset.name[:15]+"...")
-    
+        if self.home_window.asset.profile_image:
+            asset_logo_path = download_asset_logo(self.home_window.asset.name, self.home_window.asset.profile_image)
+            logo = QtGui.QPixmap(asset_logo_path)
+            self.dashboard_ui.asset_logo.setPixmap(logo)
+            print(asset_logo_path)
+        else:
+            self.dashboard_ui.asset_logo.setText(self.home_window.asset.name[:1])
+            self.dashboard_ui.asset_logo.setStyleSheet("background-color: #d7e1f5;  color: #35373b;")
+
     def load_home(self):
         self.dock_widget.setWidget(self.home_window)
         self.dock_widget.setFixedSize(300, 830)
@@ -87,14 +81,29 @@ class WorkspaceWindow(QtWidgets.QWidget):
     
     def load_project_management(self):
         if not self.group_selection_widget:
+            print('first')
             self.group_selection_widget =  GroupSelectionWidget(self)
+            self.active_widget = self.group_selection_widget
         else:
-            self.group_selection_widget.show()
-        if self.group_workspace :
-            self.group_workspace.hide()
+            if self.active_widget is self.group_selection_widget:
+                pass
+            else:
+                self.group_selection_widget.show()
+                self.active_widget.hide()
+                self.active_widget = self.group_selection_widget
 
     def load_group_window(self, group_uid):
         group_obj = self.home_window.groups_dict[group_uid]
-        self.group_selection_widget.hide()
-        self.group_workspace = GroupWorkspace(self, group_obj)
-        self.pm_workspace_grid.addWidget(self.group_workspace, 0, 1, Qt.AlignTop)
+        if not self.group_workspace:
+            self.group_workspace = GroupWorkspace(self, group_obj)
+            self.active_widget.hide()
+            self.active_widget = self.group_workspace
+            self.pm_workspace_grid.addWidget(self.group_workspace, 0, 1, Qt.AlignTop)
+        else:
+            self.group_workspace.group_obj = group_obj
+            self.group_workspace.setupUi()
+            self.group_workspace.show()
+            self.active_widget.hide()
+            self.active_widget = self.group_workspace
+
+   
