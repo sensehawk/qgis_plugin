@@ -12,6 +12,8 @@ import traceback
 import os
 import tempfile
 import urllib
+from .windows.nextracker.nextracker_tools import setup_nextracker_features
+
 
 def Project_loadTask(task, load_inputs):
     try:
@@ -26,7 +28,11 @@ def Project_loadTask(task, load_inputs):
         project_details["project_type"] = project_type
         # Get the class maps for vectors from terra / therm
         if project_type == "terra":
+            # Speacial case: Nextracker org
+            if org_uid == "00g305uhwb3ULo6Em0i7":
+                setup_nextracker_features(container_uid, core_token)
             class_maps, class_groups = get_terra_classmaps(project_details, core_token)
+            logger("Class Maps: "+str(class_maps))
             existing_files = None
             container_class_map = {}
         elif project_type == "therm":
@@ -143,7 +149,6 @@ def loginTask(task, login_window):
     # login_window.user_password = login_window.userPassword.text()
     login_window.user_email = 'ganesh@sensehawk.com'
     login_window.user_password = 'Gana@1979'
-
 
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
 
