@@ -132,26 +132,36 @@ class GroupWorkspace(QtWidgets.QWidget):
         
     def show_projects_loaded(self, application_type):
         if application_type == 'therm':
+            if not self.workspace_window.therm_tab_button:
+                self.workspace_window.therm_tab_button = QtWidgets.QPushButton('Therm')
+                self.workspace_window.therm_tab_button.setFixedSize(62, 62)
+                self.workspace_window.therm_tab_button.clicked.connect(self.workspace_window.load_therm_tab_widget)
+                self.workspace_window.therm_tab_button.setCheckable(True)
+                self.workspace_window.therm_tab_button.setChecked(True)
+                self.workspace_window.dashboard_ui.module_layout.addWidget(self.workspace_window.therm_tab_button)
+
             if not self.workspace_window.therm_project_tabs_widget:
                 self.workspace_window.therm_project_tabs_widget = self.therm_project_tabs_widget
                 self.workspace_window.pm_workspace_grid.addWidget(self.therm_project_tabs_widget, 0,1, Qt.AlignTop)
-                self.workspace_window.active_widget.hide()
-                self.workspace_window.active_widget = self.therm_project_tabs_widget
+                self.workspace_window.load_therm_tab_widget()
             else:
-                self.workspace_window.therm_project_tabs_widget.show()
-                self.workspace_window.active_widget.hide()
-                self.workspace_window.active_widget = self.therm_project_tabs_widget
+                self.workspace_window.load_therm_tab_widget()
+
         elif application_type == 'terra':
-            # TODO set active_widget and load terra tab widget
+            if not self.workspace_window.terra_tab_button:
+                self.workspace_window.terra_tab_button = QtWidgets.QPushButton('Terra')
+                self.workspace_window.terra_tab_button.setFixedSize(62, 62)
+                self.workspace_window.terra_tab_button.clicked.connect(self.workspace_window.load_terra_tab_widget)
+                self.workspace_window.terra_tab_button.setCheckable(True)
+                self.workspace_window.terra_tab_button.setChecked(True)
+                self.workspace_window.dashboard_ui.module_layout.addWidget(self.workspace_window.terra_tab_button)
+
             if not self.workspace_window.terra_project_tabs_widget:
                 self.workspace_window.terra_project_tabs_widget = self.terra_project_tabs_widget
                 self.workspace_window.pm_workspace_grid.addWidget(self.terra_project_tabs_widget, 0,1, Qt.AlignTop)
-                self.workspace_window.active_widget.hide()
-                self.workspace_window.active_widget = self.terra_project_tabs_widget
+                self.workspace_window.load_terra_tab_widget()
             else:
-                self.workspace_window.terra_project_tabs_widget.show()
-                self.workspace_window.active_widget.hide()
-                self.workspace_window.active_widget = self.terra_project_tabs_widget
+                self.workspace_window.load_terra_tab_widget()
 
     def project_load_callback(self, load_task_status, load_task, application_type):
         if load_task_status != 3:

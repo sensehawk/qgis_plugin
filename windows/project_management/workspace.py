@@ -54,6 +54,9 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.therm_project_tabs_widget = None
         self.terra_project_tabs_widget = None
         self.active_widget = None
+        self.therm_tab_button = None
+        self.terra_tab_button = None
+        print(self.dashboard_ui.module_layout)
 
     def set_asset_label(self):
 
@@ -80,19 +83,34 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.hide()
     
     def load_project_management(self):
-        if not self.group_selection_widget:
-            print('first')
-            self.group_selection_widget =  GroupSelectionWidget(self)
-            self.active_widget = self.group_selection_widget
-        else:
-            if self.active_widget is self.group_selection_widget:
-                pass
-            else:
-                self.group_selection_widget.show()
-                self.active_widget.hide()
+        #uncheck therm_tab_button
+        if self.therm_tab_button:
+            self.therm_tab_button.setChecked(False)
+        if self.terra_tab_button:
+            self.terra_tab_button.setChecked(False)
+        if self.dashboard_ui.project_management_button.isChecked():
+            print('checked')
+            if not self.group_selection_widget:
+                self.group_selection_widget =  GroupSelectionWidget(self)
                 self.active_widget = self.group_selection_widget
+            else:
+                if self.active_widget is self.group_selection_widget:
+                    pass
+                else:
+                    self.group_selection_widget.show()
+                    if self.active_widget:
+                        self.active_widget.hide()
+                    else:
+                        self.dock_widget.setFixedSize(520,830)
+                    self.active_widget = self.group_selection_widget
+        else:
+            self.active_widget.hide()
+            self.active_widget = None
+            self.dock_widget.setFixedSize(130, 830)
 
     def load_group_window(self, group_uid):
+        #uncheck project management button
+        self.dashboard_ui.project_management_button.setChecked(False)
         group_obj = self.home_window.groups_dict[group_uid]
         if not self.group_workspace:
             self.group_workspace = GroupWorkspace(self, group_obj)
@@ -106,4 +124,41 @@ class WorkspaceWindow(QtWidgets.QWidget):
             self.active_widget.hide()
             self.active_widget = self.group_workspace
 
-   
+    def load_therm_tab_widget(self):
+        #uncheck project management button
+        if self.terra_tab_button:
+            self.terra_tab_button.setChecked(False)
+        self.dashboard_ui.project_management_button.setChecked(False)
+        if self.therm_tab_button.isChecked():
+            if self.active_widget is self.therm_project_tabs_widget:
+                pass
+            else:
+                self.therm_project_tabs_widget.show()
+                if self.active_widget:
+                    self.active_widget.hide()
+                else:
+                    self.dock_widget.setFixedSize(520,830)
+                self.active_widget = self.therm_project_tabs_widget
+        else:
+            self.active_widget.hide()
+            self.active_widget = None
+            self.dock_widget.setFixedSize(130,830)
+    
+    def load_terra_tab_widget(self):#uncheck project management button
+        if self.terra_tab_button:
+            self.terra_tab_button.setChecked(False)
+        self.dashboard_ui.project_management_button.setChecked(False)
+        if self.terra_tab_button.isChecked():
+            if self.active_widget is self.terra_project_tabs_widget:
+                pass
+            else:
+                self.terra_project_tabs_widget.show()
+                if self.active_widget:
+                    self.active_widget.hide()
+                else:
+                    self.dock_widget.setFixedSize(520,830)
+                self.active_widget = self.terra_project_tabs_widget
+        else:
+            self.active_widget.hide()
+            self.active_widget = None
+            self.dock_widget.setFixedSize(130,830)
