@@ -145,8 +145,8 @@ class WorkspaceWindow(QtWidgets.QWidget):
             self.dock_widget.setFixedSize(130,830)
     
     def load_terra_tab_widget(self):#uncheck project management button
-        if self.terra_tab_button:
-            self.terra_tab_button.setChecked(False)
+        if self.therm_tab_button:
+            self.therm_tab_button.setChecked(False)
         self.dashboard_ui.project_management_button.setChecked(False)
         if self.terra_tab_button.isChecked():
             if self.active_widget is self.terra_project_tabs_widget:

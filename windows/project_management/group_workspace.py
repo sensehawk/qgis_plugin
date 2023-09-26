@@ -145,6 +145,7 @@ class GroupWorkspace(QtWidgets.QWidget):
                 self.workspace_window.pm_workspace_grid.addWidget(self.therm_project_tabs_widget, 0,1, Qt.AlignTop)
                 self.workspace_window.load_therm_tab_widget()
             else:
+                self.workspace_window.therm_tab_button.setChecked(True)
                 self.workspace_window.load_therm_tab_widget()
 
         elif application_type == 'terra':
@@ -161,6 +162,7 @@ class GroupWorkspace(QtWidgets.QWidget):
                 self.workspace_window.pm_workspace_grid.addWidget(self.terra_project_tabs_widget, 0,1, Qt.AlignTop)
                 self.workspace_window.load_terra_tab_widget()
             else:
+                self.workspace_window.terra_tab_button.setChecked(True)
                 self.workspace_window.load_terra_tab_widget()
 
     def project_load_callback(self, load_task_status, load_task, application_type):
