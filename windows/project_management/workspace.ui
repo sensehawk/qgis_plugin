@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>116</width>
-    <height>656</height>
+    <height>568</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -76,7 +76,7 @@
        <property name="sizeHint" stdset="0">
         <size>
          <width>52</width>
-         <height>40</height>
+         <height>25</height>
         </size>
        </property>
       </spacer>
@@ -195,6 +195,9 @@
        <property name="text">
         <string>PM</string>
        </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
        <property name="flat">
         <bool>false</bool>
        </property>
@@ -243,6 +246,9 @@
        <property name="text">
         <string>🏡Home</string>
        </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -267,6 +273,12 @@
        </property>
        <property name="text">
         <string>🔒Logout</string>
+       </property>
+       <property name="checkable">
+        <bool>false</bool>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
