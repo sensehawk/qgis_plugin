@@ -24,18 +24,10 @@
 
 from qgis.PyQt import QtWidgets, uic
 import os
-import requests
+from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
+from .utils import setup_clipped_orthos_group
+from ...tasks import clipRequest
 
-
-# Works only for projects in NEXTracker organization
-def setup_nextracker_features(container_uid, core_token):
-    url = f"https://terra-server.sensehawk.com/container-views/{container_uid}/ftg/add/"
-    headers = {"Authorization": f"Token {core_token}"}
-    params = {"organization": "00g305uhwb3ULo6Em0i7"}
-    # Pre-existing feature type groups
-    body = {"featureTypeGroups":["WcePT5wZkJQs","1Ngg3bHRXe5v"]}
-    requests.post(url, json=body, headers=headers, params=params)
-    return True
 
 class NextrackerToolsWidget(QtWidgets.QWidget):
 
@@ -43,12 +35,20 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         """Constructor."""
         super(NextrackerToolsWidget, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'nextracker_tools.ui'), self)
-        # self.project = project
+        self.train_widget = uic.loadUi(os.path.join(os.path.dirname(__file__), 'train.ui'), QtWidgets.QWidget())
+        self.train_widget.mstrings_strings.clicked.connect(lambda:self.logger("Training Mstrings and Strings"))
+        self.train_widget.keypoints.clicked.connect(lambda:self.logger("Training Keypoints"))
+        self.detect_widget = uic.loadUi(os.path.join(os.path.dirname(__file__), 'detect.ui'), QtWidgets.QWidget())
+        self.detect_widget.mstrings_strings.clicked.connect(lambda:self.logger("Detecting Mstrings and Strings"))
+        self.detect_widget.keypoints.clicked.connect(lambda:self.logger("Detecting Keypoints"))
+        self.project = project
         # self.parent = self.project.project_tab
         # self.modify_button.clicked.connect(self.modification)
         # self.detect_button.clicked.connect(self.start_detect_task)
         # self.approve_button.clicked.connect(self.start_approve_task)
-        # self.clip_button.clicked.connect(self.start_clip_task)
+        self.clip_button.clicked.connect(self.start_clip_task)
+        self.train_button.clicked.connect(self.train)
+        self.detect_button.clicked.connect(self.detect)
         # self.requestModelButton.clicked.connect(self.request_model)
         # self.core_token = self.project.core_token
         # self.project_details = self.project.project_details
@@ -59,7 +59,14 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         # self.models_dict = {}
         # # ML Service Map
         # self.ml_service_map_widget = None
+    def logger(self, message, level=Qgis.Info):
+        QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
+    def train(self):
+        self.train_widget.show()
+
+    def detect(self):
+        self.detect_widget.show()
     # def uncheck_all_buttons(self):
     #     for button in self.findChildren(QtWidgets.QPushButton):
     #         if button.isCheckable():
@@ -80,16 +87,40 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
     #     self.detectionModel.clear()
     #     self.detectionModel.addItems(list_items)
 
-    # def start_clip_task(self):
-    #     def callback(task, logger):
-    #         result = task.returned_values
-    #         if result:
-    #             logger(str(result["message"]))
-    #     self.logger("Clip task starting...")
-    #     clip_task_inputs = self.logger, self.project_details, self.load_window.geojson_path, self.class_maps, self.core_token
-    #     clip_task = QgsTask.fromFunction("Clip Request", clipRequest, clip_task_input=clip_task_inputs)
-    #     clip_task.statusChanged.connect(lambda:callback(clip_task, self.logger))
-    #     QgsApplication.taskManager().addTask(clip_task)
+    def start_clip_task(self):
+
+        def validate_group_callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(str(result["message"]))
+            if result and result["success"]:
+                clip_task_inputs = {'project_uid': self.project.project_details["uid"],
+                                    'geojson_path': self.project.geojson_path,
+                                    'class_maps': self.project.class_maps,
+                                    'core_token': self.project.core_token,
+                                    'project_type': 'terra',
+                                    'user_email': self.project.user_email,
+                                    'convert_to_magma': False,
+                                    'group_uid': result["group_uid"],
+                                    'logger': self.logger}
+                self.logger("Clip task starting...")
+                clip_task = QgsTask.fromFunction("Clip Request", clipRequest, clip_task_input=clip_task_inputs)
+                clip_task.statusChanged.connect(lambda:clip_callback(clip_task, self.logger))
+                QgsApplication.taskManager().addTask(clip_task)
+            
+        def clip_callback(task, logger):
+            result = task.returned_values
+            if result:
+                logger(str(result["message"]))
+        
+        # Check if `Clipped Orthos` group exists or not
+        self.logger("Validating `Clipped Orthos` group")
+        deal_id, asset_uid, container_uid, core_token = self.project.group_details.deal_id, self.project.group_details.container.asset.uid, self.project.group_details.container.uid, self.project.core_token
+        group_validate_task = QgsTask.fromFunction("Clipped Orthos group validate", 
+                                                   setup_clipped_orthos_group, 
+                                                   task_inputs=[deal_id, asset_uid, container_uid, core_token, self.logger])
+        group_validate_task.statusChanged.connect(lambda:validate_group_callback(group_validate_task, self.logger))
+        QgsApplication.taskManager().addTask(group_validate_task)
 
     # def start_detect_task(self):
     #     def callback(task, logger):

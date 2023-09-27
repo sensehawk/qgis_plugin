@@ -239,7 +239,7 @@ def groups_details(asset, org, token):
         project_details = {}
         for projects in group['projects']:
             project_details[projects['uid']] = projects['name']
-        groups_dict[group['uid']] = (group['name'], project_details, group['container'])
+        groups_dict[group['uid']] = (group['name'], project_details, group['container'], group["deal_id"])
     return groups_dict
 
 

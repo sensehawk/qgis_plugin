@@ -12,7 +12,7 @@ import traceback
 import os
 import tempfile
 import urllib
-from .windows.nextracker.nextracker_tools import setup_nextracker_features
+from .windows.nextracker.utils import setup_nextracker_features, setup_clipped_orthos_group, nextracker_org_uid
 
 
 def Project_loadTask(task, load_inputs):
@@ -28,9 +28,11 @@ def Project_loadTask(task, load_inputs):
         project_details["project_type"] = project_type
         # Get the class maps for vectors from terra / therm
         if project_type == "terra":
-            # Speacial case: Nextracker org
-            if org_uid == "00g305uhwb3ULo6Em0i7":
+            # Special case: Nextracker org
+            if org_uid == nextracker_org_uid:
+                logger("Nextracker project")
                 setup_nextracker_features(container_uid, core_token)
+                logger("Nextracker features setup complete")
             class_maps, class_groups = get_terra_classmaps(project_details, core_token)
             logger("Class Maps: "+str(class_maps))
             existing_files = None
@@ -83,13 +85,15 @@ def clipRequest(task, clip_task_input):
     """
     Sends clip request to the AWS lambda clip function
     """
-    project_details = clip_task_input['project_details']
+    project_uid= clip_task_input['project_uid']
     geojson_path = clip_task_input['geojson_path']
     class_maps = clip_task_input['class_maps']
     core_token = clip_task_input['core_token']
     project_type = clip_task_input['project_type'] 
     user_email = clip_task_input['user_email']
     convert_to_magma = clip_task_input['convert_to_magma']
+    group_uid = clip_task_input.get('group_uid', None)
+    logger = clip_task_input.get("logger", None)
 
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
@@ -123,25 +127,27 @@ def clipRequest(task, clip_task_input):
             return {"task": task.description(), "title": 'Need unique clip boundary names',
                     "description": "Please provide unique name property to all clip_boundary features before clipping...", 'level':Qgis.Warning}
 
-        ortho_url = get_project_reports(project_details.get("uid", None), core_token).get("ortho", None)
+        ortho_url = get_project_reports(project_uid, core_token).get("ortho", None)
         if not ortho_url:
             return {"task": task.description(), "title": "Ortho doesn't exist",
                     "description": "No ortho found for project...", 'level':Qgis.Warning}
         
-        request_body = {"project_uid": project_details.get("uid", None),
+        request_body = {"project_uid": project_uid,
                         "raster_url": ortho_url,
                         "geojson": geojson,
                         "clip_boundary_class_name": clip_boundary_class_name,
                         "project_type": project_type,
                         "email_id": user_email,
-                        "convert_to_magma": convert_to_magma}
+                        "convert_to_magma": convert_to_magma,
+                        "group_uid": group_uid}
 
         headers = {"Authorization": f"Token {core_token}"}
         response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
         res_status = response.status_code
+        logger(str(response.json()))
         res_title, res_description = response.json()['title'], response.json()['description']
     except Exception:
-        print(traceback.format_exc())
+        logger(traceback.format_exc())
     return {"task": task.description(), 'title':res_title, 'description':res_description, 'res_status':res_status}
 
 def loginTask(task, login_window):

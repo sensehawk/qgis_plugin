@@ -138,6 +138,7 @@ class HomeWindow(QtWidgets.QWidget):
                                                 container_uid=group_container_uid,
                                                 containers_dict=self.containers_dict,
                                                 org_info = {'uid':self.org_uid, 'name':self.org.currentText()},
+                                                deal_id=group_details[3],
                                                 projects_details=group_details[1])
         
     def parse_containers_info(self):

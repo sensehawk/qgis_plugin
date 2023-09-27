@@ -318,7 +318,7 @@ class Project:
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
             # Check if the organization is NEXTracker
-            if self.project_details["organization"]["uid"] == "00g305uhwb3ULo6Em0i7":
+            if self.project_details["organization"]["uid"] == "00g7uy87cofqS3X380i7":#"00g305uhwb3ULo6Em0i7":
                 self.tools_widget = NextrackerToolsWidget(self)
             else:
                 # get terra tools
