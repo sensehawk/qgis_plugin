@@ -10,12 +10,10 @@ from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
 from ..utils import fields_validator, categorize_layer, save_edits
 import pandas as pd
-import qgis
 import json
 from .keyboard_settings import ShortcutSettings
 import random 
 import string
-import re
 import tempfile
 import shutil
 import numpy as np
@@ -602,8 +600,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Create gis shortcuts generic to all projects
         self.qgis_shortcuts = {
             "E": "self.active_project.vlayer.startEditing()",
-            # "A": "self.active_project.vlayer.removeSelection()\n"
-            #           "self.active_project.vlayer.commitChanges()",
             "F": "self.active_project.vlayer.startEditing()\n"
                  "iface.actionAddFeature().trigger()",
             "S": "iface.actionSelect().trigger()",
@@ -651,6 +647,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         if self.load_window.workspace_window.terra_tab_button:
             self.load_window.workspace_window.terra_tab_button.setChecked(False)
         self.load_window.workspace_window.active_widget.hide()
+        self.load_window.workspace_window.group_workspace.setupUi(self.active_project.group_obj, self.active_project.group_dict)
         self.load_window.workspace_window.group_workspace.show()
         self.load_window.workspace_window.active_widget = self.load_window.workspace_window.group_workspace
 

@@ -1,10 +1,5 @@
-
-from PyQt5.QtWidgets import QPushButton, QWidget
-
-from ..project_management.datatypes import Asset
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
-from qgis.PyQt.QtCore import Qt, QSize
-from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import Qt 
 from .groups_homepage import GroupSelectionWidget
 from .group_workspace import GroupWorkspace
 from ...utils import download_asset_logo
@@ -29,6 +24,7 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.dashboard_ui.logout_button.setStyleSheet('QPushButton {background-color: #f7b7ce; color: #3d3838;}')
         
         self.iface = iface
+        self.user_id = home_window.user_id
         self.groups_form = None
         self.org_uid = home_window.org_uid
         self.asset_uid = home_window.asset_uid
@@ -36,7 +32,8 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.core_token = home_window.core_token
         self.logger = home_window.logger
         self.canvas_logger = home_window.canvas_logger
-       
+        self.asset = home_window.asset
+        self.org_info = home_window.org_info
         # self.container_details = home_window.container_details 
         self.home_window = home_window
         self.set_asset_label()
@@ -93,10 +90,13 @@ class WorkspaceWindow(QtWidgets.QWidget):
             if not self.group_selection_widget:
                 self.group_selection_widget =  GroupSelectionWidget(self)
                 self.active_widget = self.group_selection_widget
+                self.pm_workspace_grid.addWidget(self.group_selection_widget, 0, 1, Qt.AlignTop)
+                self.dock_widget.setFixedSize(520, 830)
             else:
                 if self.active_widget is self.group_selection_widget:
                     pass
                 else:
+                    self.group_selection_widget.setup_ui(self)
                     self.group_selection_widget.show()
                     if self.active_widget:
                         self.active_widget.hide()
@@ -113,13 +113,12 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.dashboard_ui.project_management_button.setChecked(False)
         group_obj = self.home_window.groups_dict[group_uid]
         if not self.group_workspace:
-            self.group_workspace = GroupWorkspace(self, group_obj)
+            self.group_workspace = GroupWorkspace(self, group_obj, self.home_window.groups_dict)
             self.active_widget.hide()
             self.active_widget = self.group_workspace
             self.pm_workspace_grid.addWidget(self.group_workspace, 0, 1, Qt.AlignTop)
         else:
-            self.group_workspace.group_obj = group_obj
-            self.group_workspace.setupUi()
+            self.group_workspace.setupUi(group_obj, self.home_window.groups_dict)
             self.group_workspace.show()
             self.active_widget.hide()
             self.active_widget = self.group_workspace
@@ -162,3 +161,4 @@ class WorkspaceWindow(QtWidgets.QWidget):
             self.active_widget.hide()
             self.active_widget = None
             self.dock_widget.setFixedSize(130,830)
+    

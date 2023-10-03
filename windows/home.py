@@ -83,6 +83,7 @@ class HomeWindow(QtWidgets.QWidget):
         
         self.org.setEnabled(True)
         self.asset_details = result['asset_dict']
+        self.user_id = result['user_id']
 
         asset_list = list(a["name"] for a in self.asset_details.values()) 
         self.asset_combobox.setEnabled(True)
@@ -112,11 +113,16 @@ class HomeWindow(QtWidgets.QWidget):
         if not 'containers_dict' in result:
             return None
         self.projectbutton.setEnabled(True)
+        self.projectbutton.setStyleSheet("background-color:#dcf6f7;")
         self.containers_details = result['containers_dict']
         
     def asset_tree(self):
         self.projectbutton.setEnabled(False)
-        self.asset_uid = list(filter(lambda x: self.asset_details[x]["name"] == self.asset_combobox.currentText(), self.asset_details))[0]
+        self.projectbutton.setStyleSheet("background-color:#f7b7ad;")
+        try:
+            self.asset_uid = list(filter(lambda x: self.asset_details[x]["name"] == self.asset_combobox.currentText(), self.asset_details))[0]
+        except IndexError:
+            pass
         print(self.org_uid, self.asset_uid)
 
         asset_container = QgsTask.fromFunction("Fetching asset level container", containers_details, self.asset_uid, self.org_uid, self.core_token)
@@ -125,7 +131,7 @@ class HomeWindow(QtWidgets.QWidget):
 
     def parse_groups_info(self):
                                     # Container = {'uid':{'container_name':'container_uid','groups':[], x``,{}]}, 'container_name':{}}
-                                    # Group = {'uid':('Group_name', {'project_name':'uid', 'project_b': 'uid'}, {'container_name':'uid'})}
+                                    # Group = groups_dict[group['uid']] = (group['name'], project_details, group['container'])
         self.groups_dict = {}
         for group_uid, group_details in self.groups_details.items():
             if group_details[2]:
@@ -137,7 +143,8 @@ class HomeWindow(QtWidgets.QWidget):
                                                 name=group_details[0],
                                                 container_uid=group_container_uid,
                                                 containers_dict=self.containers_dict,
-                                                org_info = {'uid':self.org_uid, 'name':self.org.currentText()},
+                                                org_info = self.org_info,
+                                                deal_id = group_details[3],
                                                 projects_details=group_details[1])
         
     def parse_containers_info(self):
@@ -151,6 +158,7 @@ class HomeWindow(QtWidgets.QWidget):
             return None
 
         # list of all the groups in the asset and there respective projects  | {'group_name':('group_uid', {'project_name':'uid'}, {'container_name':'uid'})}
+        self.org_info = {'uid':self.org_uid, 'name':self.org.currentText()}
         self.groups_details = groups_details(self.asset_uid, self.org_uid, self.core_token)
         asset_dict = self.asset_details[self.asset_uid]
         self.asset = Asset(asset_dict, self.org_uid)
