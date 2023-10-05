@@ -39,6 +39,7 @@ from qgis.utils import iface
 from .project_management.datatypes import Asset, Container, Group
 
 import os
+import time
 
 
 class HomeWindow(QtWidgets.QWidget):
@@ -151,7 +152,7 @@ class HomeWindow(QtWidgets.QWidget):
     def parse_containers_info(self):
         self.containers_dict = {}
         for container_uid, container_details in self.containers_details.items():
-            self.containers_dict[container_uid] = Container(container_uid, container_details["name"], self.asset, applications=container_details['application_info'])
+            self.containers_dict[container_uid] = Container(container_uid, container_details["name"], self.asset, applications=container_details['applications_info'])
                                                      
     def show_asset_workspace(self):
         if not self.asset_uid:
@@ -165,6 +166,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset = Asset(asset_dict, self.org_uid)
         self.parse_containers_info()
         self.parse_groups_info()
+        time.sleep(0.5)
         self.asset_workspace = WorkspaceWindow(self, self.iface)
         self.hide()
         self.asset_workspace.show()

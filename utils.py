@@ -569,9 +569,9 @@ def containers_details(task, asset_uid, org_uid, core_token):
     for container in containers:
         groups = container['groups']
         container_name = container['name']
-        app_info = [app.get('application', None) for app in container['app_types'] ] # dict [{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
-        container_level_groups = [group['name'] for group in groups ]
-        containers_dict[container['uid']] = {'name':container_name, 'groups':container_level_groups, 'application_info':app_info}
+        # app_info = [app.get('application', None) for app in container['app_types'] ] 
+        container_level_groups = [group['name'] for group in groups ] # app_type [{'uid':1,'name':'Thermal analaysis','application':{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
+        containers_dict[container['uid']] = {'name':container_name, 'groups':container_level_groups, 'applications_info':container['app_types']}
 
     return {'containers_dict':containers_dict, 'task':task.description()}
 

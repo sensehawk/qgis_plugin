@@ -45,19 +45,23 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.project_count_label.setText(f"Project Count: {len(self.projects_dict)}")
         self.group_label.setText(f"Group: {self.group_obj.name}")
         container_menu = QtWidgets.QMenu()
-        assign_container_btn = QtWidgets.QAction('Assign', self)
+        assign_container_btn = QtWidgets.QAction('Assign CTR', self)
         remove_container_btn = QtWidgets.QAction("Remove", self)
         edit_container_btn = QtWidgets.QAction("Edit", self)
         create_container_btn = QtWidgets.QAction("Create", self)
+        assign_app_btn = QtWidgets.QAction("Assign App", self)
         assign_container_btn.triggered.connect(lambda : AssignContainer(self, self.workspace_window, self.group_obj))
         edit_container_btn.triggered.connect(lambda :EditContainer(self, self.workspace_window, self.group_obj))
         create_container_btn.triggered.connect(lambda : CreateContainer(self, self.workspace_window, self.group_obj))
         remove_container_btn.triggered.connect(lambda : self.remove_container())
-        container_menu.addActions([edit_container_btn, assign_container_btn, create_container_btn ,remove_container_btn ])
+        assign_app_btn.triggered.connect(lambda : AssignApplication(self, self.workspace_window, self.group_obj))
+        container_menu.addActions([edit_container_btn, create_container_btn ,remove_container_btn, assign_container_btn, assign_app_btn])
         self.container_btn.setMenu(container_menu) 
        
         if self.group_obj.container:
-            self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]
+            # self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]
+            self.group_app_types = { app['name'] : app  for app in self.group_obj.container.applications}
+            self.app_list = [app.get('application', None).get('name', None)   for app_name, app in self.group_app_types.items()]
             self.container_label.setText(f"Container: {self.group_obj.container.name}")
             self.container_btn.setText(':')
             print(self.app_list)
@@ -572,7 +576,6 @@ class EditContainer(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         layout = QtWidgets.QVBoxLayout(self)
         self.edit_container_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'container_edit.ui'))
-        self.edit_container_ui.container_name.setText(self.group_obj.container.name)
         button_box = QtWidgets.QDialogButtonBox()
         button_box.addButton("Update", QtWidgets.QDialogButtonBox.AcceptRole)
         button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
@@ -582,9 +585,10 @@ class EditContainer(QtWidgets.QDialog):
         layout.addWidget(self.edit_container_ui)
         layout.addWidget(button_box)
         if self.group_obj.container:
+            self.edit_container_ui.container_name.setText(self.group_obj.container.name)
             self.exec_()
         else:
-            self.workspace_window.canvas_logger('There is no container assigned to this group for editing...', level=Qgis.Warning)
+            self.workspace_window.canvas_logger('No container assigned to this group for editing...', level=Qgis.Warning)
     
     def edit_container(self):
         if self.edit_container_ui.container_name.text():
@@ -734,3 +738,51 @@ class CreateContainer(QtWidgets.QDialog):
     def close_dialogbox(self):
         self.reject()
 
+class AssignApplication(QtWidgets.QDialog):
+    def __init__(self, group_workspace, workspace_window, group_obj):
+        super(AssignApplication, self).__init__()
+        self.group_workspace = group_workspace
+        self.workspace_window = workspace_window
+        self.group_obj = group_obj
+        self.setWindowTitle("Create Container")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        layout = QtWidgets.QVBoxLayout(self)
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Update", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.update_app)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        self.checkbox_list = []
+        for app_name, app in self.workspace_window.apptype_details.items():
+            app_checkbox = QtWidgets.QCheckBox(app_name)
+            if app_name in self.group_workspace.group_app_types:
+                app_checkbox.setChecked(True)
+            self.checkbox_list.append(app_checkbox)
+            layout.addWidget(app_checkbox)
+        layout.addWidget(button_box)
+        if self.group_obj.container:
+            self.exec_()
+        else:
+            self.workspace_window.canvas_logger('No Container assigned to this group...', level=Qgis.Warning)
+    
+    def update_app(self):
+        self.accept()
+        selected_apps = []
+        for checkbox in self.checkbox_list:
+            if checkbox.isChecked():
+                selected_apps.append(self.workspace_window.apptype_details[checkbox.text()])
+        print(selected_apps)
+        json = {'app_types':selected_apps}
+        headers = {'Authorization':f'Token {self.workspace_window.core_token}'} 
+        url = CORE_URL+f'/api/v1/containers/{self.group_obj.container.uid}/?organization={self.workspace_window.org_uid}'
+        assign_app_response = requests.patch(url, headers=headers, json=json)
+        print(assign_app_response.status_code)
+        print(assign_app_response.json())
+        if assign_app_response.status_code == 200:
+            self.group_obj.container.applications = selected_apps
+            self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)
+
+
+    def close_dialogbox(self):
+        self.reject()
