@@ -17,11 +17,6 @@ class GroupsForm:
             group_button = QtWidgets.QPushButton(f'{group_obj.name}')
             group_button.clicked.connect(partial(workspace_window.load_group_window, group_uid))
             self.myform.addRow(group_button)
-            if group_obj.container:
-                print("From groups homepage")
-                print(group_obj.name)
-                print(group_obj.uid)
-                print(group_obj.container.applications)
 
         self.new_group_button = QtWidgets.QPushButton('+')
         self.new_group_button.clicked.connect(lambda : GroupCreate(workspace_window))
@@ -112,7 +107,6 @@ class GroupCreate(QtWidgets.QDialog):
                     if add_group_response.status_code == 200:
                         container_obj = self.workspace_window.home_window.containers_dict[container_uid]
                         container_obj.groups_dict[new_group_uid] = new_group_obj
-                        container_obj.group_info.append({'uid':new_group_uid,'name':new_group_name})
                         new_group_obj.container = container_obj
                         self.workspace_window.canvas_logger(f'{self.group_create_ui.group_name.text()} Group added to {container_name} Container....')
                     else:

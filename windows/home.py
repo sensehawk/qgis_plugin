@@ -84,7 +84,8 @@ class HomeWindow(QtWidgets.QWidget):
         self.org.setEnabled(True)
         self.asset_details = result['asset_dict']
         self.user_id = result['user_id']
-
+        self.apptype_details = result['apptype_dict']
+        print(self.apptype_details)
         asset_list = list(a["name"] for a in self.asset_details.values()) 
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()

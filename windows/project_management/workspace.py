@@ -34,6 +34,7 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.canvas_logger = home_window.canvas_logger
         self.asset = home_window.asset
         self.org_info = home_window.org_info
+        self.apptype_details = home_window.apptype_details
         # self.container_details = home_window.container_details 
         self.home_window = home_window
         self.set_asset_label()

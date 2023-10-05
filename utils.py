@@ -254,8 +254,18 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
     org_user_response = requests.get(user_id_url, headers=headers)
     user_id = org_user_response.json()['owner'].get('uid', None)
 
+    apptype_url = CORE_URL + f'/api/v1/apptypes/?organization={org_uid}'
+    apptype_response = requests.get(apptype_url, headers=headers)
+    apptype_details = apptype_response.json()['results']
+    apptype_dict = {}
+    if apptype_details:
+        for apptype in apptype_details:
+            apptype_dict[apptype['name']] = {'uid':apptype['uid'],'name':apptype['name'],'acitve':apptype['active'],'application':apptype['application']}
+
+
     return {'asset_dict': asset_dict,
             'user_id': user_id,
+            'apptype_dict':apptype_dict,
             'task': task.description()}
             # 'org_container_details':org_container_details,
 

@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import  QComboBox
-from ..project_management.datatypes import Asset
+from ..project_management.datatypes import Container
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
 from qgis.PyQt.QtCore import Qt
 from qgis.core import Qgis, QgsTask, QgsApplication
@@ -16,7 +16,7 @@ import requests
 
 therm_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'therm_logo.svg'))
 terra_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'terra_logo.svg'))
-
+add_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'add.png'))
 
 class GroupWorkspace(QtWidgets.QWidget):
     def __init__(self, workspace_window, group_obj, group_dict):
@@ -35,7 +35,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.therm_project_tabs_widget = ProjectTabsWidget(self)
         self.terra_project_tabs_widget = ProjectTabsWidget(self)
         self.setupUi(group_obj, group_dict)
-    
+         
     def setupUi(self, group_obj, group_dict):
         self.group_obj = group_obj
         self.group_dict = group_dict
@@ -44,14 +44,30 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.projects_dict = self.group_obj.projects_details
         self.project_count_label.setText(f"Project Count: {len(self.projects_dict)}")
         self.group_label.setText(f"Group: {self.group_obj.name}")
-        
+        container_menu = QtWidgets.QMenu()
+        assign_container_btn = QtWidgets.QAction('Assign', self)
+        remove_container_btn = QtWidgets.QAction("Remove", self)
+        edit_container_btn = QtWidgets.QAction("Edit", self)
+        create_container_btn = QtWidgets.QAction("Create", self)
+        assign_container_btn.triggered.connect(lambda : AssignContainer(self, self.workspace_window, self.group_obj))
+        edit_container_btn.triggered.connect(lambda :EditContainer(self, self.workspace_window, self.group_obj))
+        create_container_btn.triggered.connect(lambda : CreateContainer(self, self.workspace_window, self.group_obj))
+        remove_container_btn.triggered.connect(lambda : self.remove_container())
+        container_menu.addActions([edit_container_btn, assign_container_btn, create_container_btn ,remove_container_btn ])
+        self.container_btn.setMenu(container_menu) 
+       
         if self.group_obj.container:
             self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]
             self.container_label.setText(f"Container: {self.group_obj.container.name}")
+            self.container_btn.setText(':')
+            print(self.app_list)
+            print(self.group_obj.container.applications)
+              
         else:
             self.app_list = []
             self.container_label.setText("Container: N/A")
-
+            self.container_btn.setText('+')
+            
         #clear if any existing application is already assigned
         self.remove_applications()
 
@@ -71,16 +87,16 @@ class GroupWorkspace(QtWidgets.QWidget):
             move_btn = QtWidgets.QAction('Move', self)
             delete_btn = QtWidgets.QAction("Delete", self)
             duplicate_btn = QtWidgets.QAction("Duplicate", self)
-            menu = QtWidgets.QMenu()
-            menu.addActions([edit_btn, move_btn, delete_btn, duplicate_btn])
-            opt_button.setMenu(menu)
+            project_menu = QtWidgets.QMenu()
+            project_menu.addActions([edit_btn, move_btn, delete_btn, duplicate_btn])
+            opt_button.setMenu(project_menu)
             hlayout.addWidget(project_button)
             hlayout.addWidget(opt_button)
             project_button.clicked.connect(partial(self.checkapp_and_loadproject, project_uid, project_name))
             edit_btn.triggered.connect(partial( ProjectCreateAndEdit, self.workspace_window, self.group_obj, 'Edit', project_uid, project_name))
             move_btn.triggered.connect(partial ( MoveProject, self.workspace_window, self.group_dict, project_uid, self.group_obj, project_name))
             delete_btn.triggered.connect(partial(self.delete_project, project_uid, project_name))
-            duplicate_btn.triggered.connect(lambda : print('Duplicate Clicked'))
+            duplicate_btn.triggered.connect(partial ( DuplicateProject, self.workspace_window, self.group_dict, project_name, project_uid, self.group_obj))
             self.projects_form.addRow(hlayout)
 
         self.new_project_btn = QtWidgets.QPushButton('+')
@@ -90,16 +106,17 @@ class GroupWorkspace(QtWidgets.QWidget):
 
         self.project_groupbox.setLayout(self.projects_form)
         self.project_selection_scrollarea.setWidget(self.project_groupbox)
-    
+        
+        
     def remove_applications(self):
-        logo_spaces = [self.app1, self.app2, self.app3]
-        for i in range(3):
+        logo_spaces = [self.app1, self.app2, self.app3, self.app4]
+        for i in range(4):
             logo_spaces[i].clear()
 
     def show_applications(self):
         # Show application logos which are associated to the container to which this group belongs
         logo_map = {"therm": therm_logo_png, "terra": terra_logo_png}
-        logo_spaces = [self.app1, self.app2, self.app3]
+        logo_spaces = [self.app1, self.app2, self.app3, self.app4]
         for i in range(len(self.app_list)):
             logo = logo_map[self.app_list[i]]
             logo.scaled(logo_spaces[i].size(), aspectRatioMode=QtCore.Qt.KeepAspectRatio)
@@ -282,9 +299,6 @@ class GroupWorkspace(QtWidgets.QWidget):
         project_load_task.statusChanged.connect(lambda load_task_status: self.project_load_callback(load_task_status, project_load_task, application_type, group_obj, group_dict))
 
         clicked_button.setEnabled(True)
-
-    def edit_project(self, project_uid):
-        print('Edit project', project_uid)
     
     def delete_project(self, project_uid, project_name):
         message_box = QtWidgets.QMessageBox()
@@ -304,6 +318,86 @@ class GroupWorkspace(QtWidgets.QWidget):
                 self.canvas_logger(f'{project_name} Project deleted Sucessfully...')
         else:
             pass
+    
+
+    def remove_container(self):
+        message_box = QtWidgets.QMessageBox()
+        message_box.setIcon(QtWidgets.QMessageBox.Warning)
+        message_box.setWindowTitle('Remove Container')
+        message_box.setText('Are you sure you want to move out of the container?')
+        message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        if self.group_obj.container:
+            ret = message_box.exec_()
+        else:
+            self.workspace_window.canvas_logger('No Container assigned to the Current Group...', level=Qgis.Warning)
+            return None
+        
+        if ret == QtWidgets.QMessageBox.Ok:
+            headers = {'Authorization':f'Token {self.workspace_window.core_token}'}
+            url = CORE_URL+f'/api/v1/containers/{self.group_obj.container.uid}/?organization={self.workspace_window.org_uid}'
+            groups_info = []
+            for group_info in self.group_obj.container.group_info:
+                if group_info['uid'] != self.group_obj.uid:
+                    groups_info.append(group_info)
+            json = {'groups':groups_info}
+            remove_container_response = requests.patch(url, headers=headers, json=json)
+            if remove_container_response.status_code == 200:
+                container_obj = self.workspace_window.home_window.containers_dict[self.group_obj.container.uid]
+                container_obj.group_info = groups_info
+                self.group_obj.container = None
+                self.setupUi(self.group_obj, self.group_dict)
+                self.workspace_window.canvas_logger('Container Detached from the Current Group...', level=Qgis.Success)
+        else:
+            pass
+        
+
+class DuplicateProject(QtWidgets.QDialog):
+    def __init__(self, workspace_window, group_dict, project_name, project_uid, group_obj):
+        super(DuplicateProject, self).__init__()
+        self.workspace_window = workspace_window 
+        self.group_dict = group_dict
+        self.project_name = project_name
+        self.project_uid = project_uid
+        self.group_obj = group_obj
+        layout = QtWidgets.QVBoxLayout(self)
+        self.setWindowTitle("Duplicate Project")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.group_details = {group_obj.name:group_uid for group_uid, group_obj in self.group_dict.items()}
+        self.duplicate_project_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'duplicate_project.ui'))
+        self.duplicate_project_ui.group_list.addItems(list(self.group_details.keys()))
+        self.duplicate_project_ui.project_name.setText(self.project_name)
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Duplicate", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.duplicate_project)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        layout.addWidget(self.duplicate_project_ui)
+        layout.addWidget(button_box)
+        self.exec_()
+
+    def duplicate_project(self):
+        if self.duplicate_project_ui.project_name.text() and self.duplicate_project_ui.group_list.currentText() != 'Select a Group':
+            self.accept()
+            headers = {'Authorization':f'Token {self.workspace_window.core_token}'}
+            foster_group_uid = self.group_details[self.duplicate_project_ui.group_list.currentText()]
+            json = [{'name':self.duplicate_project_ui.project_name.text(), 'uid':self.project_uid}]
+            url = CORE_URL+f'/api/v1/groups/{foster_group_uid}/copy-projects/?organization={self.workspace_window.org_uid}'
+            duplicate_project_response = requests.post(url, headers=headers, json=json)
+            if duplicate_project_response.status_code == 200:
+                child_project_uid = duplicate_project_response.json()[0]['uid']
+                foster_group_obj = self.group_dict[foster_group_uid]
+                foster_group_obj.projects_details[child_project_uid] = self.duplicate_project_ui.project_name.text()
+                self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)
+                self.workspace_window.canvas_logger('Project Duplicated Successfully...', level=Qgis.Success)
+        else:
+            if not self.duplicate_project_ui.project_name.text():
+                self.workspace_window.canvas_logger('Project name field is Empty...', level=Qgis.Warning)
+            elif self.duplicate_project_ui.group_list.currentText == 'Select a Group':
+                self.workspace_window.canvas_logger('Select a group to duplicate the Project...', level=Qgis.Warning)
+
+    def close_dialogbox(self):
+        self.reject()
 
 class MoveProject(QtWidgets.QDialog):
     def __init__(self, workspace_window, group_dict, project_uid, group_obj, project_name):
@@ -313,6 +407,8 @@ class MoveProject(QtWidgets.QDialog):
         self.project_uid = project_uid
         self.group_obj = group_obj
         self.project_name = project_name
+        self.setWindowTitle("Move Project")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         layout = QtWidgets.QVBoxLayout(self)
         self.group_details = {group_obj.name:group_uid for group_uid, group_obj in self.group_dict.items()}
         self.move_project_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'move_project.ui'))
@@ -322,7 +418,7 @@ class MoveProject(QtWidgets.QDialog):
         button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
         button_box.accepted.connect(self.move_project)
         button_box.rejected.connect(self.close_dialogbox)
-        # button_box.setCenterButtons(True)
+        button_box.setCenterButtons(True)
         layout.addWidget(self.move_project_ui)
         layout.addWidget(button_box)
         self.exec_()
@@ -341,9 +437,9 @@ class MoveProject(QtWidgets.QDialog):
                 foster_group_obj = self.group_dict[foster_group_uid]
                 foster_group_obj.projects_details[self.project_uid] = self.project_name
                 self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)
-                self.workspace_window.canvas_logger(f'{self.project_name} Project moved to {selected_group_name} Group....')
+                self.workspace_window.canvas_logger(f'{self.project_name} Project moved to {selected_group_name} Group....', level=Qgis.Success)
         else:
-           self.workspace_window.canvas_logger('Select a Group to move the Project...', level=Qgis.Warning)
+            self.workspace_window.canvas_logger('Select a Group to move the Project...', level=Qgis.Warning)
 
     def close_dialogbox(self):
         self.reject()
@@ -391,7 +487,7 @@ class ProjectCreateAndEdit(QtWidgets.QDialog):
             if update_project_response.status_code == 200:
                 self.group_obj.projects_details[self.project_uid] = self.project_edit_ui.project_name.text()
                 self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)
-                self.workspace_window.canvas_logger('Project Name updated Sucessfully...')
+                self.workspace_window.canvas_logger('Project Name updated Successfully...', level=Qgis.Success)
         else:
             self.workspace_window.canvas_logger('Project Name Field is Empty...', level=Qgis.Warning)
 
@@ -406,7 +502,7 @@ class ProjectCreateAndEdit(QtWidgets.QDialog):
             if create_project_response.status_code == 201:
                 self.group_obj.projects_details[new_project_uid] = self.project_create_ui.project_name.text()
                 self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)
-                self.workspace_window.canvas_logger(f'{self.project_create_ui.project_name.text()} Project is created Sucessfully...')
+                self.workspace_window.canvas_logger(f'{self.project_create_ui.project_name.text()} Project is created Successfully...', level=Qgis.Success)
         else:
             self.workspace_window.canvas_logger('Project Name Field is Empty...', level=Qgis.Warning)
 
@@ -448,8 +544,6 @@ class GroupEdit(QtWidgets.QDialog):
                                                                   'asset':{'uid':self.workspace_window.asset.uid},
                                                                   'owner':{'uid':self.workspace_window.user_id}}
             group_create_response = requests.put(url, headers=headers, json=json)
-            print(group_create_response.json())
-            print(group_create_response.status_code)
             if group_create_response.status_code == 200 :
                 self.group_workspace.group_label.setText(self.group_edit_ui.group_name.text())
                 self.group_obj.name = self.group_edit_ui.group_name.text()
@@ -458,9 +552,7 @@ class GroupEdit(QtWidgets.QDialog):
                     for dict in self.group_obj.container.group_info:
                         if dict['uid'] == self.group_obj.uid:
                             dict['name'] = self.group_edit_ui.group_name.text()
-                    print(self.group_obj.container.group_info)
-
-                self.workspace_window.canvas_logger('Group Name updated Sucessfully...')
+                self.workspace_window.canvas_logger('Group Name updated Successfully...', level=Qgis.Success)
         else:
             if not self.group_edit_ui.group_name.text():
                 self.workspace_window.canvas_logger('Group Name Field is Empty...', level=Qgis.Warning)
@@ -469,3 +561,176 @@ class GroupEdit(QtWidgets.QDialog):
 
     def close_dialogbox(self):
         self.reject()
+
+class EditContainer(QtWidgets.QDialog):
+    def __init__(self, group_workspace, workspace_window, group_obj):
+        super(EditContainer, self).__init__()
+        self.group_workspace = group_workspace
+        self.workspace_window = workspace_window
+        self.group_obj = group_obj
+        self.setWindowTitle("Edit Container")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        layout = QtWidgets.QVBoxLayout(self)
+        self.edit_container_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'container_edit.ui'))
+        self.edit_container_ui.container_name.setText(self.group_obj.container.name)
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Update", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.edit_container)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        layout.addWidget(self.edit_container_ui)
+        layout.addWidget(button_box)
+        if self.group_obj.container:
+            self.exec_()
+        else:
+            self.workspace_window.canvas_logger('There is no container assigned to this group for editing...', level=Qgis.Warning)
+    
+    def edit_container(self):
+        if self.edit_container_ui.container_name.text():
+            self.accept()
+            headers = {'Authorization':f'Token {self.workspace_window.core_token}'}
+            json = {"name":self.edit_container_ui.container_name.text(),
+                    "organization":{"uid":self.workspace_window.org_uid},
+                    "asset":{"uid":self.workspace_window.asset_uid},"owner":{"uid":self.workspace_window.user_id}}
+            url = CORE_URL+f'/api/v1/containers/{self.group_obj.container.uid}/?organization={self.workspace_window.org_uid}'
+            edit_container_response = requests.put(url, headers=headers, json=json)
+            if edit_container_response.status_code == 200:
+                self.group_obj.container.name = self.edit_container_ui.container_name.text()
+                self.group_workspace.container_label.setText(f"Container:{self.edit_container_ui.container_name.text()}")
+                self.workspace_window.canvas_logger('Container name edited Suscessfully..', level=Qgis.Success)
+        else:
+            self.workspace_window.canvas_logger('Container Name Field is Empty..', level=Qgis.Warning)
+
+    def close_dialogbox(self):
+        self.reject()
+
+
+class AssignContainer(QtWidgets.QDialog):
+    def __init__(self, group_workspace, workspace_window, group_obj):
+        super(AssignContainer, self).__init__()
+        self.group_workspace = group_workspace
+        self.workspace_window = workspace_window
+        self.group_obj = group_obj
+        self.setWindowTitle("Assign Container")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        layout = QtWidgets.QVBoxLayout(self)
+        self.assign_container_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'assign_container.ui'))
+        self.containers_detail = { container.name:[container_uid, container.group_info] for container_uid, container in self.workspace_window.home_window.containers_dict.items()}
+        container_list = list(self.containers_detail.keys())
+        try:
+            if self.group_obj.container.name in container_list:
+                container_list.remove(self.group_obj.container.name)
+        except AttributeError:
+            pass
+        self.assign_container_ui.container_list.addItems(container_list)
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Assign", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.assign_container)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        layout.addWidget(self.assign_container_ui)
+        layout.addWidget(button_box)
+        self.headers = {'Authorization':f'Token {self.workspace_window.core_token}'}
+        self.exec_()
+    
+    def assign_container(self):
+        if self.assign_container_ui.container_list.currentText() != 'Select Container':
+            self.accept()
+            
+            if self.group_obj.container:
+                remove_url = CORE_URL + f'/api/v1/containers/{self.group_obj.container.uid}/?organization={self.workspace_window.org_uid}'
+                groups_info = self.group_obj.container.group_info
+                for group_info in groups_info:
+                    if group_info['uid'] == self.group_obj.uid:
+                        groups_info.remove(group_info)
+                remove_json = {'groups':groups_info}
+                remove_group_from_container = requests.patch(remove_url, headers=self.headers, json=remove_json)
+
+                if remove_group_from_container.status_code == 200:
+                    current_container_obj = self.workspace_window.home_window.containers_dict[self.group_obj.container.uid]
+                    for group in current_container_obj.group_info:
+                        if group['uid'] == self.group_obj.uid:
+                            current_container_obj.group_info.remove(group)
+                    current_container_obj.groups_dict.pop(self.group_obj.uid)
+                    container_name = self.assign_container_ui.container_list.currentText()
+                    container_uid = self.containers_detail[container_name][0]
+                    container_group_info = self.containers_detail[container_name][1]
+                    add_json = {'groups':container_group_info}
+                    add_json['groups'].append({'uid':self.group_obj.uid, 'name':self.group_obj.name})
+                    add_url = CORE_URL + f'/api/v1/containers/{container_uid}/?organization={self.workspace_window.org_uid}'
+                    add_group_to_container = requests.patch(add_url, headers=self.headers, json=add_json)
+                    if add_group_to_container.status_code == 200:
+                        container_obj = self.workspace_window.home_window.containers_dict[container_uid]
+                        container_obj.groups_dict[self.group_obj.uid] = self.group_obj
+                        self.group_obj.container = container_obj
+                        self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)
+                        self.workspace_window.canvas_logger(f'Assigned {container_name} Container Successfully...', level=Qgis.Success)
+                else:
+                    self.workspace_window.canvas_logger(remove_group_from_container.json(), level=Qgis.Warning)
+
+            else:
+                container_name = self.assign_container_ui.container_list.currentText()
+                container_uid = self.containers_detail[container_name][0]
+                container_group_info = self.containers_detail[container_name][1]
+                add_json = {'groups':container_group_info}
+                add_json['groups'].append({'uid':self.group_obj.uid, 'name':self.group_obj.name})
+                add_url = CORE_URL + f'/api/v1/containers/{container_uid}/?organization={self.workspace_window.org_uid}'
+                add_group_to_container = requests.patch(add_url, headers=self.headers, json=add_json)
+                if add_group_to_container.status_code == 200:
+                        container_obj = self.workspace_window.home_window.containers_dict[container_uid]
+                        container_obj.groups_dict[self.group_obj.uid] = self.group_obj
+                        self.group_obj.container = container_obj
+                        self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)
+                        self.workspace_window.canvas_logger(f'Assigned {container_name} Container Successfully...', level=Qgis.Success)
+                else:
+                    self.workspace_window.canvas_logger(add_group_to_container.json(), level=Qgis.Warning)
+
+
+    def close_dialogbox(self):
+        self.reject()
+
+    
+
+class CreateContainer(QtWidgets.QDialog):
+    def __init__(self, group_workspace, workspace_window, group_obj):
+        super(CreateContainer, self).__init__()
+        self.group_workspace = group_workspace
+        self.workspace_window = workspace_window
+        self.group_obj = group_obj
+        self.setWindowTitle("Create Container")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        layout = QtWidgets.QVBoxLayout(self)
+        self.create_container_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'container_edit.ui'))
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Create", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.create_container)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        layout.addWidget(self.create_container_ui)
+        layout.addWidget(button_box)
+        self.exec_()
+    
+    def create_container(self):
+        if self.create_container_ui.container_name.text():
+            self.accept()
+            json = {"name":self.create_container_ui.container_name.text(),"organization":{"uid":self.workspace_window.org_uid},
+                                                                          "asset":{"uid":self.workspace_window.asset_uid},
+                                                                          "owner":{"uid":self.workspace_window.user_id}}
+            headers = {'Authorization':f'Token {self.workspace_window.core_token}'} 
+            url = CORE_URL + f'/api/v1/containers/?organization={self.workspace_window.org_uid}'
+            create_container_response = requests.post(url, headers=headers, json=json)
+            if create_container_response.status_code == 201:
+                response_json = create_container_response.json()
+                new_container_uid = response_json['uid']
+                new_container_name = response_json['name']
+                new_container_obj = Container(new_container_uid, new_container_name,self.workspace_window.home_window.asset)
+                self.workspace_window.home_window.containers_dict[new_container_uid] = new_container_obj
+        else:
+            self.workspace_window.canvas_logger('Container name Field is Empty...', level=Qgis.Warning)
+
+    def close_dialogbox(self):
+        self.reject()
+
