@@ -21,39 +21,45 @@ def Project_loadTask(task, load_inputs):
         logger = load_inputs.get("logger", None)
         org_uid = load_inputs.get("org_uid", None)
         container_uid = load_inputs.get('container_uid', None)
+        reload = load_inputs.get('reload', None)
         # Get project details from core
         project_details = get_project_details(project_uid, core_token)
         project_details["project_type"] = project_type
         # Get the class maps for vectors from terra / therm
-        if project_type == "terra":
-            class_maps, class_groups = get_terra_classmaps(project_details, core_token)
-            existing_files = None
-            container_class_map = {}
-        elif project_type == "therm":
-            class_maps, container_class_map = get_therm_classmaps(core_token, org_uid, container_uid)
-            class_groups = None
-            org = project_details['organization']['uid']
-            existing_files = file_existent(project_uid,org,core_token)
+        if not reload :
+            if project_type == "terra":
+                class_maps, class_groups = get_terra_classmaps(project_details, core_token)
+                existing_files = None
+                container_class_map = {}
+            elif project_type == "therm":
+                class_maps, container_class_map = get_therm_classmaps(core_token, org_uid, container_uid)
+                class_groups = None
+                org = project_details['organization']['uid']
+                existing_files = file_existent(project_uid,org,core_token)
 
-        # Load orthotiles
-        # Get base url for ortho tiles
-        base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
+            # Load orthotiles
+            # Get base url for ortho tiles
+            base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
 
-        # Get metadata from the base url
-        ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
-        ortho_bounds = ortho_tiles_details["bounds"]
-        bounds = ortho_bounds
-        
-        zmax = ortho_tiles_details["maxzoom"]
-        zmin = 1
+            # Get metadata from the base url
+            ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
+            ortho_bounds = ortho_tiles_details["bounds"]
+           
+            zmax = ortho_tiles_details["maxzoom"]
+            zmin = 1
 
-        orthotiles_url = "type=xyz&url=" + \
-                         base_orthotiles_url + "/{z}/{x}/{y}.png" + \
-                         "&zmax={}&zmin={}".format(zmax, zmin)
-    
+            orthotiles_url = "type=xyz&url=" + \
+                            base_orthotiles_url + "/{z}/{x}/{y}.png" + \
+                            "&zmax={}&zmin={}".format(zmax, zmin)
+        else:
+            orthotiles_url, class_maps, class_groups, existing_files, container_class_map = None, None, None, None, None
+            ortho_bounds = load_inputs['bounds']
+            logger('Fetching json from core for the existing project')
+
+
         geojson_path = load_vectors(project_details,
                                             project_type,
-                                            bounds,
+                                            ortho_bounds,
                                             core_token,
                                             logger)
 
@@ -70,6 +76,7 @@ def Project_loadTask(task, load_inputs):
             'geojson_path': geojson_path,
             'existing_files':existing_files,
             'container_class_map':container_class_map,
+            'bounds':ortho_bounds,
             'task': task.description()}
 
 

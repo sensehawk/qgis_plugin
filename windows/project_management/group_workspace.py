@@ -85,6 +85,7 @@ class GroupWorkspace(QtWidgets.QWidget):
             hlayout = QtWidgets.QHBoxLayout()
             project_button = QtWidgets.QPushButton(f'{project_name}')
             project_button.setFixedSize(290, 26)
+            project_button.setCheckable(True)
             opt_button = QtWidgets.QPushButton()
             opt_button.setFixedSize(38, 26)
             edit_btn = QtWidgets.QAction("Edit", self)
@@ -212,7 +213,7 @@ class GroupWorkspace(QtWidgets.QWidget):
 
             if not self.workspace_window.therm_project_tabs_widget:
                 self.workspace_window.therm_project_tabs_widget = self.therm_project_tabs_widget
-                self.workspace_window.pm_workspace_grid.addWidget(self.therm_project_tabs_widget, 0,1, Qt.AlignTop)
+                self.workspace_window.pm_workspace_grid.addWidget(self.therm_project_tabs_widget, 0, 1)
                 self.workspace_window.load_therm_tab_widget()
             else:
                 self.workspace_window.therm_tab_button.setChecked(True)
@@ -229,7 +230,7 @@ class GroupWorkspace(QtWidgets.QWidget):
 
             if not self.workspace_window.terra_project_tabs_widget:
                 self.workspace_window.terra_project_tabs_widget = self.terra_project_tabs_widget
-                self.workspace_window.pm_workspace_grid.addWidget(self.terra_project_tabs_widget, 0,1, Qt.AlignTop)
+                self.workspace_window.pm_workspace_grid.addWidget(self.terra_project_tabs_widget, 0,1)
                 self.workspace_window.load_terra_tab_widget()
             else:
                 self.workspace_window.terra_tab_button.setChecked(True)
@@ -239,7 +240,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         if load_task_status != 3:
             return None
         result = load_task.returned_values
-        self.logger(result)
+        
         if not result:
             self.logger("Load failed...", level=Qgis.Warning)
             return None
@@ -250,6 +251,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         project.logger = self.logger
         project.group_dict = group_dict
         project.group_obj = group_obj
+        project.org_uid = self.group_obj.org_info.get('uid', None)
         
         # Add project to therm project tab
         if application_type == 'therm':

@@ -248,7 +248,7 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
     asset_details = response.json()['results']
     asset_dict = {}
     for asset in asset_details:
-        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'], "profile_image": asset['properties'].get("profile_image", None)}
+        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'], "profile_image": asset['properties'].get("cover_image", None)}
     
     user_id_url = CORE_URL + f'/api/v1/organizations/{org_uid}/?organization={org_uid}'
     org_user_response = requests.get(user_id_url, headers=headers)
@@ -291,8 +291,8 @@ def file_existent(project_uid, org, token):
         existing_file = ['None']
         json = project_json.json()
         files = list(json.keys())
-        if 'ortho' in files:
-            existing_file =  ['ortho'] + existing_file
+        # if 'ortho' in files:
+        #     existing_file =  ['ortho'] + existing_file
         if 'reflectance' in files:
            existing_file =  ['reflectance'] + existing_file
 

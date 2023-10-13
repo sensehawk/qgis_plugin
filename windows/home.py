@@ -51,6 +51,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.logger = login_obj.logger
         self.core_token = login_obj.core_token
         self.user_email = login_obj.user_email
+        self.login_obj = login_obj
         self.iface = iface
         self.org_details = login_obj.org_details
         org_list = list(self.org_details.values())

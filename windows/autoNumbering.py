@@ -26,10 +26,12 @@ from qgis.PyQt.QtCore import Qt, QVariant
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis
 from time import time
+from PyQt5 import QtCore
 from ..windows.autoNumbering_utils import *
 
 import os
 import numpy as np
+
 
 
 class ThermNumberingWidget(QtWidgets.QWidget):
@@ -38,14 +40,37 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         """Constructor."""
         super(ThermNumberingWidget, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'AutoNumbering.ui'), self)
+        self.table_info_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info.ui'))
         self.canvas_logger = thermToolobj.canvas_logger
         self.logger = thermToolobj.logger
         self.thermToolobj = thermToolobj
         self.projectuid = thermToolobj.project_details['uid']
         self.iface = iface
-        self.canvas =self.iface.mapCanvas()
-        self.approve.clicked.connect(self.string_numbering)
-    
+        self.tables = [self.table_info_ui]
+        self.tables_info = []
+        self.canvas = self.iface.mapCanvas()
+        self.add_btn = QtWidgets.QPushButton("+")
+        self.add_btn.setFixedSize(40, 24)
+        self.add_btn.clicked.connect(self.add_table_widget)
+        self.run_btn.clicked.connect(self.string_numbering)
+        self.add_btn_poistion = 5
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignCenter)
+        self.string_grid_layout.addWidget(self.table_info_ui, self.add_btn_poistion, 1)
+       
+    def add_table_widget(self):
+        self.add_btn_poistion += 1
+        tabel_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info.ui'))
+        self.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignCenter)
+        self.string_grid_layout.addWidget(tabel_ui, self.add_btn_poistion, 1)
+        self.tables.append(tabel_ui)
+
+    def start_numbering(self):
+        for table in self.tables:
+            self.tables_info.append((table.length.text(), table.row.text(), table.column.text()))
+            print(table.length.text())
 
     def stringNumber_configuration(self):
         canvas  = self.canvas
@@ -63,6 +88,9 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         Vlayer.startEditing()
         Vfeatures = Vlayer.getFeatures()
         module_width, module_height, angle, Prefix, Suffix = self.stringNumber_configuration()
+        if not module_height or not module_width:
+            self.canvas_logger('Module Width and Height field is empty....', level=Qgis.Warning)
+            return None
         featureslist = [feature for feature in Vfeatures] #QgsfeatureIterator[] => Qgsfeatures
         featuresobjlist = [Table(feature) for feature in featureslist] 
         sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_lonlat_y, reverse=True)
@@ -114,10 +142,50 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                         issue_obj.feature['string_number'] = basicModule_number.strip('-')
                         Vlayer.updateFeature(issue_obj.feature)
         
+        elif self.stringnum_type.currentText() == 'Existing':
+            for featureobj in featuresobjlist:
+                if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
+                    if not featureobj.feature['string_number']:
+                        Existing_SN = "Existing string number does not exist"
+                    else:
+                        Existing_SN = featureobj.feature['string_number']
+                    for issue_obj in featureobj.issue_obj:
+                        Irow = issue_obj.feature['row']
+                        Icolumn = issue_obj.feature['column']
+                        basicModule_number = f"{Prefix}-{Existing_SN}"
+                        issue_obj.feature['string_number'] = basicModule_number.strip('-')
+                        Vlayer.updateFeature(issue_obj.feature)
+
+        
         elif self.stringnum_type.currentText() == 'UID':
-            pass
-            # for issue in featuresobjlist:
-            #     if issue 
+            for table in self.tables:
+                if not table.length.text() or not table.row.text() or not table.column.text():
+                    self.canvas_logger('Table length | row | column info is missing...', level=Qgis.Warning)
+                    return None 
+                else:
+                    continue
+
+            for table in self.tables:
+                self.tables_info.append([int(table.length.text()), int(table.row.text()), int(table.column.text())])
+
+            for featureobj in featuresobjlist:
+                if featureobj.feature['class_name'] == 'table':
+                    tp1, _, tp3, _ = featureobj.raw_utm_coords
+                    table_length_vertical = abs(tp3[1] - tp1[1])
+                    table_length_horizontal = abs(tp3[0] - tp1[0])
+                    if table_length_vertical > table_length_horizontal:
+                        table_length = table_length_vertical
+                    else:
+                        table_length = table_length_horizontal
+                    table_length_types = [float(x[0]) for x in self.tables_info]
+                    diffs = [abs(x - table_length) for x in table_length_types]
+                    table_type_idx = np.argmin(diffs)
+                    table_details = self.tables_info[table_type_idx]
+                    featureobj.feature['num_modules_vertical'] = table_details[1]
+                    featureobj.feature['num_modules_horizontal'] = table_details[2]
+                    featureobj.feature['total_num_modules'] = int(table_details[1] * table_details[2])
+                    Vlayer.updateFeature(featureobj.feature)
+            self.tables_info.clear()
 
         endTime = time()
         duration = int(round((endTime - startTime) * 1000))

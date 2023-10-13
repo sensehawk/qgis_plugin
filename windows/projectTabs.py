@@ -9,6 +9,7 @@ from .therm_tools import ThermToolsWidget
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
 from ..utils import fields_validator, categorize_layer, save_edits
+from ..tasks import Project_loadTask
 import pandas as pd
 import json
 from .keyboard_settings import ShortcutSettings
@@ -22,6 +23,7 @@ class Project:
     def __init__(self, load_task_result):
 
         self.project_details = load_task_result['project_details']
+        self.bounds = load_task_result['bounds']
         self.geojson_path = load_task_result['geojson_path']
         self.table_geojson = self.geojson_path.replace('.geojson', '_table.geojson')
         self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
@@ -75,7 +77,7 @@ class Project:
             self.color_code = {'hotspot': '#001c63', 'diode_failure': '#42e9de', 'module_failure': '#2ecc71',
                           'string_failure': '#3ded2d', 'module_reverse_polarity': '#ff84dc',
                           'potential_induced_degradation': '#550487', 'vegetation': '#076e0a',
-                          'tracker_malfunction': '#c50000', 'string_reverse_polarity': '#f531bd',
+                          'tracker_malfunction': '#c50000', 'string_reverse_polarity': 'self.rlaye#f531bd',
                           'dirt': '#b5b0b0', 'cracked_modules': '#9b9e33', 'table': '#ffff00'}
         else:
             self.color_code = {
@@ -135,7 +137,7 @@ class Project:
         self.tools_widget.enable_docktool_custom_labels(onlylabel=True)
 
     # Since Qgis won't support list type fields data in copy-pasted issues, 
-    # collecting list type data with Parentuid as key and list type data as value 
+    # collecting list type data with Parentuid as key and list data as value 
     def collect_list_Type_dataFields(self):
         self.listType_dataFields.clear()
         features = json.load(open(self.geojson_path))['features']
@@ -395,6 +397,44 @@ class Project:
         self.features_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.project_tab_layout.addWidget(self.features_table)
 
+    def project_load_callback(self, load_task_status, load_task):
+        if load_task_status != 3:
+            return None
+        result = load_task.returned_values
+        
+        if not result:
+            self.logger("Load failed...", level=Qgis.Warning)
+            return None
+        
+        self.initialize_vlayer()
+        self.canvas_logger('Json reloaded from the Core Successfully...', level=Qgis.Success)
+
+    def reload_json(self):
+        message_box = QtWidgets.QMessageBox()
+        message_box.setIcon(QtWidgets.QMessageBox.Warning)
+        message_box.setWindowTitle('Reload Project')
+        message_box.setText('Are you sure! you want to reload the Project Geojson?')
+        message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        ret = message_box.exec_()
+        if ret == QtWidgets.QMessageBox.Ok:
+            self.vlayer.commitChanges()
+            self.qgis_project.removeMapLayers([self.vlayer.id()])
+            load_task_inputs = {"project_uid": self.project_details['uid'],
+                            "project_type": self.project_details["project_type"],
+                            "core_token": self.core_token,
+                            "org_uid":self.org_uid,
+                            'container_uid':None,
+                            "logger": self.logger,
+                            "reload":True,
+                            "bounds":self.bounds}
+            
+            project_load_task = QgsTask.fromFunction(f"{self.project_details['name']} Project Reload", Project_loadTask, load_task_inputs)
+            QgsApplication.taskManager().addTask(project_load_task)
+            project_load_task.statusChanged.connect(lambda load_task_status: self.project_load_callback(load_task_status, project_load_task))
+
+        else:
+            pass
+
     def create_project_details_widget(self):
         self.project_details_widget = QtWidgets.QWidget(self.project_tab)
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'project_details.ui'), self.project_details_widget)
@@ -417,6 +457,7 @@ class Project:
         self.project_details_widget.project_uid.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.project_details_widget.table_toggle.clicked.connect(self.table_checkbox_info)
         self.project_details_widget.table_toggle.setStyleSheet("background-color:#c2fcdc")
+        self.project_details_widget.json_reload.clicked.connect(lambda : self.reload_json())
 
     def populate_project_tab(self):
         # Simple line widget separator
@@ -548,6 +589,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.qgis_project = QgsProject.instance()
         self.layer_tree = self.qgis_project.layerTreeRoot()
         self.active_project = None
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.iface = iface
         self.setupKeyboardShortcuts() 
         # self.constrain_canvas_zoom()
@@ -563,6 +605,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
         # Create a tabs widget and add it to the group layout
         self.project_tabs_widget = QtWidgets.QTabWidget(projects_group_widget)
+        # self.project_tabs_widget.setFixedSize(380, 650)
         # Connect tab change event to activate project layers
         self.project_tabs_widget.currentChanged.connect(self.activate_project)
         projects_group_layout.addWidget(self.project_tabs_widget)
@@ -647,9 +690,14 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         if self.load_window.workspace_window.terra_tab_button:
             self.load_window.workspace_window.terra_tab_button.setChecked(False)
         self.load_window.workspace_window.active_widget.hide()
-        self.load_window.workspace_window.group_workspace.setupUi(self.active_project.group_obj, self.active_project.group_dict)
-        self.load_window.workspace_window.group_workspace.show()
-        self.load_window.workspace_window.active_widget = self.load_window.workspace_window.group_workspace
+        try:
+            self.load_window.workspace_window.group_workspace.setupUi(self.active_project.group_obj, self.active_project.group_dict)
+            self.load_window.workspace_window.group_workspace.show()
+            self.load_window.workspace_window.active_widget = self.load_window.workspace_window.group_workspace
+        except AttributeError:
+            self.load_window.workspace_window.active_widget.hide()
+            self.load_window.workspace_window.active_widget = None
+            self.load_window.workspace_window.dock_widget.setFixedSize(130, 830)
 
     def add_project(self, project):
         self.rlayer_id = project.rlayer.id()
