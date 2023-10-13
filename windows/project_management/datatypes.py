@@ -25,6 +25,7 @@ class Group:
         self.uid = uid
         self.name = name
         self.org_info = org_info
+        self.deal_id = deal_id
         self.container = containers_dict.get(container_uid, None)
         self.projects_details = projects_details
         self.deal_id = deal_id

@@ -245,7 +245,7 @@ class GroupWorkspace(QtWidgets.QWidget):
             self.logger("Load failed...", level=Qgis.Warning)
             return None
         # Create a project object from the callback result
-        project = Project(result)
+        project = Project(result, application_type)
         project.user_email = self.user_email
         project.canvas_logger = self.canvas_logger
         project.logger = self.logger
@@ -293,17 +293,19 @@ class GroupWorkspace(QtWidgets.QWidget):
                 self.terra_project_tabs_widget.activate_project()
                 self.show_projects_loaded(application_type)
                 return None
+                
+        self.logger(f"Deal ID: {self.group_obj.deal_id}")
+        self.logger(f"Asset UID: {self.group_obj.container.asset.uid}")
         
         load_task_inputs = {"project_uid": project_uid,
                             "project_type": application_type,
                             "core_token": self.core_token,
                             "org_uid":self.group_obj.org_info.get('uid', None),
-                            'container_uid':self.group_obj.container.uid,
+                            "container_uid":self.group_obj.container.uid,
                             "logger": self.logger}
         project_load_task = QgsTask.fromFunction(f"{project_name} Project Load", Project_loadTask, load_task_inputs)
         QgsApplication.taskManager().addTask(project_load_task)
         project_load_task.statusChanged.connect(lambda load_task_status: self.project_load_callback(load_task_status, project_load_task, application_type, group_obj, group_dict))
-
         clicked_button.setEnabled(True)
     
     def delete_project(self, project_uid, project_name):
