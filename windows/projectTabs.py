@@ -9,7 +9,7 @@ from ..event_filters import KeypressFilter, KeypressEmitter
 from .therm_tools import ThermToolsWidget
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
-from ..utils import fields_validator, categorize_layer, save_edits
+from ..utils import fields_validator, categorize_layer, save_edits, features_to_polygons
 import pandas as pd
 import qgis
 import json
@@ -22,7 +22,7 @@ import shutil
 import numpy as np
 
 class Project:
-    def __init__(self, load_task_result):
+    def __init__(self, load_task_result, application_type):
 
         self.project_details = load_task_result['project_details']
         self.geojson_path = load_task_result['geojson_path']
@@ -30,22 +30,27 @@ class Project:
         self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
-
+        self.application_type = application_type
         #validate fields and create if not there
-        self.required_fields = {'temperature_min':QVariant.Double,'temperature_max':QVariant.Double,
-                           'temperature_difference':QVariant.Double,'uid':QVariant.String,
-                           'projectUid':QVariant.String,'groupUid':QVariant.String,
-                           'num_images_tagged':QVariant.Double,'string_number':QVariant.String, 
-                           'table_row':QVariant.Double,'table_column':QVariant.Double, 
-                           'row':QVariant.Double,'idx':QVariant.Double,
-                           'total_num_modules':QVariant.Double,'column':QVariant.Double, 
-                           'num_modules_horizontal':QVariant.Double,'timestamp':QVariant.String, 
-                           'num_modules_vertical':QVariant.Double,'center':QVariant.String, 
-                           'raw_images':QVariant.String,'attachments':QVariant.String,
-                           'parent_uid':QVariant.String,'name':QVariant.String,
-                           'idx':QVariant.Double}
+        self.required_fields = {"therm": {'temperature_min':QVariant.Double,'temperature_max':QVariant.Double,
+                                            'temperature_difference':QVariant.Double,'uid':QVariant.String,
+                                            'projectUid':QVariant.String,'groupUid':QVariant.String,
+                                            'num_images_tagged':QVariant.Double,'string_number':QVariant.String, 
+                                            'table_row':QVariant.Double,'table_column':QVariant.Double, 
+                                            'row':QVariant.Double,'idx':QVariant.Double,
+                                            'total_num_modules':QVariant.Double,'column':QVariant.Double, 
+                                            'num_modules_horizontal':QVariant.Double,'timestamp':QVariant.String, 
+                                            'num_modules_vertical':QVariant.Double,'center':QVariant.String, 
+                                            'raw_images':QVariant.String,'attachments':QVariant.String,
+                                            'parent_uid':QVariant.String,'name':QVariant.String,
+                                            'idx':QVariant.Double},
+                                "terra": {'projectUid':QVariant.String,'groupUid':QVariant.String,
+                                            'table_row':QVariant.Double,'table_column':QVariant.Double, 
+                                            'row':QVariant.Double,'idx':QVariant.Double,'column':QVariant.Double,
+                                            'center':QVariant.String,'parent_uid':QVariant.String,'name':QVariant.String,
+                                            'idx':QVariant.Double}}
 
-        fields_validator(self.required_fields, self.vlayer)
+        fields_validator(self.required_fields, self.vlayer, self.application_type)
         #initialize and update parent_uid field 
         self.listType_dataFields = {}
         self.table_features = []
@@ -121,7 +126,7 @@ class Project:
         categorize_layer(self)
         self.load_feature_count()  
         #validate and create fields if not exits
-        fields_validator(self.required_fields, self.vlayer)
+        fields_validator(self.required_fields, self.vlayer, self.application_type)
         #connect pre-defined singles 
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
@@ -130,12 +135,15 @@ class Project:
         self.collect_list_Type_dataFields()
         self.vlayer.startEditing()
         #if any Tool-Dockwidget is already opened enable the respective label
-        self.tools_widget.custom_label.setCurrentIndex(0)
         try:
-            self.tools_widget.therm_viewer_widget.signal_connected = False
-        except AttributeError :
+            self.tools_widget.custom_label.setCurrentIndex(0)
+            try:
+                self.tools_widget.therm_viewer_widget.signal_connected = False
+            except AttributeError :
+                pass
+            self.tools_widget.enable_docktool_custom_labels(onlylabel=True)
+        except AttributeError:
             pass
-        self.tools_widget.enable_docktool_custom_labels(onlylabel=True)
 
     # Since Qgis won't support list type fields data in copy-pasted issues, 
     # collecting list type data with Parentuid as key and list type data as value 
@@ -143,7 +151,7 @@ class Project:
         self.listType_dataFields.clear()
         features = json.load(open(self.geojson_path))['features']
         for feature in features:
-            if feature['properties']['class_name'] != 'table':
+            if feature['properties'].get('class_name', None) != 'table':
                 raw_images = feature['properties'].get('raw_images', None)
                 parentUid = feature['properties'].get('parent_uid', None)
                 if type(raw_images) == list :
@@ -153,8 +161,11 @@ class Project:
 
     def initialize_parentUid(self):
         for feature in self.vlayer.getFeatures():
-            feature['parent_uid'] = feature['uid']
-            self.vlayer.updateFeature(feature)
+            try:
+                feature['parent_uid'] = feature['uid']
+                self.vlayer.updateFeature(feature)
+            except KeyError:
+                continue
         self.vlayer.commitChanges()
 
     def setup_tool_widget(self):
@@ -175,12 +186,13 @@ class Project:
         if geojson_path and self.layer_edit_status:
             self.vlayer.commitChanges()
             with open(geojson_path, 'r') as g:
-                imported_geojson = json.load(g)['features']
-            
+                imported_features = json.load(g)['features']
+            # Convert the features to polygons
+            imported_features = features_to_polygons(imported_features)
             with open(self.geojson_path , 'r') as g:
                 existing_geojson = json.load(g)
 
-            existing_geojson['features'] += imported_geojson
+            existing_geojson['features'] += imported_features
             #disconnect any single added to existing vlayer
             self.vlayer.selectionChanged.disconnect()
             # Remove existing Vlayer  
@@ -706,6 +718,10 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                     if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
                         feature['properties'].pop('parent_uid', None)
                         feature['properties'].pop('num_images_tagged', None)
+                        if feature['properties'].get('extraProperties', "{\n}\n") == "{\n}\n":
+                            feature['properties']['extraProperties'] = {}
+                        if feature['properties'].get('workflowProgress', "{\n}\n") == "{\n}\n":
+                            feature['properties']['workflowProgress'] = {}
                         try:
                             center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
                             centroid_x , centroid_y = center

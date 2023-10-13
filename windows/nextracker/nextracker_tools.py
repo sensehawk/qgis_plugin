@@ -24,9 +24,12 @@
 
 from qgis.PyQt import QtWidgets, uic
 import os
-from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
+from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint, QgsVectorLayer
 from .utils import setup_clipped_orthos_group
 from ...tasks import clipRequest
+from ...constants import CORE_URL, THERMAL_TAGGING_URL
+import requests
+import urllib.request
 
 
 class NextrackerToolsWidget(QtWidgets.QWidget):
@@ -35,60 +38,14 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         """Constructor."""
         super(NextrackerToolsWidget, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'nextracker_tools.ui'), self)
-        self.train_widget = uic.loadUi(os.path.join(os.path.dirname(__file__), 'train.ui'), QtWidgets.QWidget())
-        self.train_widget.mstrings_strings.clicked.connect(lambda:self.logger("Training Mstrings and Strings"))
-        self.train_widget.keypoints.clicked.connect(lambda:self.logger("Training Keypoints"))
-        self.detect_widget = uic.loadUi(os.path.join(os.path.dirname(__file__), 'detect.ui'), QtWidgets.QWidget())
-        self.detect_widget.mstrings_strings.clicked.connect(lambda:self.logger("Detecting Mstrings and Strings"))
-        self.detect_widget.keypoints.clicked.connect(lambda:self.logger("Detecting Keypoints"))
         self.project = project
-        # self.parent = self.project.project_tab
-        # self.modify_button.clicked.connect(self.modification)
-        # self.detect_button.clicked.connect(self.start_detect_task)
-        # self.approve_button.clicked.connect(self.start_approve_task)
         self.clip_button.clicked.connect(self.start_clip_task)
-        self.train_button.clicked.connect(self.train)
-        self.detect_button.clicked.connect(self.detect)
-        # self.requestModelButton.clicked.connect(self.request_model)
-        # self.core_token = self.project.core_token
-        # self.project_details = self.project.project_details
-        # self.class_maps = self.project.class_maps
-        # self.class_groups = self.project.class_groups
-        # self.iface = self.project.iface
-        # self.active_layer = self.project.vlayer
-        # self.models_dict = {}
-        # # ML Service Map
-        # self.ml_service_map_widget = None
+        self.csv_button.clicked.connect(self.download_csv)
+    
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
-    def train(self):
-        self.train_widget.show()
-
-    def detect(self):
-        self.detect_widget.show()
-    # def uncheck_all_buttons(self):
-    #     for button in self.findChildren(QtWidgets.QPushButton):
-    #         if button.isCheckable():
-    #             button.setChecked(False)
-
-    # def logger(self, message, level=Qgis.Info):
-    #     QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
-
-    # def load_models(self):
-    #     # Get list of available models
-    #     self.models_dict = get_models_list(self.project_details["uid"], self.core_token)
-    #     models_list = list(self.models_dict.keys())
-    #     if models_list:
-    #         list_items = models_list
-    #     else:
-    #         list_items = ["No models available"]
-    #     # Clear list to avoid duplicates
-    #     self.detectionModel.clear()
-    #     self.detectionModel.addItems(list_items)
-
     def start_clip_task(self):
-
         def validate_group_callback(task, logger):
             result = task.returned_values
             if result:
@@ -97,7 +54,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
                 clip_task_inputs = {'project_uid': self.project.project_details["uid"],
                                     'geojson_path': self.project.geojson_path,
                                     'class_maps': self.project.class_maps,
-                                    'core_token': self.project.core_token,
+                                    'core_core_token': self.project.core_core_token,
                                     'project_type': 'terra',
                                     'user_email': self.project.user_email,
                                     'convert_to_magma': False,
@@ -111,49 +68,40 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         def clip_callback(task, logger):
             result = task.returned_values
             if result:
-                logger(str(result["message"]))
+                logger(str(result))
         
         # Check if `Clipped Orthos` group exists or not
         self.logger("Validating `Clipped Orthos` group")
-        deal_id, asset_uid, container_uid, core_token = self.project.group_details.deal_id, self.project.group_details.container.asset.uid, self.project.group_details.container.uid, self.project.core_token
+        deal_id, asset_uid, container_uid, core_core_token = self.project.group_details.deal_id, self.project.group_details.container.asset.uid, self.project.group_details.container.uid, self.project.core_core_token
         group_validate_task = QgsTask.fromFunction("Clipped Orthos group validate", 
-                                                   setup_clipped_orthos_group, 
-                                                   task_inputs=[deal_id, asset_uid, container_uid, core_token, self.logger])
+                                                setup_clipped_orthos_group, 
+                                                task_inputs=[deal_id, asset_uid, container_uid, core_core_token, self.logger])
         group_validate_task.statusChanged.connect(lambda:validate_group_callback(group_validate_task, self.logger))
         QgsApplication.taskManager().addTask(group_validate_task)
 
-    # def start_detect_task(self):
-    #     def callback(task, logger):
-    #         result = task.returned_values
-    #         if result:
-    #             logger(str(result))
-    #     self.logger("Detection called..")
-    #     geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
-    #     self.logger("Getting model information...")
-    #     model_name = self.detectionModel.currentText()
-    #     if model_name not in self.models_dict:
-    #         self.logger("Invalid model...")
-    #         return None
-    #     model_url = self.models_dict[model_name]
-    #     model_details = [model_name, model_url]
-    #     self.logger("Initiating detection request task...")
-    #     detection_task = QgsTask.fromFunction("Detect", detectionTask,
-    #                                           detection_task_input=[self.project_details, geojson,
-    #                                                                 model_details, self.project.project_tabs_widget.load_window.home.user_email,
-    #                                                                 self.core_token])
-    #     detection_task.statusChanged.connect(lambda:callback(detection_task, self.logger))
-    #     QgsApplication.taskManager().addTask(detection_task)
-
-    # def start_approve_task(self):
-    #     def callback(task, logger):
-    #         result = task.returned_values
-    #         if result:
-    #             logger(str(result))
-    #     self.logger("Approve called...")
-    #     geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
-    #     approve_task = QgsTask.fromFunction("Approve", approveTask,
-    #                                         approve_task_input=[self.project_details, geojson,
-    #                                                             self.project.project_tabs_widget.load_window.home.user_email,
-    #                                                             self.core_token])
-    #     approve_task.statusChanged.connect(lambda:callback(approve_task, self.logger))
-    #     QgsApplication.taskManager().addTask(approve_task)
+    def download_csv(self):
+        project_uid = self.project.project_details["uid"]
+        download_path = f"{project_uid}_csvs.zip"
+        csvs_service_obj = None
+        url = CORE_URL + f"/api/v1/projects/{project_uid}/?reports=true"
+        reports = requests.get(url, headers={"Authorization": f"Token {self.project.core_token}"}).json().get("reports", [])
+        csvs_service_obj = None
+        for r in reports:
+            if r.get("name", "") == "Nextracker CSVs":
+                csvs_service_obj = r["service"]
+                break
+        if csvs_service_obj:
+            csvs_url = self.get_csv_url(csvs_service_obj)
+            urllib.request.urlretrieve(csvs_url, download_path)
+            self.logger("CSV download successful.", level=Qgis.Success)
+        else:
+            self.logger("CSV does not exist. Please generate using `Points` feature first.", level=Qgis.Warning)
+    
+    def get_csv_url(self, csv_service_obj):
+        body = {"project_uid": self.project.project_details["uid"],
+                "organization": self.project.project_details.get("organization", {}).get("uid", None),
+                "service_objects":[csv_service_obj]}
+        object_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", 
+                               headers={"Authorization": f"Token {self.project.core_token}"}, 
+                               json=body).json()
+        return list(object_urls.values())[0]

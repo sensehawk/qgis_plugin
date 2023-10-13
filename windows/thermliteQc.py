@@ -389,7 +389,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             try:
                 num_images_tagged = sfeature['num_images_tagged']
             except KeyError:
-                fields_validator(self.required_fields, self.project.vlayer)
+                fields_validator(self.required_fields, self.project.vlayer, self.project.application_type)
                 num_images_tagged = sfeature['num_images_tagged']
             # Make num_images_tagged to zero if issue is copy pasted or freshly created   
             if not sfeature_image_tagged_info and not self.therm_tools.num_tagged_rawimages.get(uid, None):

@@ -28,6 +28,9 @@ import traceback
 import re
 from pathlib import Path
 from qgis.PyQt.QtCore import Qt, QVariant
+from shapely.ops import MultiLineString, Polygon, transform
+from shapely.geometry import mapping
+
 
 def project_data_existent(task, input):
     projectUid, org, token = input
@@ -346,7 +349,8 @@ def get_image_urls(task , inputs):
     return {'task':task.description(),
             'image_urls':image_urls}
 
-def fields_validator(required_fields, layer):
+def fields_validator(required_fields, layer, application_type):
+        required_fields = required_fields.get(application_type, {})
         layer.startEditing()
         fname = list(required_fields.keys())
         for field in fname:
@@ -575,3 +579,25 @@ def download_asset_logo(asset_name, url):
             file.write(chunk)
 
     return asset_logo_path
+
+
+def features_to_polygons(features):
+    polygon_features = []
+    for f in features:
+        if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
+            polygon_features.append(f)
+            continue
+        elif f["geometry"]["type"] in ["MultiLineString"]:
+            coords = f["geometry"]["coordinates"]
+            # coords = np.array(coords)
+            ml = MultiLineString(coords)
+            # Remove 
+            ml = transform(lambda x, y, z=None: (x, y), ml)
+            p = mapping(Polygon(ml.convex_hull))
+            f = {
+            "type": "Feature",
+            "properties": {},
+            "geometry": p
+            }
+            polygon_features.append(f)
+    return polygon_features

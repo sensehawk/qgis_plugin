@@ -246,7 +246,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
             # validate if fields exists if not create one
             required_fields = {'num_images_tagged':QVariant.Double, 
                                     'timestamp':QVariant.String}
-            fields_validator(required_fields, obj.project.vlayer)
+            fields_validator(required_fields, obj.project.vlayer, obj.project.application_type)
             # Get num tagged raw images that already exists in the geojson
             features = json.load(open(obj.project.geojson_path))["features"]
             obj.num_tagged_rawimages = {}

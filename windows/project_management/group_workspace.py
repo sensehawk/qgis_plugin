@@ -174,7 +174,7 @@ class GroupWorkspace(QtWidgets.QWidget):
             self.logger("Load failed...", level=Qgis.Warning)
             return None
         # Create a project object from the callback result
-        project = Project(result)
+        project = Project(result, application_type)
         project.user_email = self.user_email
         project.canvas_logger = self.canvas_logger
         project.logger = self.logger
