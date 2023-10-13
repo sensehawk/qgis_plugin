@@ -34,6 +34,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.group_edit_button.clicked.connect(lambda : GroupEdit(self, workspace_window, self.group_obj))
         self.therm_project_tabs_widget = ProjectTabsWidget(self)
         self.terra_project_tabs_widget = ProjectTabsWidget(self)
+        self.group_action_button = None
         self.setupUi(group_obj, group_dict)
          
     def setupUi(self, group_obj, group_dict):
@@ -58,15 +59,14 @@ class GroupWorkspace(QtWidgets.QWidget):
         container_menu.addActions([edit_container_btn, create_container_btn ,remove_container_btn, assign_container_btn, assign_app_btn])
         self.container_btn.setMenu(container_menu) 
 
-        # Nextracker run button for Nextracker groups
+        # For Nextracker org, group action button is connected to Nextracker group points generation 
         org_uid = self.group_obj.container.asset.org_uid
-        if org_uid == nextracker_org_uid:
-            print("Nextracker org")
-            nextracker_action_button = QtWidgets.QPushButton("Generate Nextracker Points")
-            nextracker_action_button.setFixedSize(280, 26)
-            nextracker_action_button.setStyleSheet("background-color:rgba(91, 160, 125, 100);")
-            self.group_layout.addWidget(nextracker_action_button)
-            nextracker_action_button.clicked.connect(lambda: generate_group_points(self.group_obj.uid, org_uid, self.user_email, self.core_token, self.logger))
+        if org_uid == nextracker_org_uid and not self.group_action_button:
+            self.group_action_button = QtWidgets.QPushButton("Generate Nextracker Points")
+            self.group_action_button.setFixedSize(280, 26)
+            self.group_action_button.setStyleSheet("background-color:rgba(91, 160, 125, 100);")
+            self.group_layout.addWidget(self.group_action_button)
+            self.group_action_button.clicked.connect(lambda: generate_group_points(self.group_obj.uid, org_uid, self.user_email, self.core_token, self.logger))
        
         if self.group_obj.container:
             # self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]
