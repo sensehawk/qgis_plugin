@@ -2,31 +2,30 @@ try :
     from .windows.packages.cv2 import cv2
 except Exception:
     import cv2
-import requests
-from urllib.request import urlopen
-import os
-from .sensehawk_apis.core_apis import get_project_geojson
-import json
-from qgis.core import Qgis, QgsDefaultValue, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling
-from qgis.utils import iface
 from qgis.core import *
-import tempfile
-import random
-import tempfile
-from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
-from PyQt5.QtWidgets import  QCompleter, QComboBox
+from qgis.utils import iface
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtWidgets
 from PyQt5.QtGui import QImage, QColor, QFont
-from qgis.PyQt.QtCore import Qt
-from .windows.packages.exiftool import ExifToolHelper
-from datetime import datetime
-import glob
-import threading
-import matplotlib.pyplot as plt 
-import numpy as np
-import traceback
+from PyQt5.QtWidgets import  QCompleter, QComboBox
+from qgis.core import Qgis, QgsDefaultValue, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling
 import re
+import glob
+import json
+import random
+import os
+import requests
+import threading
+import traceback
+import numpy as np
 from pathlib import Path
+from datetime import datetime
+from functools import partial
+import matplotlib.pyplot as plt 
+from urllib.request import urlopen
+from .sensehawk_apis.core_apis import get_project_geojson
+from .windows.packages.exiftool import ExifToolHelper
+from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
 from qgis.PyQt.QtCore import Qt, QVariant
 from shapely.ops import MultiLineString, Polygon, transform
 from shapely.geometry import mapping
@@ -242,7 +241,7 @@ def groups_details(asset, org, token):
         project_details = {}
         for projects in group['projects']:
             project_details[projects['uid']] = projects['name']
-        groups_dict[group['uid']] = (group['name'], project_details, group['container'], group["deal_id"])
+        groups_dict[group['uid']] = (group['name'], project_details, group['container'], group['deal_id'])
     return groups_dict
 
 
@@ -253,9 +252,24 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
     asset_details = response.json()['results']
     asset_dict = {}
     for asset in asset_details:
-        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'], "profile_image": asset['properties'].get("profile_image", None)}
+        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'], "profile_image": asset['properties'].get("cover_image", None)}
     
+    user_id_url = CORE_URL + f'/api/v1/organizations/{org_uid}/?organization={org_uid}'
+    org_user_response = requests.get(user_id_url, headers=headers)
+    user_id = org_user_response.json()['owner'].get('uid', None)
+
+    apptype_url = CORE_URL + f'/api/v1/apptypes/?organization={org_uid}'
+    apptype_response = requests.get(apptype_url, headers=headers)
+    apptype_details = apptype_response.json()['results']
+    apptype_dict = {}
+    if apptype_details:
+        for apptype in apptype_details:
+            apptype_dict[apptype['name']] = {'uid':apptype['uid'],'name':apptype['name'],'acitve':apptype['active'],'application':apptype['application']}
+
+
     return {'asset_dict': asset_dict,
+            'user_id': user_id,
+            'apptype_dict':apptype_dict,
             'task': task.description()}
             # 'org_container_details':org_container_details,
 
@@ -281,8 +295,8 @@ def file_existent(project_uid, org, token):
         existing_file = ['None']
         json = project_json.json()
         files = list(json.keys())
-        if 'ortho' in files:
-            existing_file =  ['ortho'] + existing_file
+        # if 'ortho' in files:
+        #     existing_file =  ['ortho'] + existing_file
         if 'reflectance' in files:
            existing_file =  ['reflectance'] + existing_file
 
@@ -496,12 +510,12 @@ def save_edits(task, save_inputs):
 
 #asset level projects 
 class ProjectForm:
-    def __init__(self, project_list, project_selection_layout, project_selection_window):
+    def __init__(self, projects_dict, project_selection_layout, project_selection_window):
         self.project_groupbox = QtWidgets.QGroupBox('Projects:')
         self.myform = QtWidgets.QFormLayout()
-        for project in project_list:
-            button = QtWidgets.QPushButton(f'{project}')
-            button.clicked.connect(project_selection_window.update_selected_project)
+        for project_uid, project_name in sorted(projects_dict.items(), key=lambda x: x[1]):
+            button = QtWidgets.QPushButton(f'{project_name}')
+            button.clicked.connect(partial(project_selection_window.update_selected_project, project_uid))
             self.myform.addRow(button)
 
         self.project_groupbox.setLayout(self.myform)
@@ -519,28 +533,31 @@ class ProjectForm:
 class AssetLevelProjects(QtWidgets.QWidget):
     def __init__(self, img_tag_obj):
         super().__init__()
+        self.img_tag_obj = img_tag_obj
         self.projects_form = None
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
-        self.group_details = img_tag_obj.project.group_details
-        self.img_tag_obj = img_tag_obj
+        self.setWindowTitle('Asset...')
+        self.setupUi(self.img_tag_obj.project.group_dict)
+
+    def setupUi(self, group_dict):
+        self.group_details = {}
+        for group_uid, group_obj in group_dict.items():
+            self.group_details[group_obj.name] = (group_uid, group_obj.projects_details)
         group_list = list(self.group_details.keys())
         self.group_combobox = QComboBox(self) 
         self.group = combobox_modifier(self.group_combobox, group_list)
         self.project_selection_layout.addWidget(self.group, 0, Qt.AlignTop)
         self.group.currentIndexChanged.connect(self.group_tree)
         self.project_details = self.group_details[self.group.currentText()][1]
-        project_list = list(self.project_details.keys())
-        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
-        self.setWindowTitle('Asset...')
+        self.projects_form = ProjectForm(self.project_details, self.project_selection_layout, self)
+
     def group_tree(self):
         self.group_uid = self.group_details[self.group.currentText()][0]
         self.project_details = self.group_details[self.group.currentText()][1]
-        project_list = list(self.project_details.keys())
-        self.projects_form = ProjectForm(project_list, self.project_selection_layout, self)
+        self.projects_form = ProjectForm(self.project_details, self.project_selection_layout, self)
 
-    def update_selected_project(self):
+    def update_selected_project(self, project_uid):
         clicked_button = self.sender()
-        project_uid = self.project_details[clicked_button.text()]
         self.img_tag_obj.addl_uid = project_uid
         self.img_tag_obj.addl_projectuid.setText(f'{clicked_button.text()}')
         self.img_tag_obj.addl_projectuid.setReadOnly(True)
@@ -557,9 +574,9 @@ def containers_details(task, asset_uid, org_uid, core_token):
     for container in containers:
         groups = container['groups']
         container_name = container['name']
-        app_info = [app.get('application', None) for app in container['app_types'] ] # dict [{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
-        container_level_groups = [group['name'] for group in groups ]
-        containers_dict[container['uid']] = {'name':container_name, 'groups':container_level_groups, 'application_info':app_info}
+        # app_info = [app.get('application', None) for app in container['app_types'] ] 
+        container_level_groups = [group['name'] for group in groups ] # app_type [{'uid':1,'name':'Thermal analaysis','application':{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
+        containers_dict[container['uid']] = {'name':container_name, 'groups':container_level_groups, 'applications_info':container['app_types']}
 
     return {'containers_dict':containers_dict, 'task':task.description()}
 

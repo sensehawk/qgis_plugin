@@ -45,7 +45,6 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.canvas =self.iface.mapCanvas()
         self.existing_files = self.thermToolobj.existing_files
         self.project = thermtool_obj.project
-        self.group_details = self.project.group_details
         self.project_details = self.project.project_details
         self.core_token = self.project.core_token
         self.project_uid = self.project.project_details["uid"]
@@ -123,6 +122,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
     def current_type(self, value):
         if value == 'ThermLite Tagging' or value == 'Thermal Tagging':
             self.MagmaConversion.setChecked(True)
+            self.rotate_image.setEnabled(True)
+            self.rotate_image.setChecked(True)
             self.IssueCropImage.setChecked(False)
             self.opt_uid_txt.setText('3.5GSD UID')
             self.addl_projectuid_button.setEnabled(True)
@@ -134,6 +135,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.No_images.setValue(4)
         elif value == 'Visual Tagging':
             self.MagmaConversion.setChecked(False)
+            self.rotate_image.setEnabled(True)
+            self.rotate_image.setChecked(True)
             self.IssueCropImage.setChecked(False)
             self.opt_uid_txt.setText('VProj UID')
             self.addl_projectuid_button.setEnabled(True)
@@ -146,6 +149,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             # self.projectUid.setText('')
         elif value == 'SiteMap Tagging':
             self.MagmaConversion.setChecked(True)
+            self.rotate_image.setEnabled(False)
+            self.rotate_image.setChecked(False)
             self.IssueCropImage.setChecked(True)
             self.opt_uid_txt.setText('3.5GSD UID')
             self.addl_projectuid_button.setEnabled(False)
@@ -156,6 +161,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.No_images.setEnabled(False)
         elif value == 'Temp Extraction':
             self.MagmaConversion.setChecked(False)
+            self.rotate_image.setEnabled(False)
+            self.rotate_image.setChecked(False)
             self.IssueCropImage.setChecked(False)
             self.opt_uid_txt.setText('3.5GSD UID')
             self.addl_projectuid_button.setEnabled(False)
@@ -166,6 +173,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.No_images.setEnabled(False)
         elif value == '3.5 GSD Tagging':
             self.MagmaConversion.setChecked(True)
+            self.rotate_image.setEnabled(True)
+            self.rotate_image.setChecked(True)
             self.IssueCropImage.setChecked(False)
             self.opt_uid_txt.setText('3.5GSD UID')
             self.addl_projectuid_button.setEnabled(True)
@@ -203,6 +212,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         else : magma_image = False
         if self.IssueCropImage.isChecked():crop_image = True
         else: crop_image = False
+        if self.rotate_image.isChecked():rotate = True
+        else : rotate = False
         no_images = self.No_images.value()
         temp_file = self.temp_option.currentText()
 
@@ -212,17 +223,17 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
                 self.canvas_logger('Select the Project to tag Visual images....',level=Qgis.Warning)
             else:
                 json = {'projectUid': self.project_uid, 'method':5, 'VprojectUid': self.addl_uid, 'org':org, 'Addl_ProjUid':None,
-                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
+                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None', 'rotate_image':rotate}
                 self.api(json)
          
         elif self.imagetaggingType.currentText() == 'Thermal Tagging':
             json = {'projectUid': self.project_uid, 'method':1, 'Addl_ProjUid':self.addl_uid,'org':org,
-                    'magma_image':magma_image,'crop_image':crop_image, 'No_images':no_images, 'temp_file':temp_file}
+                    'magma_image':magma_image,'crop_image':crop_image, 'No_images':no_images, 'temp_file':temp_file, 'rotate_image':rotate}
             self.api(json)
            
         elif self.imagetaggingType.currentText() == 'ThermLite Tagging':
             json ={'projectUid': self.project_uid, 'method':2, 'Addl_ProjUid':self.addl_uid,'org':org,
-                   'magma_image':magma_image, 'crop_image':crop_image,'No_images':no_images,'temp_file':temp_file}
+                   'magma_image':magma_image, 'crop_image':crop_image,'No_images':no_images,'temp_file':temp_file, 'rotate_image':rotate}
             self.api(json)
             
         elif self.imagetaggingType.currentText() == 'SiteMap Tagging':
@@ -240,6 +251,6 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
                 self.canvas_logger('Select the Project to tag 3.5GSD images....',level=Qgis.Warning)
             else:
                 json = {'projectUid': self.project_uid, 'method':6, 'Addl_ProjUid': self.addl_uid, 'org':org,
-                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None'}
+                        'magma_image':magma_image, 'crop_image':crop_image, 'No_images':no_images, 'temp_file':'None', 'rotate_image':rotate}
                 self.api(json)
 

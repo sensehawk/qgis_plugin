@@ -58,6 +58,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.existing_files = self.project.existing_files
         self.canvas = self.iface.mapCanvas()
         self.StringNumberButton.clicked.connect(self.string_numbering)
+        # self.StringNumberButton.clicked.connect(lambda : ThermNumberingWidget(self, self.iface))
         self.imagetaggingButton.clicked.connect(self.ImageTagging)
         self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
         self.viewer_button.clicked.connect(self.therm_viewer)
@@ -196,7 +197,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if not self.numbering_widget:
             self.numbering_widget = ThermNumberingWidget(self, self.iface)
         self.project.docktool_widget.setWidget(self.numbering_widget)
-        self.project.docktool_widget.setFixedSize(250, 355)    
+        self.project.docktool_widget.setFixedSize(450, 780)    
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.StringNumberButton.setChecked(True)
@@ -219,7 +220,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.vlayer.setLabelsEnabled(False)
     
     def enable_docktool_custom_labels(self, onlylabel=None):
-        tool_field_map = {'StringNumber':'string_number','ManualTagging':'num_images_tagged','ThermViewer':'num_images_tagged'}
+        tool_field_map = {'StringNumber':'string_number', 'ManualTagging':'num_images_tagged', 'ThermViewer':'num_images_tagged'}
         for button in self.findChildren(QtWidgets.QPushButton):
             if button.isCheckable():
                 if button.isChecked():
