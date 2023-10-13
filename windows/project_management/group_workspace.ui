@@ -67,10 +67,13 @@
         <x>12</x>
         <y>12</y>
         <width>379</width>
-        <height>53</height>
+        <height>81</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="group_layout">
+      <layout class="QGridLayout" name="group_layout" rowstretch="0,0">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetNoConstraint</enum>
+       </property>
        <item row="1" column="0">
         <widget class="QLabel" name="project_count_label">
          <property name="text">
@@ -135,7 +138,7 @@
       <property name="geometry">
        <rect>
         <x>12</x>
-        <y>78</y>
+        <y>100</y>
         <width>380</width>
         <height>320</height>
        </rect>

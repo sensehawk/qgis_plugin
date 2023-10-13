@@ -25,43 +25,43 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QPushButton" name="clip_button">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>29</y>
-     <width>60</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Clip</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="points_button">
    <property name="geometry">
     <rect>
-     <x>95</x>
-     <y>30</y>
-     <width>61</width>
+     <x>8</x>
+     <y>10</y>
+     <width>111</width>
      <height>32</height>
     </rect>
    </property>
    <property name="text">
-    <string>Points</string>
+    <string>Generate Points</string>
    </property>
   </widget>
   <widget class="QPushButton" name="csv_button">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>30</y>
-     <width>61</width>
+     <x>8</x>
+     <y>50</y>
+     <width>111</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Download CSV</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="clip_button">
+   <property name="geometry">
+    <rect>
+     <x>132</x>
+     <y>10</y>
+     <width>106</width>
      <height>32</height>
     </rect>
    </property>
    <property name="text">
-    <string>CSV</string>
+    <string>Clip Raster</string>
    </property>
   </widget>
  </widget>

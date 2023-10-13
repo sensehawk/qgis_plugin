@@ -11,7 +11,7 @@ from ...tasks import Project_loadTask
 from ...utils import categorize_layer
 from ...constants import CORE_URL
 import os
-import time
+from ..nextracker.utils import nextracker_org_uid, generate_group_points
 import requests
 
 therm_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'therm_logo.svg'))
@@ -57,6 +57,16 @@ class GroupWorkspace(QtWidgets.QWidget):
         assign_app_btn.triggered.connect(lambda : AssignApplication(self, self.workspace_window, self.group_obj))
         container_menu.addActions([edit_container_btn, create_container_btn ,remove_container_btn, assign_container_btn, assign_app_btn])
         self.container_btn.setMenu(container_menu) 
+
+        # Nextracker run button for Nextracker groups
+        org_uid = self.group_obj.container.asset.org_uid
+        if org_uid == nextracker_org_uid:
+            print("Nextracker org")
+            nextracker_action_button = QtWidgets.QPushButton("Generate Nextracker Points")
+            nextracker_action_button.setFixedSize(280, 26)
+            nextracker_action_button.setStyleSheet("background-color:rgba(91, 160, 125, 100);")
+            self.group_layout.addWidget(nextracker_action_button)
+            nextracker_action_button.clicked.connect(lambda: generate_group_points(self.group_obj.uid, org_uid, self.user_email, self.core_token, self.logger))
        
         if self.group_obj.container:
             # self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]

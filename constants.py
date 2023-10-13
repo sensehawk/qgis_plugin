@@ -1,5 +1,3 @@
-import os
-
 # Production env
 CORE_URL = "https://core-server.sensehawk.com"
 MAP_SERVER_URL = "https://mapserver.sensehawk.com/"
@@ -13,6 +11,7 @@ THERMAL_TAGGING_URL = "https://sid-tagging-server.sensehawk.com"
 API_SENSEHAWK = "https://api.sensehawk.com"
 S3_REGION="ap-south-1"
 S3_BUCKET="sh-inc-ap-south-1"
+NEXTRACKER_URL = "https://nextracker-server.sensehawk.com"
 
 
 # # Staging env

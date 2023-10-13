@@ -27,7 +27,7 @@ import os
 from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint, QgsVectorLayer
 from .utils import setup_clipped_orthos_group
 from ...tasks import clipRequest
-from ...constants import CORE_URL, THERMAL_TAGGING_URL
+from ...constants import CORE_URL, THERMAL_TAGGING_URL, NEXTRACKER_URL
 import requests
 import urllib.request
 
@@ -41,6 +41,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         self.project = project
         self.clip_button.clicked.connect(self.start_clip_task)
         self.csv_button.clicked.connect(self.download_csv)
+        self.points_button.clicked.connect(self.generate_points)
     
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -105,3 +106,11 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
                                headers={"Authorization": f"Token {self.project.core_token}"}, 
                                json=body).json()
         return list(object_urls.values())[0]
+
+    def generate_points(self):
+        project_uid = self.project.project_details["uid"]
+        org_uid = self.project.project_details.get("organization", {}).get("uid", None)
+        url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={org_uid}"
+        headers = {"Authorization": f"Token {self.project.core_token}"}
+        resp = requests.post(url, headers=headers).json()
+        self.logger(str(resp))

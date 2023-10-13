@@ -5,6 +5,7 @@ from qgis.core import QgsProject, Qgis, QgsTask, QgsApplication, QgsVectorLayer,
 from qgis.utils import iface
 from .terra_tools import TerraToolsWidget
 from .nextracker.nextracker_tools import NextrackerToolsWidget
+from .nextracker.utils import nextracker_org_uid
 from ..event_filters import KeypressFilter, KeypressEmitter
 from .therm_tools import ThermToolsWidget
 from datetime import datetime
@@ -332,7 +333,7 @@ class Project:
     def add_tools(self):
         if self.project_details["project_type"] == "terra":
             # Check if the organization is NEXTracker
-            if self.project_details["organization"]["uid"] == "00g7uy87cofqS3X380i7":#"00g305uhwb3ULo6Em0i7":
+            if self.project_details["organization"]["uid"] == nextracker_org_uid:#"00g305uhwb3ULo6Em0i7":
                 self.tools_widget = NextrackerToolsWidget(self)
             else:
                 # get terra tools

@@ -155,10 +155,8 @@ def clipRequest(task, clip_task_input):
     return {"task": task.description(), 'title':res_title, 'description':res_description, 'res_status':res_status}
 
 def loginTask(task, login_window):
-    # login_window.user_email = login_window.userName.text()
-    # login_window.user_password = login_window.userPassword.text()
-    login_window.user_email = 'ganesh@sensehawk.com'
-    login_window.user_password = 'Gana@1979'
+    login_window.user_email = login_window.userName.text()
+    login_window.user_password = login_window.userPassword.text()
 
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
 
