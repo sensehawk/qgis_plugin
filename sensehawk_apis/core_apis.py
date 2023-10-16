@@ -2,10 +2,10 @@ import requests
 import json
 import os
 from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
+from qgis.core import Qgis
 
 def get_project_reports(project_uid, token):
     PROJECT_REPORT_URL = CORE_URL + "/api/v1/projects/%s/reports/"
-    REPORT_DATA_DOWNLOAD_URL = CORE_URL + "/api/v1/projects/%s/data/reports/%s/download/"
     REPORT_DOWNLOAD_URL = CORE_URL + "/api/v1/projects/%s/reports/%s/download/"
     HOST_TOKEN = f'Token {token}'
 
@@ -13,12 +13,7 @@ def get_project_reports(project_uid, token):
     reports = requests.get(PROJECT_REPORT_URL %project_uid, headers = {'Authorization': HOST_TOKEN}).json()['results']
 
     for report in reports:
-        if report['report_type'] == 'processed':
-            processed_reports =  requests.post(REPORT_DATA_DOWNLOAD_URL %(project_uid, report['uid']), headers = {'Authorization':HOST_TOKEN}).json()['urls']
-            for data_report in data_reports:
-                if processed_reports.get(data_report):
-                    all_reports[data_report] = processed_reports[data_report]
-        else:
+        if report['report_type'] != 'processed':
             url = requests.get(REPORT_DOWNLOAD_URL %(project_uid, report['uid']), headers = {'Authorization':HOST_TOKEN}).json()['url']
             all_reports[report['report_type']] = url
     return all_reports
@@ -43,6 +38,11 @@ def get_ortho_tiles_url(project_uid, token):
     orthotiles_url = MAP_SERVER_URL + orthotiles_uid
     return orthotiles_url
 
+def get_ortho_url(project_uid, org, token):
+    url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'
+    headers = {"Authorization": f"Token {token}"}
+    projetJson = requests.get(url, headers=headers)
+    return projetJson.json()
 
 def get_project_geojson(project_uid, token, project_type):
     project_details = get_project_details(project_uid, token)
@@ -88,7 +88,7 @@ def save_project_geojson(geojson, project_uid, token, project_type="terra"):
     return res.json()
 
 
-def core_login(username, password):
+def core_login(username, password, logger):
     url = CORE_URL + "/api/v1/api-basic-auth/"
     payload = json.dumps({
         "username": username,
@@ -101,7 +101,7 @@ def core_login(username, password):
     try:
         token = response.json()["Authorization"]
     except Exception as e:
-        print(e)
+        logger(str(e), Qgis.Warning)
         token = None
     return token
 

@@ -23,52 +23,69 @@
 # """
 
 from ..sensehawk_apis.core_apis import core_login
-from ..windows.load import LoadWindow
+from ..windows.home import HomeWindow
 
-from qgis.PyQt import QtWidgets, uic
+from qgis.PyQt import QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QCoreApplication, QSize
 
 from ..tasks import loginTask
-
+# from ..utils import organization_details
 import os
 
-LOGIN_UI, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'login.ui'))
+class LoginWindow(QtWidgets.QWidget):
 
-
-class LoginWindow(QtWidgets.QDockWidget, LOGIN_UI):
-
-    def __init__(self, iface):
+    def __init__(self, iface, dockwidget):
         """Constructor."""
         super(LoginWindow, self).__init__()
-        self.setupUi(self)
+        uic.loadUi(os.path.join(os.path.dirname(__file__), 'login.ui'), self)
+        self.loginButton.setText('🗝️ Login')
+        self.loginButton.setStyleSheet("background-color:#dcf6f7;")
         self.loginButton.clicked.connect(self.start_login_task)
         self.user_email = None
         self.user_password = None
         self.core_token = None
         self.iface = iface
-        # Add to the left docking area by default
-        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self)
+
         self.load_window = None
+        self.dock_widget = dockwidget
+        # Add to the left docking area by default
+        logo_label = QtWidgets.QLabel(self)
+        logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))
+        logo = logo.scaled(300, 60, Qt.AspectRatioMode.KeepAspectRatioByExpanding)
+        logo_label.setPixmap(logo)
+        logo_label.setAlignment(Qt.AlignCenter)
+        logo_label.show()
+        self.layout.addWidget(logo_label)
+        self.dock_widget.setWidget(self)
+        self.dock_widget.setMinimumSize(QSize(300, 380))
+        # self.dock_widget.setFixedSize(330, 700)
+        self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
+        self.canvas_logger('Welcome to Sensehawk Qgis plugin')
 
     def logger(self, message, level=Qgis.Info):
+        QgsMessageLog.logMessage(str(message), 'SenseHawk QC', level=level)
+
+    def canvas_logger(self, message, level=Qgis.Info):
+        self.iface.messageBar().clearWidgets()
+        self.iface.messageBar().pushMessage(message, level=level, duration=3)
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def login_callback(self, login_task_status, login_task):
         if login_task_status != 3:
             return None
         if not login_task.returned_values:
-            self.logger("Login task returned None...", level=Qgis.Warning)
+            self.canvas_logger("Check username and password", level=Qgis.Warning)
             return None
         self.show_load_window()
 
     def start_login_task(self):
+        self.canvas_logger('Initiated login process')
         login_task = QgsTask.fromFunction("Login", loginTask, login_window=self)
         QgsApplication.taskManager().addTask(login_task)
         login_task.statusChanged.connect(lambda login_task_status: self.login_callback(login_task_status, login_task))
 
     def show_load_window(self):
         # Initialize load save window (next window post login)
-        self.load_window = LoadWindow(self.user_email, self.core_token, self.iface)
+        self.load_window = HomeWindow(self)
         self.load_window.show()
-        self.hide()

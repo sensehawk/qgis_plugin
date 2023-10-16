@@ -72,6 +72,7 @@ class SensehawkQC:
         #print "** INITIALIZING SensehawkQC"
 
         self.pluginIsActive = False
+        self.dockwidget = QDockWidget()
 
 
     # noinspection PyMethodMayBeStatic
@@ -191,6 +192,7 @@ class SensehawkQC:
         # self.dockwidget = None
 
         self.pluginIsActive = False
+        print("Closing SenseHawk QC plugin")
 
 
     def unload(self):
@@ -215,6 +217,6 @@ class SensehawkQC:
             self.pluginIsActive = True
 
             # Initialize login window
-            self.login_window = LoginWindow(self.iface)
+            self.login_window = LoginWindow(self.iface, self.dockwidget)
             self.login_window.show()
 
