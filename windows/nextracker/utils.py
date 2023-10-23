@@ -2,9 +2,9 @@ import requests
 import traceback
 from ...constants import NEXTRACKER_URL
 
-nextracker_org_uid = "00g7uy87cofqS3X380i7" #00g305uhwb3ULo6Em0i7
+nextracker_org_uid = "00g305uhwb3ULo6Em0i7" #"00g7uy87cofqS3X380i7"
 nextracker_owner_uid = "NMHuEVAxXz" #NMHuEVAxXz
-nextracker_featuretype_groups = ["BudsBapby0N0", "tM2NCKQSPW0g"] #["WcePT5wZkJQs","1Ngg3bHRXe5v"]
+nextracker_featuretype_groups = ["WcePT5wZkJQs","1Ngg3bHRXe5v"] #["BudsBapby0N0", "tM2NCKQSPW0g"] 
 
 # Works only for projects in NEXTracker organization
 def setup_nextracker_features(container_uid, core_token):

@@ -601,6 +601,8 @@ def download_asset_logo(asset_name, url):
 def features_to_polygons(features):
     polygon_features = []
     for f in features:
+        if "class" not in f["properties"].keys():
+            f["properties"]["class"] = None
         if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
             polygon_features.append(f)
             continue
