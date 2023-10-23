@@ -118,6 +118,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.projectbutton.setEnabled(True)
         self.projectbutton.setStyleSheet("background-color:#dcf6f7;")
         self.containers_details = result['containers_dict']
+        print('extracted asset level container details')
         
     def asset_tree(self):
         self.projectbutton.setEnabled(False)
@@ -167,7 +168,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset = Asset(asset_dict, self.org_uid)
         self.parse_containers_info()
         self.parse_groups_info()
-        time.sleep(0.5)
+        time.sleep(1)
         self.asset_workspace = WorkspaceWindow(self, self.iface)
         self.hide()
         self.asset_workspace.show()
