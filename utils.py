@@ -218,7 +218,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     return geojson_path
 
 def projects_details(group, org, token):
-    url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
+    url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=1000&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     projects_details = response.json()['results']
@@ -275,14 +275,14 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
 
 
 def organization_details(token):
-    url = API_SENSEHAWK + '/v1/organizations/?limit=9007199254740991&page=1'
+    print(token)
+    url = CORE_URL + '/api/v1/organizations/?page_size=99999&page=1'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
-    org_details = response.json()['organizations']
+    org_details = response.json()['results']
     org_list = {}
     for org in org_details:
         org_list[org['uid']] = org['name']
-
     return org_list
 
 def file_existent(project_uid, org, token):
@@ -382,6 +382,8 @@ def fields_validator(required_fields, layer, application_type):
 def download_images(task, inputs):
     threads = []
     viewerobj, raw_images = inputs
+    if not os.path.exists(viewerobj.images_dir):
+            os.makedirs(viewerobj.images_dir)
     for r in raw_images:
         key = r["service"]["key"]
         viewerobj.marker_location.append(r['location'])
@@ -566,10 +568,11 @@ class AssetLevelProjects(QtWidgets.QWidget):
 
 
 def containers_details(task, asset_uid, org_uid, core_token):
-    url = f'https://core-server.sensehawk.com/api/v1/containers/?asset={asset_uid}&groups=true&labels=true&page=1&page_size=10&search=&users=true&organization={org_uid}'
+    url = CORE_URL + f'/api/v1/containers/?asset={asset_uid}&groups=true&labels=true&page=1&page_size=1000&search=&users=true&organization={org_uid}'
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, headers=headers)
     containers = response.json()['results']
+    print(containers)
     containers_dict = {}
     for container in containers:
         groups = container['groups']

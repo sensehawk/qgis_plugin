@@ -5,6 +5,8 @@ from .groups_homepage import GroupSelectionWidget
 from .group_workspace import GroupWorkspace
 from ...utils import download_asset_logo
 import os
+import tempfile
+import shutil
 
 
 
@@ -184,7 +186,7 @@ class WorkspaceWindow(QtWidgets.QWidget):
             self.layers_id = []
             for i in active_layers:
                 self.layers_id.append(i.vlayer.id())
-                self.layers_id.append(i.rlayer.id())
+                self.layers_id.append(i.rlayer.id())    
         except AttributeError as e:
             pass
         
@@ -205,6 +207,10 @@ class WorkspaceWindow(QtWidgets.QWidget):
     def change_window(self, window=None):
         #remove loaded projects
         try:
+            for project in self.group_workspace.project_uids:
+                folderpath = os.path.join(tempfile.gettempdir(), project)
+                if os.path.exists(folderpath):
+                    shutil.rmtree(folderpath)
             self.qgis_project.removeMapLayers(self.layers_id)
             #close active tool widget 
             self.group_workspace.therm_project_tabs_widget.docktool_widget.close()
@@ -212,7 +218,7 @@ class WorkspaceWindow(QtWidgets.QWidget):
             del self.group_workspace.therm_project_tabs_widget.docktool_widget
             del self.group_workspace.terra_project_tabs_widget.docktool_widget
         except Exception as e:
-            self.logger(str(e), level=Qgis.Warning)
+            pass
         if window:
             self.dock_widget.setWidget(self.home_window)
             self.dock_widget.setFixedSize(300, 830)

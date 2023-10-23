@@ -28,6 +28,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.core_token = workspace_window.core_token
         self.user_email = workspace_window.user_email
         self.workspace_window = workspace_window
+        self.org_uid = workspace_window.org_uid
         self.project_form = None
         self.group_delete_button.clicked.connect(self.delete_group)
         self.back_button.clicked.connect(self.load_group_workspace)
@@ -35,6 +36,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.therm_project_tabs_widget = ProjectTabsWidget(self)
         self.terra_project_tabs_widget = ProjectTabsWidget(self)
         self.group_action_button = None
+        self.project_uids = []
         self.setupUi(group_obj, group_dict)
          
     def setupUi(self, group_obj, group_dict):
@@ -60,13 +62,12 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.container_btn.setMenu(container_menu) 
 
         # For Nextracker org, group action button is connected to Nextracker group points generation 
-        org_uid = self.group_obj.container.asset.org_uid
-        if org_uid == nextracker_org_uid and not self.group_action_button:
+        if self.org_uid == nextracker_org_uid and not self.group_action_button:
             self.group_action_button = QtWidgets.QPushButton("Generate Nextracker Points")
             self.group_action_button.setFixedSize(280, 26)
             self.group_action_button.setStyleSheet("background-color:rgba(91, 160, 125, 100);")
             self.group_layout.addWidget(self.group_action_button)
-            self.group_action_button.clicked.connect(lambda: generate_group_points(self.group_obj.uid, org_uid, self.user_email, self.core_token, self.logger))
+            self.group_action_button.clicked.connect(lambda: generate_group_points(self.group_obj.uid, self.org_uid, self.user_email, self.core_token, self.logger))
        
         if self.group_obj.container:
             # self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]
@@ -303,7 +304,8 @@ class GroupWorkspace(QtWidgets.QWidget):
                 self.terra_project_tabs_widget.activate_project()
                 self.show_projects_loaded(application_type)
                 return None
-                
+        if project_uid not in self.project_uids:
+            self.project_uids.append(project_uid)
         self.logger(f"Deal ID: {self.group_obj.deal_id}")
         self.logger(f"Asset UID: {self.group_obj.container.asset.uid}")
         

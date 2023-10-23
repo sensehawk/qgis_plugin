@@ -437,6 +437,9 @@ class Project:
         message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         ret = message_box.exec_()
         if ret == QtWidgets.QMessageBox.Ok:
+            folderpath = os.path.join(tempfile.gettempdir(), self.project_details["uid"])
+            if os.path.exists(folderpath):
+                shutil.rmtree(folderpath)
             self.vlayer.commitChanges()
             self.qgis_project.removeMapLayers([self.vlayer.id()])
             load_task_inputs = {"project_uid": self.project_details['uid'],
@@ -848,6 +851,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
     def remove_project(self):
         iface.messageBar().clearWidgets()
+        folderpath = os.path.join(tempfile.gettempdir(), self.active_project.project_details["uid"])
+        if os.path.exists(folderpath):
+            shutil.rmtree(folderpath)
         self.logger(f"Removing project: {self.active_project.project_details['name']}")
         project = self.active_project
         try:

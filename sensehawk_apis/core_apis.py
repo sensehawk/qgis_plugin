@@ -98,6 +98,7 @@ def core_login(username, password, logger):
         'Content-Type': 'application/json'
     }
     response = requests.request("POST", url, headers=headers, data=payload)
+    print(response.json())
     try:
         token = response.json()["Authorization"]
     except Exception as e:

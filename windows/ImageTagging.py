@@ -46,6 +46,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.existing_files = self.thermToolobj.existing_files
         self.project = thermtool_obj.project
         self.project_details = self.project.project_details
+        self.email_id = self.project.user_email
         self.core_token = self.project.core_token
         self.project_uid = self.project.project_details["uid"]
         self.canvas =self.iface.mapCanvas()
@@ -191,6 +192,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         canvas  = self.canvas
         rotation = canvas.rotation()
         json['angle'] = rotation
+        json['email_id'] = self.email_id
         print(json)
         url =  THERMAL_TAGGING_URL + "/tag" 
         headers = {'Authorization': f'Token {self.core_token}'}
