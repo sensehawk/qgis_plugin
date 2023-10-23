@@ -31,7 +31,7 @@ class Project:
         self.geojson_path = load_task_result['geojson_path']
         # self.table_geojson = self.geojson_path.replace('.geojson', '_table.geojson')
         self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
-        # self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
+        self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         #self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
         self.application_type = application_type
         #validate fields and create if not there
@@ -96,21 +96,26 @@ class Project:
             self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
     
     # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
-    def save_and_parse_listType_dataFields(self):   
-        self.vlayer.commitChanges()
-        self.vlayer.startEditing()
-        # disconnect any single added to existing vlayer
-        self.vlayer.selectionChanged.disconnect()
-        # remove existing json 
-        self.qgis_project.removeMapLayers([self.vlayer.id()])
+    def save_and_parse_listType_dataFields(self):  
+        if self.application_type == 'therm' :
+            self.vlayer.commitChanges()
+            self.vlayer.startEditing()
+            # disconnect any single added to existing vlayer
+            self.vlayer.selectionChanged.disconnect()
+            # remove existing json 
+            self.qgis_project.removeMapLayers([self.vlayer.id()])
 
-        save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
-                                                                                    'listType_dataFields':self.listType_dataFields,
-                                                                                    'logger':self.logger})
-        QgsApplication.taskManager().addTask(save_edits_task)
-        save_edits_task.statusChanged.connect(lambda save_edits_status : self.save_edits_callback(save_edits_status, save_edits_task))
+            save_edits_task = QgsTask.fromFunction("Save_Edits", save_edits, save_inputs={'json_path':self.geojson_path,
+                                                                                        'listType_dataFields':self.listType_dataFields,
+                                                                                        'logger':self.logger})
+            QgsApplication.taskManager().addTask(save_edits_task)
+            save_edits_task.statusChanged.connect(lambda save_edits_status : self.save_edits_callback(save_edits_status, save_edits_task))
 
-
+        else:
+            self.vlayer.commitChanges()
+            self.vlayer.startEditing()
+            self.canvas_logger(f'{self.project_details.get("name", None)} Geojson Saved...', level=Qgis.Success)
+            
     def save_edits_callback(self, save_edits_status, save_edits_task):
         if save_edits_status != 3:
             return None
@@ -349,7 +354,7 @@ class Project:
     def updateUid_and_sync_featurecount(self, new_feature_id=None):
         # Update uid field 
         feature = list(self.vlayer.getFeatures([new_feature_id]))[0]
-        # self.load_feature_count()
+        self.load_feature_count()
         feature['uid'] = self.create_uid()
         feature['projectUid'] = self.project_details["uid"]
         feature['groupUid'] = self.project_details["group"]["uid"]
@@ -397,6 +402,7 @@ class Project:
                 self.features_table.setItem(row_position, 1, feature_count_item)
 
     def toggle_features(self):
+        self.vlayer.featureAdded.disconnect()
         current_enabled_features = list(self.vlayer.getFeatures())
         current_disabled_features = self.disabled_features
         disabled_features = []
@@ -412,6 +418,9 @@ class Project:
         disabled_feature_ids = [f.id() for f in disabled_features]
         self.disabled_features = disabled_features
         self.vlayer.deleteFeatures(disabled_feature_ids)
+        self.vlayer.commitChanges()
+        self.vlayer.startEditing()
+        self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
 
     def create_features_table(self):
         # Create a table of feature counts
@@ -467,7 +476,7 @@ class Project:
                             "logger": self.logger,
                             "reload":True,
                             "bounds":self.bounds}
-            
+            self.disabled_features.clear()
             project_load_task = QgsTask.fromFunction(f"{self.project_details['name']} Project Reload", Project_loadTask, load_task_inputs)
             QgsApplication.taskManager().addTask(project_load_task)
             project_load_task.statusChanged.connect(lambda load_task_status: self.project_load_callback(load_task_status, project_load_task))

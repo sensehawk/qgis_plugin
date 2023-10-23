@@ -33,8 +33,8 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.group_delete_button.clicked.connect(self.delete_group)
         self.back_button.clicked.connect(self.load_group_workspace)
         self.group_edit_button.clicked.connect(lambda : GroupEdit(self, workspace_window, self.group_obj))
-        self.therm_project_tabs_widget = ProjectTabsWidget(self)
         self.terra_project_tabs_widget = ProjectTabsWidget(self)
+        self.therm_project_tabs_widget = ProjectTabsWidget(self)
         self.group_action_button = None
         self.project_uids = []
         self.setupUi(group_obj, group_dict)
@@ -748,6 +748,7 @@ class CreateContainer(QtWidgets.QDialog):
                 new_container_name = response_json['name']
                 new_container_obj = Container(new_container_uid, new_container_name,self.workspace_window.home_window.asset)
                 self.workspace_window.home_window.containers_dict[new_container_uid] = new_container_obj
+                self.workspace_window.canvas_logger(f'{self.create_container_ui.container_name.text()} Container Created Successfully...', level=Qgis.Warning)
         else:
             self.workspace_window.canvas_logger('Container name Field is Empty...', level=Qgis.Warning)
 
