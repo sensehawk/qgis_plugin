@@ -87,7 +87,6 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset_details = result['asset_dict']
         self.user_id = result['user_id']
         self.apptype_details = result['apptype_dict']
-        print(self.apptype_details)
         asset_list = list(a["name"] for a in self.asset_details.values()) 
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
@@ -98,7 +97,6 @@ class HomeWindow(QtWidgets.QWidget):
     def org_tree(self, value):
         try:
             self.org_uid = list(filter(lambda x: self.org_details[x] == self.org.currentText(), self.org_details))[0]
-            print(self.org_uid)
         except KeyError:
             return None
         self.org.setEnabled(False)

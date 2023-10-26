@@ -282,9 +282,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         image_sort_task.statusChanged.connect(lambda sort_task_status: self.sort_task_callback(sort_task_status, image_sort_task))
 
     def change_image(self):
-        # print(f"Current image index: {self.image_selector.currentIndex()}")
-        # print(f"Changed image index: {self.sorted_images[self.image_index]}")
-        # print(f"Current image coords: {self.long_lat[self.image_index]}")
         self.image_index = self.image_selector.currentIndex()
         self.load_image(self.image_index)
         self.marker_info.setText('')
@@ -460,18 +457,21 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
         for feature in features:
-            mapping_uid  = feature['properties'].get('uid', None)
-            if not mapping_uid:
-                geojson['features'].append(feature)
+            if feature["class_name"] == "None" or feature["class_name"] == "NULL":
                 continue
-            raw_images = feature['properties']['raw_images']
-            if raw_images is None or isinstance(raw_images, type('')) or len(raw_images) == 0 :
-                feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
             else:
-                feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
-            if 'num_images_tagged' in feature['properties']:
-                feature['properties'].pop('num_images_tagged')
-            geojson['features'].append(feature)
+                mapping_uid  = feature['properties'].get('uid', None)
+                if not mapping_uid:
+                    geojson['features'].append(feature)
+                    continue
+                raw_images = feature['properties']['raw_images']
+                if isinstance(raw_images, type('')) or len(raw_images) == 0 :
+                    feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
+                else:
+                    feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
+                if 'num_images_tagged' in feature['properties']:
+                    feature['properties'].pop('num_images_tagged')
+                geojson['features'].append(feature)
 
         #remove exiting vlayer and add tagged vlayer
         self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])

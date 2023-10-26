@@ -87,7 +87,7 @@ class Project:
             self.color_code = {'hotspot': '#001c63', 'diode_failure': '#42e9de', 'module_failure': '#2ecc71',
                           'string_failure': '#3ded2d', 'module_reverse_polarity': '#ff84dc',
                           'potential_induced_degradation': '#550487', 'vegetation': '#076e0a',
-                          'tracker_malfunction': '#c50000', 'string_reverse_polarity': 'self.rlaye#f531bd',
+                          'tracker_malfunction': '#c50000', 'string_reverse_polarity': '#f531bd',
                           'dirt': '#b5b0b0', 'cracked_modules': '#9b9e33', 'table': '#ffff00'}
         else:
             self.color_code = {
@@ -114,6 +114,7 @@ class Project:
         else:
             self.vlayer.commitChanges()
             self.vlayer.startEditing()
+            self.layer_edit_status = True
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson Saved...', level=Qgis.Success)
             
     def save_edits_callback(self, save_edits_status, save_edits_task):
@@ -374,16 +375,24 @@ class Project:
         class_name_keyword = {"terra": "class", "therm": "class_name"}[self.project_details["project_type"]]
         for f in list(self.vlayer.getFeatures()) + self.disabled_features:
             feature_class = f[class_name_keyword]
-            class_count = feature_count_dict.get(feature_class, 0)
+            class_count = feature_count_dict.get(str(feature_class), 0)
             class_count += 1
-            feature_count_dict[feature_class] = class_count
+            feature_count_dict[str(feature_class)] = class_count
+        
+        removed_features = []
+        for i in self.features_table_items.values():
+            feature_name = i['feature_item'].text()
+            if not feature_count_dict.get(feature_name, None):
+                row, column = i['feature_item'].row(),i['feature_item'].column()
+                self.features_table.removeRow(row)
+                removed_features.append(str(feature_name))
 
-        #self.feature_counts = [(k, v) for k, v in feature_count_dict.items()]
-        # Populate feature counts
-        # self.features_table.setRowCount(len(self.feature_counts))
+        if removed_features:
+            [self.features_table_items.pop(i) for i in removed_features]
+
         for feature_type, feature_count in feature_count_dict.items():
             feature_label = self.container_class_map.get(feature_type, str(feature_type))
-            if feature_label in self.features_table_items:
+            if str(feature_label) in self.features_table_items:
                 feature_count_item = self.features_table_items[feature_label]["count_item"]
                 feature_count_item.setText(str(feature_count))
             else:
@@ -401,6 +410,8 @@ class Project:
                 self.features_table.setItem(row_position, 0, feature_type_item)
                 self.features_table.setItem(row_position, 1, feature_count_item)
 
+        
+
     def toggle_features(self):
         self.vlayer.featureAdded.disconnect()
         current_enabled_features = list(self.vlayer.getFeatures())
@@ -409,14 +420,27 @@ class Project:
         class_name_keyword = {"terra": "class", "therm": "class_name"}[self.project_details["project_type"]]
         enabled_feature_keywords = [i["feature_keyword"] for i in self.features_table_items.values() if i["feature_item"].checkState() == 2]
         for f in current_enabled_features + current_disabled_features:
-            if f[class_name_keyword] not in enabled_feature_keywords:
+            if f[class_name_keyword] not in enabled_feature_keywords and f not in self.disabled_features:
                 disabled_features.append(f)
             else:
-                if f in current_disabled_features:
+                if f in current_disabled_features and f[class_name_keyword] in enabled_feature_keywords:
                     self.vlayer.addFeature(f)
+                    self.disabled_features.remove(f)
+
+        for label in self.features_table_items:
+            if label not in enabled_feature_keywords:
+                feature_type_item = self.features_table_items[label]['feature_item']
+                font = feature_type_item.font()
+                font.setStrikeOut(True)
+                feature_type_item.setFont(font)
+            else:
+                feature_type_item = self.features_table_items[label]['feature_item']
+                font = feature_type_item.font()
+                font.setStrikeOut(False)
+                feature_type_item.setFont(font)
 
         disabled_feature_ids = [f.id() for f in disabled_features]
-        self.disabled_features = disabled_features
+        self.disabled_features += disabled_features
         self.vlayer.deleteFeatures(disabled_feature_ids)
         self.vlayer.commitChanges()
         self.vlayer.startEditing()
@@ -428,11 +452,11 @@ class Project:
 
         # Hide headers
         self.features_table.verticalHeader().setVisible(False)
-        self.features_table.verticalHeader().resizeSection(0, 100)
-        self.features_table.verticalHeader().resizeSection(1, 100)
+        self.features_table.verticalHeader().resizeSection(0, 150)
+        self.features_table.verticalHeader().resizeSection(1, 150)
         self.features_table.horizontalHeader().setVisible(False)
-        self.features_table.horizontalHeader().resizeSection(0, 100)
-        self.features_table.horizontalHeader().resizeSection(1, 100)
+        self.features_table.horizontalHeader().resizeSection(0, 150)
+        self.features_table.horizontalHeader().resizeSection(1, 150)
         # 2 columns
         self.features_table.setColumnCount(2)
         self.features_table.setRowCount(1)
@@ -641,8 +665,17 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         self.active_project = None
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.iface = iface
-        self.setupKeyboardShortcuts() 
+        # self.setupKeyboardShortcuts() 
         # self.constrain_canvas_zoom()
+        self.qgis_shortcuts = {
+            "E": "self.active_project.vlayer.startEditing()",
+            "F": "self.active_project.vlayer.startEditing()\n"
+                 "iface.actionAddFeature().trigger()",
+            "S": "iface.actionSelect().trigger()",
+            "Z": "iface.actionZoomToLayer().trigger()",
+            "O": "iface.showAttributeTable(self.active_project.vlayer)",
+            "D": "iface.actionCopyFeatures().trigger()"
+        }
 
     def setupUi(self):
 
@@ -688,26 +721,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
         Vmain_layout.addLayout(Hmain_layout)
         Vmain_layout.setContentsMargins(10, 15, 0, 10)
-
-    def setupKeyboardShortcuts(self):
-        # Create gis shortcuts generic to all projects
-        self.qgis_shortcuts = {
-            "E": "self.active_project.vlayer.startEditing()",
-            "F": "self.active_project.vlayer.startEditing()\n"
-                 "iface.actionAddFeature().trigger()",
-            "S": "iface.actionSelect().trigger()",
-            "Z": "iface.actionZoomToLayer().trigger()",
-            "O": "iface.showAttributeTable(self.active_project.vlayer)",
-            "D": "iface.actionCopyFeatures().trigger()"
-        }
-        # Create a key emitter that sends the key presses
-        self.key_emitter = KeypressEmitter()
-        # Connect the key emitter to the key eater that performs required shortcuts
-        self.key_emitter.signal.connect(lambda x: self.key_eater(x))
-        # Create keypress event filter to consume the key presses from iface and send it to key_emitter
-        self.keypress_filter = KeypressFilter(self.key_emitter)
-        # Install key press filter to iface's map canvas
-        self.iface.mapCanvas().installEventFilter(self.keypress_filter)
     
     def change_rotation(self):
         rot = self.iface.mapCanvas().rotation()
@@ -827,7 +840,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             if result:
                 self.logger(result["status"])
                 self.canvas_logger(result['status'])
-                
+
         st = QgsTask.fromFunction("Save", save_task,
                                   save_task_input=[self.active_project.geojson_path,
                                                    self.load_window.core_token,
@@ -851,6 +864,12 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             return None
         project = self.projects_loaded[project_uid]
         self.active_project = project
+        # Connect the key emitter to the key eater that performs required shortcuts
+        try:
+            self.load_window.key_emitter.signal.disconnect()
+        except TypeError:
+            pass
+        self.load_window.key_emitter.signal.connect(lambda x: self.key_eater(x))
         for layer in self.layer_tree.layerOrder():
             if layer.id() in [project.rlayer.id(), project.vlayer.id()]:
                 self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(True)

@@ -46,5 +46,4 @@ class ShortcutSettings(QtWidgets.QWidget):
             shortcut = self.shortcuts_table.item(row, 1).text()
             new_shortcuts[shortcut] = feature_type
         self.project.feature_shortcuts = new_shortcuts
-        print(self.project.feature_shortcuts)
         self.hide()

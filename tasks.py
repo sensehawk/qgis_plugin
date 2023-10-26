@@ -166,8 +166,6 @@ def loginTask(task, login_window):
     
     login_window.core_token = core_login(login_window.user_email, login_window.user_password, login_window.logger)
     login_window.org_details = organization_details(login_window.core_token)
-    print(login_window.core_token)
-    print(login_window.org_details)
     if login_window.core_token:
         login_window.logger("Successfully logged in...")
         return {"login_window": login_window, "task": task.description()}

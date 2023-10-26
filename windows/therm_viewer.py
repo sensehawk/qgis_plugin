@@ -16,8 +16,6 @@ import threading
 from .thermliteQc import PhotoViewer
 from ..utils import get_image_urls, download_images, create_custom_label
 import traceback
-import re
-import pprint
 import math
 import numpy as np
 
@@ -166,8 +164,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             self.change_image_index(-1)
         else:
             self.blank_image()
-        # print(self.uid_map[self.uid])
-        # print(self.project.listType_dataFields[self.sfeature['parent_uid']])
 
     def photoClicked(self, pos=None):
         if self.photo_viewer.dragMode()  == QtWidgets.QGraphicsView.NoDrag:
@@ -178,7 +174,6 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
                 self.marker_location[self.image_index] = [pos.x(), pos.y()]
                 self.project.listType_dataFields[self.sfeature['parent_uid']]['raw_images'][self.image_index]['location'] = [pos.x(), pos.y()]
                 self.uid_map[self.uid][self.image_index]['location'] = [pos.x(), pos.y()]
-                # print(self.project.listType_dataFields[self.sfeature['parent_uid']])
           
     def reload_required_data(self):
         self.generate_service_objects()
@@ -265,7 +260,7 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
                 request.urlretrieve(url, savepath)
             except Exception as e:
                 tb = traceback.format_exc()
-                print(tb)
+                self.logger(tb, level=Qgis.Warning)
     
     def show_raw_images(self, selected_features):
         if not self.image_urls_loaded:

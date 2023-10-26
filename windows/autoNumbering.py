@@ -70,7 +70,6 @@ class ThermNumberingWidget(QtWidgets.QWidget):
     def start_numbering(self):
         for table in self.tables:
             self.tables_info.append((table.length.text(), table.row.text(), table.column.text()))
-            print(table.length.text())
 
     def stringNumber_configuration(self):
         canvas  = self.canvas

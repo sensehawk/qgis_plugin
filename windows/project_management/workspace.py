@@ -4,6 +4,7 @@ from qgis.core import QgsProject, Qgis
 from .groups_homepage import GroupSelectionWidget
 from .group_workspace import GroupWorkspace
 from ...utils import download_asset_logo
+from qgis.utils import iface
 import os
 import tempfile
 import shutil
@@ -43,6 +44,7 @@ class WorkspaceWindow(QtWidgets.QWidget):
         # self.container_details = home_window.container_details 
         self.home_window = home_window
         self.qgis_project = QgsProject.instance()
+        self.layer_tree = self.qgis_project.layerTreeRoot()
         self.set_asset_label()
 
         self.dock_widget = home_window.dock_widget
@@ -60,7 +62,6 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.active_widget = None
         self.therm_tab_button = None
         self.terra_tab_button = None
-        print(self.dashboard_ui.module_layout)
 
     def set_asset_label(self):
         # Limit length of name to 15 characters
@@ -76,8 +77,6 @@ class WorkspaceWindow(QtWidgets.QWidget):
             logo = QtGui.QPixmap(asset_logo_path)
             self.dashboard_ui.asset_logo.setScaledContents(True)
             self.dashboard_ui.asset_logo.setPixmap(logo.scaled(self.dashboard_ui.asset_logo.size(), aspectRatioMode=Qt.KeepAspectRatio))
-
-            print(asset_logo_path)
         else:
             self.dashboard_ui.asset_logo.setText(self.home_window.asset.name[:1])
             self.dashboard_ui.asset_logo.setStyleSheet("background-color: #d7e1f5;  color: #35373b;")
@@ -94,7 +93,6 @@ class WorkspaceWindow(QtWidgets.QWidget):
         if self.terra_tab_button:
             self.terra_tab_button.setChecked(False)
         if self.dashboard_ui.project_management_button.isChecked():
-            print('checked')
             if not self.group_selection_widget:
                 self.group_selection_widget =  GroupSelectionWidget(self)
                 self.active_widget = self.group_selection_widget
@@ -142,6 +140,15 @@ class WorkspaceWindow(QtWidgets.QWidget):
                 pass
             else:
                 self.therm_project_tabs_widget.show()
+                project = self.therm_project_tabs_widget.active_project
+                for layer in self.layer_tree.layerOrder():
+                    if layer.id() in [project.rlayer.id(), project.vlayer.id()]:
+                        self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(True)
+                        if layer.id() == project.vlayer.id():
+                            iface.setActiveLayer(layer)
+                            iface.actionZoomToLayer().trigger()
+                    else:
+                        self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
                 if self.active_widget:
                     self.active_widget.hide()
                 else:
@@ -161,6 +168,15 @@ class WorkspaceWindow(QtWidgets.QWidget):
                 pass
             else:
                 self.terra_project_tabs_widget.show()
+                project = self.terra_project_tabs_widget.active_project
+                for layer in self.layer_tree.layerOrder():
+                    if layer.id() in [project.rlayer.id(), project.vlayer.id()]:
+                        self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(True)
+                        if layer.id() == project.vlayer.id():
+                            iface.setActiveLayer(layer)
+                            iface.actionZoomToLayer().trigger()
+                    else:
+                        self.layer_tree.findLayer(layer.id()).setItemVisibilityChecked(False)
                 if self.active_widget:
                     self.active_widget.hide()
                 else:
@@ -198,10 +214,8 @@ class WorkspaceWindow(QtWidgets.QWidget):
                 event.ignore()
         else:
             if ret == QtWidgets.QMessageBox.Ok:
-                print('pressed')
                 self.change_window(window=next_window)
             elif ret == QtWidgets.QMessageBox.Cancel:
-                print('canceled')
                 return None
 
     def change_window(self, window=None):

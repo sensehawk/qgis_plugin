@@ -186,8 +186,6 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.No_images.setEnabled(True)
             self.No_images.setValue(2)
 
-        print("combobox changed", value)
-
     def api(self, json):
         canvas  = self.canvas
         rotation = canvas.rotation()

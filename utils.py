@@ -275,7 +275,6 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
 
 
 def organization_details(token):
-    print(token)
     url = CORE_URL + '/api/v1/organizations/?page_size=99999&page=1'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
@@ -305,7 +304,6 @@ def file_existent(project_uid, org, token):
 def convert_and_upload(path, image_path, projectUid, post_urls_data):
     image_name = image_path.split('\\')[-1]
     image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
-    print("image key: ", image_key)
     dpath = os.path.join(f'{path}', image_name)
     image = cv2.imread(image_path, 0)
     colormap = plt.get_cmap('inferno')
@@ -342,17 +340,17 @@ def upload(task ,inputs):
 
 def get_presigned_post_urls(task, inputs):
     upload_image_list = inputs["imageslist"]
-    print(f"Upload images list: {upload_image_list}")
+    # print(f"Upload images list: {upload_image_list}")
     org_uid = inputs["orgUid"]
     project_uid = inputs["projectUid"]
     core_token = inputs["core_token"]
     upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{os.path.split(i)[-1]}" for i in upload_image_list]
     data = {"project_uid": project_uid, "organization": org_uid, "object_keys": upload_keys}
-    print(f"Data for presigned post urls: {data}")
+    # print(f"Data for presigned post urls: {data}")
     url = THERMAL_TAGGING_URL + "/presigned_post_urls"
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, json=data, headers=headers).json()
-    print(f"Presigned post url response: {response}")
+    # print(f"Presigned post url response: {response}")
     return {'task': task.description(),
             'response': response}
 
@@ -496,7 +494,6 @@ def save_edits(task, save_inputs):
                         feature['properties']['attachments'] = []
 
             except Exception as e :
-                    print(e)
                     tb = traceback.format_exc()
                     logger(str(tb), level=Qgis.Warning)
                     pass
@@ -563,7 +560,6 @@ class AssetLevelProjects(QtWidgets.QWidget):
         self.img_tag_obj.addl_uid = project_uid
         self.img_tag_obj.addl_projectuid.setText(f'{clicked_button.text()}')
         self.img_tag_obj.addl_projectuid.setReadOnly(True)
-        print(self.sender().text(), project_uid)
         self.hide()
 
 
@@ -572,7 +568,6 @@ def containers_details(task, asset_uid, org_uid, core_token):
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, headers=headers)
     containers = response.json()['results']
-    print(containers)
     containers_dict = {}
     for container in containers:
         groups = container['groups']
