@@ -79,7 +79,7 @@ class GroupWorkspace(QtWidgets.QWidget):
             self.group_action_button.setFixedSize(280, 26)
             self.group_action_button.setStyleSheet("background-color:rgba(91, 160, 125, 100);")
             self.group_layout.addWidget(self.group_action_button)
-            self.group_action_button.clicked.connect(lambda: generate_group_points(self.group_obj.uid, self.org_uid, self.user_email, self.core_token, self.logger))
+            self.group_action_button.clicked.connect(lambda: generate_group_points(self.group_obj, self.org_uid, self.user_email, self.core_token, self.logger))
        
         if self.group_obj.container:
             # self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]

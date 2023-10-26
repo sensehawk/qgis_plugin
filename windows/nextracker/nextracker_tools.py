@@ -110,7 +110,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
     def generate_points(self):
         project_uid = self.project.project_details["uid"]
         org_uid = self.project.project_details.get("organization", {}).get("uid", None)
-        url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={org_uid}"
+        url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={org_uid}&user_email={self.project.user_email}"
         headers = {"Authorization": f"Token {self.project.core_token}"}
         resp = requests.post(url, headers=headers).json()
         self.project.canvas_logger(str(resp))

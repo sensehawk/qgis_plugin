@@ -63,8 +63,9 @@ def setup_clipped_orthos_group(task, task_inputs):
                 "message": str(tb),
                 "group_uid": None}
     
-def generate_group_points(group_uid, org_uid, user_email, token, logger):
-    url = f"{NEXTRACKER_URL}/group_points?group_uid={group_uid}&organization_uid={org_uid}&user_email={user_email}"
+def generate_group_points(group_obj, org_uid, user_email, token, logger):
+    group_uid, group_name = group_obj.uid, group_obj.name
+    url = f"{NEXTRACKER_URL}/group_points?group_uid={group_uid}&organization_uid={org_uid}&user_email={user_email}&group_name={group_name}"
     headers = {"Authorization": f"Token {token}"}
     resp = requests.post(url, headers=headers)
     logger(str(resp))
