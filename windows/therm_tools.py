@@ -80,18 +80,26 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.custom_label.view().setRowHidden(0, True)
         self.custom_label.currentTextChanged.connect(lambda x :self.enable_custom_label(x))
     
-    def sid_detection(self):
+    def get_ortho_url(self):
         org_uid = self.project_details['organization'].get('uid', None)
-        url =  f'https://sid.sensehawk.com/detect-solar-issues?organization={org_uid}'
+        url = f"https://therm-server.sensehawk.com/projects/{self.project_details['uid']}/data?organization={org_uid}"
+        headers = {"Authorization": f"Token {self.core_token}"}
+        ortho_url = requests.get(url, headers=headers).json().get("ortho", None)
+        return ortho_url
+    
+    def sid_detection(self):
+        url =  f'https://sid.sensehawk.com/detect-solar-issues'
         headers = {'Authorization': f'Token {self.core_token}', 'email_id':self.project.user_email}
         payload = {
-                "details": {
-                    "projectUID": self.project_details['uid'],
+                    "details": {
+                        "projectUID": self.project_details['uid'],
+                        "user_email": self.project.user_email
                     },
+                    "data": {"ortho": self.get_ortho_url()},
                     "geojson": {
-                    "features": [],
-                    "type": "FeatureCollection"
-                    }
+                                "type": "FeatureCollection",
+                                "features": []
+                                }
                 }
         imagetag = requests.post(url, json=payload, headers=headers)
         if imagetag.status_code == 200:
