@@ -32,7 +32,7 @@ class Project:
         # self.table_geojson = self.geojson_path.replace('.geojson', '_table.geojson')
         self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
-        #self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
+        # self.vlayer.featureDeleted.connect(lambda x: self.updateUid_and_sync_featurecount())
         self.application_type = application_type
         #validate fields and create if not there
         self.required_fields = {"therm": {'temperature_min':QVariant.Double,'temperature_max':QVariant.Double,
@@ -139,7 +139,7 @@ class Project:
         fields_validator(self.required_fields, self.vlayer, self.application_type)
         #connect pre-defined singles 
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
-        # self.vlayer.featureDeleted.connect(lambda x: self.load_feature_count(feature_id=x))
+        # self.vlayer.featureDeleted.connect(lambda x: self.updateUid_and_sync_featurecount())
         #Re-collecting list type data fields after parsing list type data field to copy pasted one
         self.initialize_parentUid()
         self.collect_list_Type_dataFields()
@@ -253,23 +253,24 @@ class Project:
     
     # update uid to newly added feature and synch feature count in project table tab widget
     def updateUid_and_sync_featurecount(self, new_feature_id=None):
-        # Update uid field 
-        feature = list(self.vlayer.getFeatures([new_feature_id]))[0]
         self.load_feature_count()
-        feature['uid'] = self.create_uid()
-        feature['projectUid'] = self.project_details["uid"]
-        feature['groupUid'] = self.project_details["group"]["uid"]
-        feature['row'] = None
-        feature['column'] = None
-        feature['table_row'] = None
-        feature['table_column'] = None
-        feature['idx'] = None
-        self.layer_edit_status = False
-        self.vlayer.removeSelection()
-        self.vlayer.updateFeature(feature)
+        if new_feature_id:
+            # Update uid field 
+            feature = list(self.vlayer.getFeatures([new_feature_id]))[0]
+            feature['uid'] = self.create_uid()
+            feature['projectUid'] = self.project_details["uid"]
+            feature['groupUid'] = self.project_details["group"]["uid"]
+            feature['row'] = None
+            feature['column'] = None
+            feature['table_row'] = None
+            feature['table_column'] = None
+            feature['idx'] = None
+            self.layer_edit_status = False
+            self.vlayer.removeSelection()
+            self.vlayer.updateFeature(feature)
 
     # synch  feature count in project table
-    def load_feature_count(self, feature_id=None):
+    def load_feature_count(self):
         # Get feature count by class_name
         feature_count_dict = {}
         class_name_keyword = {"terra": "class", "therm": "class_name"}[self.project_details["project_type"]]
@@ -283,7 +284,7 @@ class Project:
         for i in self.features_table_items.values():
             feature_name = i['feature_item'].text()
             if not feature_count_dict.get(feature_name, None):
-                row, column = i['feature_item'].row(),i['feature_item'].column()
+                row, _ = i['feature_item'].row(),i['feature_item'].column()
                 self.features_table.removeRow(row)
                 removed_features.append(str(feature_name))
 
@@ -703,10 +704,15 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                     geojson = json.load(fi)
                 cleaned_json = {"type":"FeatureCollection","features":[]}
 
+                if project_type == "terra":
+                    allowed_geometries = ['Polygon', 'MultiPolygon']
+                elif project_type == "therm":
+                    allowed_geometries = ['Polygon']
+
                 features = []
                 duplicate_geometries = []
                 for feature in geojson['features']: # Vaild Polygon Geometry, remove duplicate geometry, Remove Null geometry
-                    if feature['geometry']['type'] == 'Polygon' and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
+                    if feature['geometry']['type'] in allowed_geometries and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
                         feature['properties'].pop('parent_uid', None)
                         feature['properties'].pop('num_images_tagged', None)
                         if feature['properties'].get('extraProperties', "{\n}\n") == "{\n}\n":

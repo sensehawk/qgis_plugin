@@ -85,6 +85,10 @@ def save_project_geojson(geojson, project_uid, token, project_type="terra"):
     if not url:
         return False
     res = requests.post(url, json={"geojson": geojson}, headers=headers)
+    if project_type == "terra":
+        # Return only status code
+        if res.status_code == 200:
+            return "Successfully saved to SenseHawk Terra."
     return res.json()
 
 
