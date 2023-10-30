@@ -198,7 +198,7 @@ class Project:
             with open(geojson_path, 'r') as g:
                 imported_features = json.load(g)['features']
             # Convert the features to polygons
-            imported_features = features_to_polygons(imported_features)
+            imported_features = features_to_polygons(imported_features, self)
             with open(self.geojson_path , 'r') as g:
                 existing_geojson = json.load(g)
 
@@ -615,7 +615,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
         # Save project button
         save_project_button = QtWidgets.QPushButton(self)
-        save_project_button.setText("✔️ Save")
+        save_project_button.setText("✔️ Push")
         save_project_button.setStyleSheet('QPushButton {background-color: #b9f7b7; color: #3d3838;}')
         save_project_button.clicked.connect(self.save_project)
         Hmain_layout.addWidget(save_project_button)

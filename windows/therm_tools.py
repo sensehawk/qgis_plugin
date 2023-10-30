@@ -102,10 +102,12 @@ class ThermToolsWidget(QtWidgets.QWidget):
                                 }
                 }
         imagetag = requests.post(url, json=payload, headers=headers)
-        if imagetag.status_code == 200:
-            self.tag_button.setChecked(False)
-            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
 
+        if imagetag.status_code == 202:
+            self.sidv2_detect_button.setChecked(False)
+            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
+        else:
+            self.canvas_logger(imagetag.json())
 
     def enable_custom_label(self, field_name):
         create_custom_label(self.project.vlayer, field_name)

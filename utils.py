@@ -3,6 +3,7 @@ try :
 except Exception:
     import cv2
 from qgis.core import *
+from PyQt5 import QtCore
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtWidgets
@@ -13,6 +14,7 @@ import re
 import glob
 import json
 import random
+import string
 import os
 import requests
 import threading
@@ -25,7 +27,7 @@ import matplotlib.pyplot as plt
 from urllib.request import urlopen
 from .sensehawk_apis.core_apis import get_project_geojson
 from .windows.packages.exiftool import ExifToolHelper
-from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
+from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL
 from qgis.PyQt.QtCore import Qt, QVariant
 from shapely.ops import MultiLineString, Polygon, transform
 from shapely.geometry import mapping
@@ -534,6 +536,7 @@ class AssetLevelProjects(QtWidgets.QWidget):
         super().__init__()
         self.img_tag_obj = img_tag_obj
         self.projects_form = None
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
         self.setWindowTitle('Asset...')
         self.setupUi(self.img_tag_obj.project.group_dict)
@@ -596,9 +599,10 @@ def download_asset_logo(asset_name, url):
     return asset_logo_path
 
 
-def features_to_polygons(features):
+def features_to_polygons(features, project_obj):
     polygon_features = []
     for f in features:
+        f["properties"]["uid"] = project_obj.create_uid()
         if "class" not in f["properties"].keys():
             f["properties"]["class"] = None
         if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
