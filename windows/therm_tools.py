@@ -80,24 +80,34 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.custom_label.view().setRowHidden(0, True)
         self.custom_label.currentTextChanged.connect(lambda x :self.enable_custom_label(x))
     
-    def sid_detection(self):
+    def get_ortho_url(self):
         org_uid = self.project_details['organization'].get('uid', None)
-        url =  f'https://sid.sensehawk.com/detect-solar-issues?organization={org_uid}'
+        url = f"https://therm-server.sensehawk.com/projects/{self.project_details['uid']}/data?organization={org_uid}"
+        headers = {"Authorization": f"Token {self.core_token}"}
+        ortho_url = requests.get(url, headers=headers).json().get("ortho", None)
+        return ortho_url
+    
+    def sid_detection(self):
+        url =  f'https://sid.sensehawk.com/detect-solar-issues'
         headers = {'Authorization': f'Token {self.core_token}', 'email_id':self.project.user_email}
         payload = {
-                "details": {
-                    "projectUID": self.project_details['uid'],
+                    "details": {
+                        "projectUID": self.project_details['uid'],
+                        "user_email": self.project.user_email
                     },
+                    "data": {"ortho": self.get_ortho_url()},
                     "geojson": {
-                    "features": [],
-                    "type": "FeatureCollection"
-                    }
+                                "type": "FeatureCollection",
+                                "features": []
+                                }
                 }
         imagetag = requests.post(url, json=payload, headers=headers)
-        if imagetag.status_code == 200:
-            self.tag_button.setChecked(False)
-            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
 
+        if imagetag.status_code == 202:
+            self.sidv2_detect_button.setChecked(False)
+            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
+        else:
+            self.canvas_logger(imagetag.json())
 
     def enable_custom_label(self, field_name):
         create_custom_label(self.project.vlayer, field_name)
@@ -234,49 +244,31 @@ class ThermToolsWidget(QtWidgets.QWidget):
                             self.generate_num_tagged_rawimages()
                         if current_tool == 'ThermViewer':
                             self.therm_viewer_widget.connect_signal()
-                            self.therm_viewer_widget.reload_required_data()
-                        
-                        # #Disabling tables for thermviewer and manual tagging
-                        # if not self.project.table_features:
-                        #      self.project.project_details_widget.table_checkbox.setChecked(False)
-                                    
+                            self.therm_viewer_widget.reload_required_data()    
 
 
     def generate_num_tagged_rawimages(self):
-        def generate_image_count(task, obj):
-            # validate if fields exists if not create one
+            # # validate if fields exists if not create one
             required_fields = {'num_images_tagged':QVariant.Double, 
                                     'timestamp':QVariant.String}
-            fields_validator(required_fields, obj.project.vlayer, obj.project.application_type)
+            fields_validator(required_fields, self.project.vlayer, self.project.application_type)
             # Get num tagged raw images that already exists in the geojson
-            features = json.load(open(obj.project.geojson_path))["features"]
-            obj.num_tagged_rawimages = {}
+            features = json.load(open(self.project.geojson_path))["features"]
+            self.num_tagged_rawimages = {}
             for feature in features:
                 raw_images = feature["properties"].get("raw_images", [])
                 if type(raw_images) in [str, type(None)]: raw_images = []
-                obj.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(raw_images)
+                self.num_tagged_rawimages[feature["properties"].get("uid", None)] = len(raw_images)
             # Loop through layer features and add num_tagged_rawimages as a field for labeler
-            features = obj.project.vlayer.getFeatures()
+            features = self.project.vlayer.getFeatures()
             for feature in features:
                 if feature['class_name'] != 'table':
                     uid = feature["uid"]
-                    feature["num_images_tagged"] = obj.num_tagged_rawimages.get(uid, 0)
-                    obj.project.vlayer.updateFeature(feature)
-            obj.project.vlayer.commitChanges()
-            obj.project.vlayer.startEditing()
-            return {"task": task.description(),
-                    "status":'Num image tagged generated'}
-        
-        def callback(task, logger, obj):
-            returned_values = task.returned_values
-            if returned_values:
-                status = returned_values["status"]
-                obj.custom_label.setCurrentText("num_images_tagged")
-                logger(str(status))
-            
-        gnt = QgsTask.fromFunction("Disable Tables", generate_image_count, self)
-        QgsApplication.taskManager().addTask(gnt)
-        gnt.statusChanged.connect(lambda: callback(gnt, self.logger, self))
+                    feature["num_images_tagged"] = self.num_tagged_rawimages.get(uid, 0)
+                    self.project.vlayer.updateFeature(feature)
+            self.project.vlayer.commitChanges()
+            self.project.vlayer.startEditing()
+            self.custom_label.setCurrentText("num_images_tagged")
 
 
     def uncheck_all_buttons(self):

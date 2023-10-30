@@ -31,7 +31,6 @@ def get_therm_classmaps(core_token, org_uid, container_uid):
             org_class_name['color'] = c_class_name['color']
             therm_classmaps[issue_name] = org_class_name
     
-    # print(container_class_map)
     return [therm_classmaps, container_class_map]
 
 def get_project_data(project_details, token):

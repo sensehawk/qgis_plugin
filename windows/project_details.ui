@@ -206,7 +206,7 @@
         </font>
        </property>
        <property name="text">
-        <string>🔃 Table</string>
+        <string>🔃 Refresh</string>
        </property>
        <property name="shortcut">
         <string>Ctrl+E</string>

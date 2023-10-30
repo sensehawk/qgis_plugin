@@ -28,6 +28,7 @@ from qgis.core import Qgis
 from time import time
 from PyQt5 import QtCore
 from ..windows.autoNumbering_utils import *
+from functools import partial
 
 import os
 import numpy as np
@@ -49,29 +50,52 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         self.tables = [self.table_info_ui]
         self.tables_info = []
         self.canvas = self.iface.mapCanvas()
-        self.add_btn = QtWidgets.QPushButton("+")
+        self.add_btn = QtWidgets.QPushButton("➕")
         self.add_btn.setFixedSize(40, 24)
+        self.add_remove_buttons = [self.add_btn]
         self.add_btn.clicked.connect(self.add_table_widget)
         self.run_btn.clicked.connect(self.string_numbering)
+        self.stringnum_type.currentTextChanged.connect(self.ui_change)
         self.add_btn_poistion = 5
         self.setup_ui()
 
     def setup_ui(self):
-        self.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignCenter)
+        self.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
         self.string_grid_layout.addWidget(self.table_info_ui, self.add_btn_poistion, 1)
-       
+    
+    def ui_change(self, value):
+        if value != 'UID':
+            for table_ui in self.tables:
+                table_ui.setEnabled(False)
+            for btn in self.add_remove_buttons:
+                btn.setEnabled(False)
+        else:
+            for table_ui in self.tables:
+                table_ui.setEnabled(True)
+            for btn in self.add_remove_buttons:
+                btn.setEnabled(True)
+
+
     def add_table_widget(self):
+        remove_btn = QtWidgets.QPushButton("❌")
+        remove_btn.setFixedSize(40, 24)
+        remove_btn.clicked.connect(partial (self.remove_table_widget, self.tables[-1], remove_btn))
         self.add_btn_poistion += 1
-        tabel_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info.ui'))
-        self.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignCenter)
-        self.string_grid_layout.addWidget(tabel_ui, self.add_btn_poistion, 1)
-        self.tables.append(tabel_ui)
+        table_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info.ui'))
+        self.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
+        self.string_grid_layout.addWidget(remove_btn, self.add_btn_poistion-1, 0, Qt.AlignLeft)
+        self.string_grid_layout.addWidget(table_ui, self.add_btn_poistion, 1)
+        self.tables.append(table_ui)
+        self.add_remove_buttons.append(remove_btn)
 
-    def start_numbering(self):
-        for table in self.tables:
-            self.tables_info.append((table.length.text(), table.row.text(), table.column.text()))
-            print(table.length.text())
-
+    def remove_table_widget(self, table_ui, remove_btn):
+        self.string_grid_layout.removeWidget(table_ui)
+        self.string_grid_layout.removeWidget(remove_btn)
+        self.tables.remove(table_ui)
+        self.add_remove_buttons.remove(remove_btn)
+        table_ui.deleteLater()
+        remove_btn.deleteLater()
+        
     def stringNumber_configuration(self):
         canvas  = self.canvas
         rotation = canvas.rotation()

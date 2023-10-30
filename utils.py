@@ -3,6 +3,7 @@ try :
 except Exception:
     import cv2
 from qgis.core import *
+from PyQt5 import QtCore
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtWidgets
@@ -13,6 +14,7 @@ import re
 import glob
 import json
 import random
+import string
 import os
 import requests
 import threading
@@ -25,7 +27,7 @@ import matplotlib.pyplot as plt
 from urllib.request import urlopen
 from .sensehawk_apis.core_apis import get_project_geojson
 from .windows.packages.exiftool import ExifToolHelper
-from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL, API_SENSEHAWK
+from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL
 from qgis.PyQt.QtCore import Qt, QVariant
 from shapely.ops import MultiLineString, Polygon, transform
 from shapely.geometry import mapping
@@ -218,7 +220,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     return geojson_path
 
 def projects_details(group, org, token):
-    url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=10&organization={org}'
+    url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=1000&organization={org}'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
     projects_details = response.json()['results']
@@ -275,14 +277,13 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
 
 
 def organization_details(token):
-    url = API_SENSEHAWK + '/v1/organizations/?limit=9007199254740991&page=1'
+    url = CORE_URL + '/api/v1/organizations/?page_size=99999&page=1'
     headers = {"Authorization": f"Token {token}"}
     response = requests.get(url, headers=headers)
-    org_details = response.json()['organizations']
+    org_details = response.json()['results']
     org_list = {}
     for org in org_details:
         org_list[org['uid']] = org['name']
-
     return org_list
 
 def file_existent(project_uid, org, token):
@@ -305,7 +306,6 @@ def file_existent(project_uid, org, token):
 def convert_and_upload(path, image_path, projectUid, post_urls_data):
     image_name = image_path.split('\\')[-1]
     image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
-    print("image key: ", image_key)
     dpath = os.path.join(f'{path}', image_name)
     image = cv2.imread(image_path, 0)
     colormap = plt.get_cmap('inferno')
@@ -342,17 +342,17 @@ def upload(task ,inputs):
 
 def get_presigned_post_urls(task, inputs):
     upload_image_list = inputs["imageslist"]
-    print(f"Upload images list: {upload_image_list}")
+    # print(f"Upload images list: {upload_image_list}")
     org_uid = inputs["orgUid"]
     project_uid = inputs["projectUid"]
     core_token = inputs["core_token"]
     upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{os.path.split(i)[-1]}" for i in upload_image_list]
     data = {"project_uid": project_uid, "organization": org_uid, "object_keys": upload_keys}
-    print(f"Data for presigned post urls: {data}")
+    # print(f"Data for presigned post urls: {data}")
     url = THERMAL_TAGGING_URL + "/presigned_post_urls"
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, json=data, headers=headers).json()
-    print(f"Presigned post url response: {response}")
+    # print(f"Presigned post url response: {response}")
     return {'task': task.description(),
             'response': response}
 
@@ -382,6 +382,8 @@ def fields_validator(required_fields, layer, application_type):
 def download_images(task, inputs):
     threads = []
     viewerobj, raw_images = inputs
+    if not os.path.exists(viewerobj.images_dir):
+            os.makedirs(viewerobj.images_dir)
     for r in raw_images:
         key = r["service"]["key"]
         viewerobj.marker_location.append(r['location'])
@@ -494,7 +496,6 @@ def save_edits(task, save_inputs):
                         feature['properties']['attachments'] = []
 
             except Exception as e :
-                    print(e)
                     tb = traceback.format_exc()
                     logger(str(tb), level=Qgis.Warning)
                     pass
@@ -535,6 +536,7 @@ class AssetLevelProjects(QtWidgets.QWidget):
         super().__init__()
         self.img_tag_obj = img_tag_obj
         self.projects_form = None
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
         self.setWindowTitle('Asset...')
         self.setupUi(self.img_tag_obj.project.group_dict)
@@ -561,12 +563,11 @@ class AssetLevelProjects(QtWidgets.QWidget):
         self.img_tag_obj.addl_uid = project_uid
         self.img_tag_obj.addl_projectuid.setText(f'{clicked_button.text()}')
         self.img_tag_obj.addl_projectuid.setReadOnly(True)
-        print(self.sender().text(), project_uid)
         self.hide()
 
 
 def containers_details(task, asset_uid, org_uid, core_token):
-    url = f'https://core-server.sensehawk.com/api/v1/containers/?asset={asset_uid}&groups=true&labels=true&page=1&page_size=10&search=&users=true&organization={org_uid}'
+    url = CORE_URL + f'/api/v1/containers/?asset={asset_uid}&groups=true&labels=true&page=1&page_size=1000&search=&users=true&organization={org_uid}'
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, headers=headers)
     containers = response.json()['results']
@@ -598,9 +599,12 @@ def download_asset_logo(asset_name, url):
     return asset_logo_path
 
 
-def features_to_polygons(features):
+def features_to_polygons(features, project_obj):
     polygon_features = []
     for f in features:
+        f["properties"]["uid"] = project_obj.create_uid()
+        if "class" not in f["properties"].keys():
+            f["properties"]["class"] = None
         if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
             polygon_features.append(f)
             continue

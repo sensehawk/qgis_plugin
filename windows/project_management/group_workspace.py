@@ -9,10 +9,12 @@ from functools import partial
 from ..projectTabs import ProjectTabsWidget, Project
 from ...tasks import Project_loadTask 
 from ...utils import categorize_layer
+from qgis.utils import iface
 from ...constants import CORE_URL
 import os
 from ..nextracker.utils import nextracker_org_uid, generate_group_points
 import requests
+from ...event_filters import KeypressEmitter, KeypressFilter
 
 therm_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'therm_logo.svg'))
 terra_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'terra_logo.svg'))
@@ -28,15 +30,27 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.core_token = workspace_window.core_token
         self.user_email = workspace_window.user_email
         self.workspace_window = workspace_window
+        self.iface = iface
+        self.org_uid = workspace_window.org_uid
         self.project_form = None
         self.group_delete_button.clicked.connect(self.delete_group)
         self.back_button.clicked.connect(self.load_group_workspace)
         self.group_edit_button.clicked.connect(lambda : GroupEdit(self, workspace_window, self.group_obj))
-        self.therm_project_tabs_widget = ProjectTabsWidget(self)
         self.terra_project_tabs_widget = ProjectTabsWidget(self)
+        self.therm_project_tabs_widget = ProjectTabsWidget(self)
         self.group_action_button = None
+        self.project_uids = []
         self.setupUi(group_obj, group_dict)
-         
+        self.intialize_keyboard_signals()
+    
+    def intialize_keyboard_signals(self):
+        # Create a key emitter that sends the key presses
+        self.key_emitter = KeypressEmitter()
+        # Create keypress event filter to consume the key presses from iface and send it to key_emitter
+        self.keypress_filter = KeypressFilter(self.key_emitter)
+        # Install key press filter to iface's map canvas
+        self.iface.mapCanvas().installEventFilter(self.keypress_filter)
+
     def setupUi(self, group_obj, group_dict):
         self.group_obj = group_obj
         self.group_dict = group_dict
@@ -60,13 +74,12 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.container_btn.setMenu(container_menu) 
 
         # For Nextracker org, group action button is connected to Nextracker group points generation 
-        org_uid = self.group_obj.container.asset.org_uid
-        if org_uid == nextracker_org_uid and not self.group_action_button:
+        if self.org_uid == nextracker_org_uid and not self.group_action_button:
             self.group_action_button = QtWidgets.QPushButton("Generate Nextracker Points")
             self.group_action_button.setFixedSize(280, 26)
             self.group_action_button.setStyleSheet("background-color:rgba(91, 160, 125, 100);")
             self.group_layout.addWidget(self.group_action_button)
-            self.group_action_button.clicked.connect(lambda: generate_group_points(self.group_obj.uid, org_uid, self.user_email, self.core_token, self.logger))
+            self.group_action_button.clicked.connect(lambda: generate_group_points(self.group_obj, self.org_uid, self.user_email, self.core_token, self.logger))
        
         if self.group_obj.container:
             # self.app_list = [a.get("name", None) for a in self.group_obj.container.applications]
@@ -74,8 +87,6 @@ class GroupWorkspace(QtWidgets.QWidget):
             self.app_list = [app.get('application', None).get('name', None)   for app_name, app in self.group_app_types.items()]
             self.container_label.setText(f"Container: {self.group_obj.container.name}")
             self.container_btn.setText(':')
-            print(self.app_list)
-            print(self.group_obj.container.applications)
               
         else:
             self.app_list = []
@@ -303,7 +314,8 @@ class GroupWorkspace(QtWidgets.QWidget):
                 self.terra_project_tabs_widget.activate_project()
                 self.show_projects_loaded(application_type)
                 return None
-                
+        if project_uid not in self.project_uids:
+            self.project_uids.append(project_uid)
         self.logger(f"Deal ID: {self.group_obj.deal_id}")
         self.logger(f"Asset UID: {self.group_obj.container.asset.uid}")
         
@@ -746,6 +758,7 @@ class CreateContainer(QtWidgets.QDialog):
                 new_container_name = response_json['name']
                 new_container_obj = Container(new_container_uid, new_container_name,self.workspace_window.home_window.asset)
                 self.workspace_window.home_window.containers_dict[new_container_uid] = new_container_obj
+                self.workspace_window.canvas_logger(f'{self.create_container_ui.container_name.text()} Container Created Successfully...', level=Qgis.Warning)
         else:
             self.workspace_window.canvas_logger('Container name Field is Empty...', level=Qgis.Warning)
 
@@ -786,13 +799,10 @@ class AssignApplication(QtWidgets.QDialog):
         for checkbox in self.checkbox_list:
             if checkbox.isChecked():
                 selected_apps.append(self.workspace_window.apptype_details[checkbox.text()])
-        print(selected_apps)
         json = {'app_types':selected_apps}
         headers = {'Authorization':f'Token {self.workspace_window.core_token}'} 
         url = CORE_URL+f'/api/v1/containers/{self.group_obj.container.uid}/?organization={self.workspace_window.org_uid}'
         assign_app_response = requests.patch(url, headers=headers, json=json)
-        print(assign_app_response.status_code)
-        print(assign_app_response.json())
         if assign_app_response.status_code == 200:
             self.group_obj.container.applications = selected_apps
             self.workspace_window.group_workspace.setupUi(self.group_obj, self.workspace_window.home_window.groups_dict)

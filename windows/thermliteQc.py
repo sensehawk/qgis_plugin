@@ -207,7 +207,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def get_temperature_map(self, image_path):
         metadata = self.et.get_metadata(image_path)[0]
         camera = metadata["EXIF:Model"]
-        print(image_path)
         if "MAVIC2-ENTERPRISE-ADVANCED" in camera or "H20T" in camera or "M3T" in camera or "M30T" in camera:
             download_path = str(Path.home() / "Downloads")
             temp_raw_path = os.path.join(download_path+'\\'+'temp.raw')
@@ -283,9 +282,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         image_sort_task.statusChanged.connect(lambda sort_task_status: self.sort_task_callback(sort_task_status, image_sort_task))
 
     def change_image(self):
-        print(f"Current image index: {self.image_selector.currentIndex()}")
-        print(f"Changed image index: {self.sorted_images[self.image_index]}")
-        print(f"Current image coords: {self.long_lat[self.image_index]}")
         self.image_index = self.image_selector.currentIndex()
         self.load_image(self.image_index)
         self.marker_info.setText('')
@@ -383,7 +379,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             sfeature['temperature_difference'] = float(format(self.max_temp-self.min_temp, ".2f"))
             sfeature['temperature_min']  = float(self.min_temp)
             sfeature['temperature_max'] = float(self.max_temp)
-            print(sfeature['temperature_difference'])
         # Update num images tagged if the image does not already exist in the feature tagged info
         if image_path not in sfeature_image_tagged_info:
             try:
@@ -447,25 +442,36 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         with open(self.images_dir+f'\\{self.projectUid}_tagged.json', 'w') as p:
             json.dump(file , p)
 
-        # Saving tagged images meta data for backup
-        with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
-            json.dump(aws_tagged_images, g)
+        img_json_path = f'{self.images_dir}\\{self.projectUid}_image_metadata.json'
+        if os.path.exists(img_json_path):
+            with open(img_json_path, 'r') as m:
+                img_geojson = json.load(m)
+            img_geojson.update(aws_tagged_images)
+            with open(img_json_path, 'w') as i:
+                json.dump(img_geojson, i)
+        else:
+            # Saving tagged images meta data for backup
+            with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
+                json.dump(aws_tagged_images, g)
 
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
         for feature in features:
-            mapping_uid  = feature['properties'].get('uid', None)
-            if not mapping_uid:
-                geojson['features'].append(feature)
+            if feature["class_name"] == "None" or feature["class_name"] == "NULL":
                 continue
-            raw_images = feature['properties']['raw_images']
-            if raw_images is None or isinstance(raw_images, type('')) or len(raw_images) == 0 :
-                feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
             else:
-                feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
-            if 'num_images_tagged' in feature['properties']:
-                feature['properties'].pop('num_images_tagged')
-            geojson['features'].append(feature)
+                mapping_uid  = feature['properties'].get('uid', None)
+                if not mapping_uid:
+                    geojson['features'].append(feature)
+                    continue
+                raw_images = feature['properties']['raw_images']
+                if isinstance(raw_images, type('')) or len(raw_images) == 0 :
+                    feature['properties']['raw_images'] = aws_tagged_images.get(mapping_uid, [])
+                else:
+                    feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
+                if 'num_images_tagged' in feature['properties']:
+                    feature['properties'].pop('num_images_tagged')
+                geojson['features'].append(feature)
 
         #remove exiting vlayer and add tagged vlayer
         self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])
@@ -483,7 +489,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         if upload_task_status != 3:
             return None
         result = upload_task.returned_values
-        print(f"{result['num_images']} uploaded")
+        self.canvas_logger(f"{result['num_images']} uploaded")
         self.project.project_tabs_window.save_project()
         #clear image_tagged info to avoid re-tagging already tagged ones
         self.image_tagged_info.clear()
