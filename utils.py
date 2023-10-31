@@ -470,7 +470,7 @@ def save_edits(task, save_inputs):
         raw_image = feature['properties'].get('raw_images', None)
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
-        if feature['properties']['class_name'] != 'table' and feature['geometry']['coordinates'][0] :
+        if feature['properties']['class_name'] != 'table' :
             try:
                 if parentUid:
                     parent_item = listType_dataFields.get(parentUid, None)
@@ -492,8 +492,8 @@ def save_edits(task, save_inputs):
                     tb = traceback.format_exc()
                     logger(str(tb), level=Qgis.Warning)
                     pass
-
-        cleaned_json["features"].append(feature)
+        if feature['geometry']['coordinates'][0]:
+            cleaned_json["features"].append(feature)
 
     with open(json_path, "w") as fi:
         json.dump(cleaned_json, fi)
@@ -531,7 +531,7 @@ class AssetLevelProjects(QtWidgets.QWidget):
         self.projects_form = None
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.project_selection_layout = QtWidgets.QVBoxLayout(self)
-        self.setWindowTitle('Asset...')
+        self.setWindowTitle('Groups...')
         self.setupUi(self.img_tag_obj.project.group_dict)
 
     def setupUi(self, group_dict):

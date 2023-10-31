@@ -283,7 +283,7 @@ class Project:
         removed_features = []
         for i in self.features_table_items.values():
             feature_name = i['feature_item'].text()
-            if not feature_count_dict.get(feature_name, None):
+            if not feature_count_dict.get(feature_name, None) :
                 row, _ = i['feature_item'].row(),i['feature_item'].column()
                 self.features_table.removeRow(row)
                 removed_features.append(str(feature_name))

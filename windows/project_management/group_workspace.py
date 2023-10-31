@@ -758,7 +758,7 @@ class CreateContainer(QtWidgets.QDialog):
                 new_container_name = response_json['name']
                 new_container_obj = Container(new_container_uid, new_container_name,self.workspace_window.home_window.asset)
                 self.workspace_window.home_window.containers_dict[new_container_uid] = new_container_obj
-                self.workspace_window.canvas_logger(f'{self.create_container_ui.container_name.text()} Container Created Successfully...', level=Qgis.Warning)
+                self.workspace_window.canvas_logger(f'{self.create_container_ui.container_name.text()} Container Created Successfully...', level=Qgis.Success)
         else:
             self.workspace_window.canvas_logger('Container name Field is Empty...', level=Qgis.Warning)
 

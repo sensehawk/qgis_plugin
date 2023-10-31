@@ -175,6 +175,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.temp_option.setEnabled(False)
             self.No_images.setEnabled(True)
             self.No_images.setValue(2)
+            self.No_images.setEnabled(False)
 
     def api(self, json):
         canvas  = self.canvas
