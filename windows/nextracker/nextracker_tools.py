@@ -26,7 +26,7 @@ from qgis.PyQt import QtWidgets, uic
 import os
 from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint, QgsVectorLayer
 from .utils import setup_clipped_orthos_group
-from ...tasks import clipRequest
+from ...tasks import clip_request
 from ...constants import CORE_URL, THERMAL_TAGGING_URL, NEXTRACKER_URL
 import requests
 import urllib.request
@@ -62,7 +62,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
                                     'group_uid': result["group_uid"],
                                     'logger': self.project.logger}
                 self.project.logger("Clip task starting...")
-                clip_task = QgsTask.fromFunction("Clip Request", clipRequest, clip_task_input=clip_task_inputs)
+                clip_task = QgsTask.fromFunction("Clip Request", clip_request, clip_task_input=clip_task_inputs)
                 clip_task.statusChanged.connect(lambda:clip_callback(clip_task, self.project.canvas_logger))
                 QgsApplication.taskManager().addTask(clip_task)
             

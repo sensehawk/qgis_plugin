@@ -65,11 +65,10 @@ class SensehawkQC:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&SenseHawk QC')
-        # TODO: We are going to let the user set this up in a future iteration
+        
         self.toolbar = self.iface.addToolBar(u'SensehawkQC')
         self.toolbar.setObjectName(u'SensehawkQC')
 
-        #print "** INITIALIZING SensehawkQC"
 
         self.pluginIsActive = False
         self.dockwidget = QDockWidget()
@@ -180,16 +179,8 @@ class SensehawkQC:
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING SensehawkQC"
-
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
-
-        # remove this statement if dockwidget is to remain
-        # for reuse if plugin is reopened
-        # Commented next statement since it causes QGIS crashe
-        # when closing the docked window:
-        # self.dockwidget = None
 
         self.pluginIsActive = False
         print("Closing SenseHawk QC plugin")
@@ -197,9 +188,6 @@ class SensehawkQC:
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
-
-        #print "** UNLOAD SensehawkQC"
-
         for action in self.actions:
             self.iface.removePluginVectorMenu(
                 self.tr(u'&SenseHawk QC'),

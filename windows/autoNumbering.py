@@ -22,12 +22,11 @@
 #  ***************************************************************************/
 # """
 
-from qgis.PyQt.QtCore import Qt, QVariant
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis
 from time import time
-from PyQt5 import QtCore
-from ..windows.autoNumbering_utils import *
+from ..windows.autoNumbering_utils import Table, topmost_table, update_rotated_coords, update_issue_Row_column, update_issue_tRow_tColumn, table_numbering
 from functools import partial
 
 import os

@@ -22,11 +22,11 @@
 #  ***************************************************************************/
 # """
 
+from PyQt5 import QtCore
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt import QtWidgets, uic
 from PyQt5.QtCore import QVariant 
-import qgis
-from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
+from qgis.PyQt import QtWidgets, uic
+from qgis.core import  Qgis, QgsApplication, QgsTask
 
 from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
@@ -35,10 +35,9 @@ from ..windows.autoNumbering import ThermNumberingWidget
 from ..windows.ImageTagging import ThermImageTaggingWidget
 from ..windows.thermliteQc import ThermliteQcWindow
 from ..windows.therm_viewer import ThermViewerDockWidget
-from ..tasks import clipRequest
+from ..tasks import clip_request
 from ..utils import create_custom_label, fields_validator
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QKeySequence
+
 
 import os
 import json
@@ -63,7 +62,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
         self.viewer_button.clicked.connect(self.therm_viewer)
         self.clipButton.clicked.connect(self.clip_raster)
-        self.sidv2_detect_button.clicked.connect(self.sid_detection)
+        self.sidv2_detect_button.clicked.connect(lambda : Sid_detection(self))
         self.class_maps = self.project.class_maps
         self.core_token = self.project.core_token
         self.project_details = self.project.project_details
@@ -87,27 +86,29 @@ class ThermToolsWidget(QtWidgets.QWidget):
         ortho_url = requests.get(url, headers=headers).json().get("ortho", None)
         return ortho_url
     
-    def sid_detection(self):
-        url =  f'https://sid.sensehawk.com/detect-solar-issues'
-        headers = {'Authorization': f'Token {self.core_token}', 'email_id':self.project.user_email}
-        payload = {
-                    "details": {
-                        "projectUID": self.project_details['uid'],
-                        "user_email": self.project.user_email
-                    },
-                    "data": {"ortho": self.get_ortho_url()},
-                    "geojson": {
-                                "type": "FeatureCollection",
-                                "features": []
-                                }
-                }
-        imagetag = requests.post(url, json=payload, headers=headers)
+    
 
-        if imagetag.status_code == 202:
-            self.sidv2_detect_button.setChecked(False)
-            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
-        else:
-            self.canvas_logger(imagetag.json())
+    # def sid_detection(self):
+    #     url =  f'https://sid.sensehawk.com/detect-solar-issues'
+    #     headers = {'Authorization': f'Token {self.core_token}', 'email_id':self.project.user_email}
+    #     payload = {
+    #                 "details": {
+    #                     "projectUID": self.project_details['uid'],
+    #                     "user_email": self.project.user_email
+    #                 },
+    #                 "data": {"ortho": self.get_ortho_url()},
+    #                 "geojson": {
+    #                             "type": "FeatureCollection",
+    #                             "features": []
+    #                             }
+    #             }
+    #     imagetag = requests.post(url, json=payload, headers=headers)
+
+    #     if imagetag.status_code == 202:
+    #         self.sidv2_detect_button.setChecked(False)
+    #         self.canvas_logger('Queued Successfully.',level=Qgis.Success)
+    #     else:
+    #         self.canvas_logger(imagetag.json())
 
     def enable_custom_label(self, field_name):
         create_custom_label(self.project.vlayer, field_name)
@@ -165,7 +166,7 @@ class ThermToolsWidget(QtWidgets.QWidget):
                              'user_email': self.project.user_email,
                              'convert_to_magma': convert_to_magma}
         
-        clip_task = QgsTask.fromFunction("Clip Raster", clipRequest, clip_task_input)
+        clip_task = QgsTask.fromFunction("Clip Raster", clip_request, clip_task_input)
         QgsApplication.taskManager().addTask(clip_task)
         clip_task.statusChanged.connect(lambda clip_status : self.clipraster_callback(clip_status, clip_task))
 
@@ -298,3 +299,52 @@ class ThermToolsWidget(QtWidgets.QWidget):
         dt.statusChanged.connect(lambda: callback(dt, self.logger))
 
    
+class Sid_detection(QtWidgets.QDialog):
+    def __init__(self, therm_tool_obj ):
+        super(Sid_detection, self).__init__()
+        self.therm_tool_obj = therm_tool_obj
+        self.setWindowTitle("Auto Detection")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        layout = QtWidgets.QVBoxLayout(self)
+        self.detect_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'detection_module_info.ui'))
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Detect", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.detect_issues)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        layout.addWidget(self.detect_ui)
+        layout.addWidget(button_box)
+        self.exec_()
+    
+    def detect_issues(self):
+        self.accept()
+        url =  f'https://sid.sensehawk.com/detect-solar-issues'
+        headers = {'Authorization': f'Token {self.therm_tool_obj.core_token}', 'email_id':self.therm_tool_obj.project.user_email}
+        payload = {
+                    "details": {
+                        "projectUID": self.therm_tool_obj.project_details['uid'],
+                        "user_email": self.therm_tool_obj.project.user_email,
+                        "angle" :-self.therm_tool_obj.canvas.rotation(),
+                        "width":float(self.detect_ui.module_width.text()),
+                        "height":float(self.detect_ui.module_height.text())
+
+                    },
+                    "data": {"ortho": self.therm_tool_obj.get_ortho_url()},
+                    "geojson": {
+                                "type": "FeatureCollection",
+                                "features": []
+                                }
+                }
+        print(payload)
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 202:
+            self.therm_tool_obj.sidv2_detect_button.setChecked(False)
+            self.therm_tool_obj.canvas_logger('Queued Successfully.',level=Qgis.Success)
+        else:
+            self.therm_tool_obj.canvas_logger(response.json())
+
+    
+    def close_dialogbox(self):
+        self.reject()
+        self.therm_tool_obj.sidv2_detect_button.setChecked(False)

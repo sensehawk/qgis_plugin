@@ -27,14 +27,15 @@ def setup_clipped_orthos_group(task, task_inputs):
         group_names = [i["name"] for i in groups]
         logger(f"Existing groups: {group_names}")
         group_uids = [i["uid"] for i in groups]
-        if "Clipped Orthos" in group_names:
-            group_uid = group_uids[group_names.index("Clipped Orthos")]
+        clipped_ortho = "Clipped Orthos"
+        if clipped_ortho in group_names:
+            group_uid = group_uids[group_names.index(clipped_ortho)]
             return {"task": task.description(), "success": True,
                     "message": "Clipped Orthos group already exists",
                     "group_uid": group_uid}
         else:
             body = {
-                "name": "Clipped Orthos",
+                "name": clipped_ortho,
                 "organization": {
                     "uid": nextracker_org_uid
                 },

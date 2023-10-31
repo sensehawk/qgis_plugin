@@ -41,8 +41,8 @@ def get_ortho_tiles_url(project_uid, token):
 def get_ortho_url(project_uid, org, token):
     url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'
     headers = {"Authorization": f"Token {token}"}
-    projetJson = requests.get(url, headers=headers)
-    return projetJson.json()
+    reponse = requests.get(url, headers=headers)
+    return reponse.json()
 
 def get_project_geojson(project_uid, token, project_type):
     project_details = get_project_details(project_uid, token)
@@ -63,27 +63,14 @@ def get_project_geojson(project_uid, token, project_type):
 def save_project_geojson(geojson, project_uid, token, project_type="terra"):
     project_details = get_project_details(project_uid, token)
     headers = {"Authorization": "Token {}".format(token)}
-    url = None
     if project_type == "terra":
         url = TERRA_URL + "/qc/project/{}/features/?organization={}".format(project_uid,
                                                                             project_details["organization"]["uid"])
-        properties_to_remove = ["element", "uid"]
-        for f in geojson["features"]:
-            workflowProgress = f["properties"].get("workflowProgress")
-            if not workflowProgress:
-                f["properties"]["workflowProgress"] = {}
-            for p in properties_to_remove:
-                try:
-                    del f["properties"][p]
-                except KeyError:
-                    continue
 
     elif project_type == "therm":
         url = THERM_URL + "/qc/projects/{}?organization={}".format(project_uid,
                                                                    project_details["organization"]["uid"])
 
-    if not url:
-        return False
     res = requests.post(url, json={"geojson": geojson}, headers=headers)
     if project_type == "terra":
         # Return only status code

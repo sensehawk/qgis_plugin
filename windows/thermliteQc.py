@@ -457,9 +457,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
         for feature in features:
-            if feature["class_name"] == "None" or feature["class_name"] == "NULL":
-                continue
-            else:
+            try:
                 mapping_uid  = feature['properties'].get('uid', None)
                 if not mapping_uid:
                     geojson['features'].append(feature)
@@ -472,7 +470,9 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 if 'num_images_tagged' in feature['properties']:
                     feature['properties'].pop('num_images_tagged')
                 geojson['features'].append(feature)
-
+            except TypeError:
+                pass
+                
         #remove exiting vlayer and add tagged vlayer
         self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])
         

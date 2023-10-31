@@ -29,7 +29,7 @@ from qgis.PyQt import QtWidgets, uic, QtGui
 from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
 from qgis.PyQt.QtCore import Qt, QCoreApplication, QSize
 
-from ..tasks import loginTask
+from ..tasks import logintask
 # from ..utils import organization_details
 import os
 
@@ -81,7 +81,7 @@ class LoginWindow(QtWidgets.QWidget):
 
     def start_login_task(self):
         self.canvas_logger('Initiated login process')
-        login_task = QgsTask.fromFunction("Login", loginTask, login_window=self)
+        login_task = QgsTask.fromFunction("Login", logintask, login_window=self)
         QgsApplication.taskManager().addTask(login_task)
         login_task.statusChanged.connect(lambda login_task_status: self.login_callback(login_task_status, login_task))
 

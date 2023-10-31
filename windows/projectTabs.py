@@ -11,7 +11,7 @@ from .therm_tools import ThermToolsWidget
 from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
 
-from ..tasks import Project_loadTask
+from ..tasks import project_loadtask
 from ..utils import fields_validator, categorize_layer, save_edits, features_to_polygons
 
 import pandas as pd
@@ -402,7 +402,7 @@ class Project:
                             "reload":True,
                             "bounds":self.bounds}
             self.disabled_features.clear()
-            project_load_task = QgsTask.fromFunction(f"{self.project_details['name']} Project Reload", Project_loadTask, load_task_inputs)
+            project_load_task = QgsTask.fromFunction(f"{self.project_details['name']} Project Reload", project_loadtask, load_task_inputs)
             QgsApplication.taskManager().addTask(project_load_task)
             project_load_task.statusChanged.connect(lambda load_task_status: self.project_load_callback(load_task_status, project_load_task))
 
@@ -719,6 +719,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                             feature['properties']['extraProperties'] = {}
                         if feature['properties'].get('workflowProgress', "{\n}\n") == "{\n}\n":
                             feature['properties']['workflowProgress'] = {}
+                        if project_type == "terra":
+                            feature['properties'].pop('uid', None)
+                            feature['properties'].pop('element', None)
                         try:
                             center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
                             centroid_x , centroid_y = center

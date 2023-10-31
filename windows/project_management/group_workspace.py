@@ -7,7 +7,7 @@ from qgis.core import Qgis, QgsTask, QgsApplication
 from .groups_homepage import GroupsForm
 from functools import partial
 from ..projectTabs import ProjectTabsWidget, Project
-from ...tasks import Project_loadTask 
+from ...tasks import project_loadtask 
 from ...utils import categorize_layer
 from qgis.utils import iface
 from ...constants import CORE_URL
@@ -325,7 +325,7 @@ class GroupWorkspace(QtWidgets.QWidget):
                             "org_uid":self.group_obj.org_info.get('uid', None),
                             "container_uid":self.group_obj.container.uid,
                             "logger": self.logger}
-        project_load_task = QgsTask.fromFunction(f"{project_name} Project Load", Project_loadTask, load_task_inputs)
+        project_load_task = QgsTask.fromFunction(f"{project_name} Project Load", project_loadtask, load_task_inputs)
         QgsApplication.taskManager().addTask(project_load_task)
         project_load_task.statusChanged.connect(lambda load_task_status: self.project_load_callback(load_task_status, project_load_task, application_type, group_obj, group_dict))
         clicked_button.setEnabled(True)

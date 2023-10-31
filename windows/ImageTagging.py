@@ -22,7 +22,6 @@
 #  ***************************************************************************/
 # """
 
-from qgis.PyQt.QtCore import Qt, QCoreApplication
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import Qgis, QgsTask, QgsApplication
 from ..constants import THERMAL_TAGGING_URL
@@ -76,42 +75,32 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         reflectance = result['projectjson'].get('reflectance', None)
         calibratedParameters = result['projectjson'].get('calibratedParameters', None)
         externalCalibratedParameters = result['projectjson'].get('externalCalibratedParameters', None)
+        green = "QCheckBox::indicator" "{" "background-color : lightgreen;" "}"
+        red = "QCheckBox::indicator""{" "background-color : red;" "}"
         if dsm : 
             self.get_dsm.setChecked(True)
-            self.get_dsm.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : lightgreen;" "}")
-        else:self.get_dsm.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : red;" "}")
+            self.get_dsm.setStyleSheet(green)
+        else:self.get_dsm.setStyleSheet(red)
         if ortho : 
             self.get_ortho.setChecked(True)
-            self.get_ortho.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : lightgreen;" "}")
-        else: self.get_ortho.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : red;" "}")
+            self.get_ortho.setStyleSheet(green)
+        else: self.get_ortho.setStyleSheet(red)
         if reflectance : 
             self.get_reflectance.setChecked(True)
-            self.get_reflectance.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : lightgreen;" "}")
-        else:self.get_reflectance.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : red;" "}")
+            self.get_reflectance.setStyleSheet(green)
+        else:self.get_reflectance.setStyleSheet(red)
         if rawimage : 
             self.get_rawimage.setChecked(True)
-            self.get_rawimage.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : lightgreen;" "}")
-        else : self.get_rawimage.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : red;" "}")
+            self.get_rawimage.setStyleSheet(green)
+        else : self.get_rawimage.setStyleSheet(red)
         if calibratedParameters : 
             self.get_calibration.setChecked(True)
-            self.get_calibration.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : lightgreen;" "}")
-        else : self.get_calibration.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : red;" "}")
+            self.get_calibration.setStyleSheet(green)
+        else : self.get_calibration.setStyleSheet(red)
         if externalCalibratedParameters : 
             self.get_externalcalibration.setChecked(True)
-            self.get_externalcalibration.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : lightgreen;" "}")
-        else: self.get_externalcalibration.setStyleSheet("QCheckBox::indicator"
-                               "{" "background-color : red;" "}")
+            self.get_externalcalibration.setStyleSheet(green)
+        else: self.get_externalcalibration.setStyleSheet(red)
 
     def get_project_details(self):
         org = self.project_details['organization']['uid']
@@ -121,12 +110,13 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         get_details.statusChanged.connect(lambda get_project_detials_task_status: self.get_project_details_callback(get_project_detials_task_status, get_details))
 
     def current_type(self, value):
+        three_gsd = '3.5GSD UID'
         if value == 'ThermLite Tagging' or value == 'Thermal Tagging':
             self.MagmaConversion.setChecked(True)
             self.rotate_image.setEnabled(True)
             self.rotate_image.setChecked(True)
             self.IssueCropImage.setChecked(False)
-            self.opt_uid_txt.setText('3.5GSD UID')
+            self.opt_uid_txt.setText(three_gsd)
             self.addl_projectuid_button.setEnabled(True)
             self.addl_projectuid.setEnabled(True)
             self.IssueCropImage.setEnabled(False)
@@ -153,7 +143,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.rotate_image.setEnabled(False)
             self.rotate_image.setChecked(False)
             self.IssueCropImage.setChecked(True)
-            self.opt_uid_txt.setText('3.5GSD UID')
+            self.opt_uid_txt.setText(three_gsd)
             self.addl_projectuid_button.setEnabled(False)
             self.addl_projectuid.setEnabled(False)
             self.IssueCropImage.setEnabled(True)
@@ -165,7 +155,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.rotate_image.setEnabled(False)
             self.rotate_image.setChecked(False)
             self.IssueCropImage.setChecked(False)
-            self.opt_uid_txt.setText('3.5GSD UID')
+            self.opt_uid_txt.setText(three_gsd)
             self.addl_projectuid_button.setEnabled(False)
             self.addl_projectuid.setEnabled(False)
             self.IssueCropImage.setEnabled(False)
@@ -177,7 +167,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.rotate_image.setEnabled(True)
             self.rotate_image.setChecked(True)
             self.IssueCropImage.setChecked(False)
-            self.opt_uid_txt.setText('3.5GSD UID')
+            self.opt_uid_txt.setText(three_gsd)
             self.addl_projectuid_button.setEnabled(True)
             self.addl_projectuid.setEnabled(True)
             self.IssueCropImage.setEnabled(False)

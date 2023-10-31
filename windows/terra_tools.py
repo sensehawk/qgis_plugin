@@ -24,7 +24,7 @@
 
 from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.scm_apis import get_models_list, detect
-from ..tasks import clipRequest, detectionTask, approveTask
+from ..tasks import clip_request, detectionTask, approveTask
 
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint
@@ -100,7 +100,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
                 logger(str(result["message"]))
         self.logger("Clip task starting...")
         clip_task_inputs = self.logger, self.project_details, self.load_window.geojson_path, self.class_maps, self.core_token
-        clip_task = QgsTask.fromFunction("Clip Request", clipRequest, clip_task_input=clip_task_inputs)
+        clip_task = QgsTask.fromFunction("Clip Request", clip_request, clip_task_input=clip_task_inputs)
         clip_task.statusChanged.connect(lambda:callback(clip_task, self.logger))
         QgsApplication.taskManager().addTask(clip_task)
 

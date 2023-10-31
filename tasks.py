@@ -15,7 +15,7 @@ import urllib
 from .windows.nextracker.utils import setup_nextracker_features, setup_clipped_orthos_group, nextracker_org_uid
 
 
-def Project_loadTask(task, load_inputs):
+def project_loadtask(task, load_inputs):
     try:
         project_uid = load_inputs.get("project_uid", None)
         project_type = load_inputs.get("project_type", None)
@@ -68,7 +68,7 @@ def Project_loadTask(task, load_inputs):
                                             core_token,
                                             logger)
 
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
         logger(str(tb), level=Qgis.Warning)
         return False
@@ -85,7 +85,7 @@ def Project_loadTask(task, load_inputs):
             'task': task.description()}
 
 
-def clipRequest(task, clip_task_input):
+def clip_request(task, clip_task_input):
     """
     Sends clip request to the AWS lambda clip function
     """
@@ -154,7 +154,7 @@ def clipRequest(task, clip_task_input):
         logger(traceback.format_exc())
     return {"task": task.description(), 'title':res_title, 'description':res_description, 'res_status':res_status}
 
-def loginTask(task, login_window):
+def logintask(task, login_window):
     login_window.user_email = login_window.userName.text()
     login_window.user_password = login_window.userPassword.text()
 

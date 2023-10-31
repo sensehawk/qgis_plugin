@@ -97,8 +97,8 @@ class HomeWindow(QtWidgets.QWidget):
     def org_tree(self, value):
         try:
             self.org_uid = list(filter(lambda x: self.org_details[x] == self.org.currentText(), self.org_details))[0]
-        except KeyError:
-            return None
+        except KeyError as e:
+            self.logger(e)
         self.org.setEnabled(False)
         self.asset_combobox.setEnabled(False)
         

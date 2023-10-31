@@ -2,19 +2,18 @@ try :
     from .windows.packages.cv2 import cv2
 except Exception:
     import cv2
-from qgis.core import *
+
 from PyQt5 import QtCore
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtWidgets
 from PyQt5.QtGui import QImage, QColor, QFont
 from PyQt5.QtWidgets import  QCompleter, QComboBox
-from qgis.core import Qgis, QgsDefaultValue, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling
+from qgis.core import Qgis, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling, QgsSimpleFillSymbolLayer, QgsSymbol, QgsGeometry, QgsRectangle,QgsCategorizedSymbolRenderer, QgsRendererCategory
 import re
 import glob
 import json
 import random
-import string
 import os
 import requests
 import threading
@@ -28,7 +27,7 @@ from urllib.request import urlopen
 from .sensehawk_apis.core_apis import get_project_geojson
 from .windows.packages.exiftool import ExifToolHelper
 from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL
-from qgis.PyQt.QtCore import Qt, QVariant
+from qgis.PyQt.QtCore import Qt
 from shapely.ops import MultiLineString, Polygon, transform
 from shapely.geometry import mapping
 
@@ -471,7 +470,7 @@ def save_edits(task, save_inputs):
         raw_image = feature['properties'].get('raw_images', None)
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
-        if feature['properties']['class_name'] != 'table' :
+        if feature['properties']['class_name'] != 'table' and feature['geometry']['coordinates'][0] :
             try:
                 if parentUid:
                     parent_item = listType_dataFields.get(parentUid, None)
@@ -480,13 +479,7 @@ def save_edits(task, save_inputs):
                 else:
                     Parent_rawimages = []
 
-                if parentUid in listType_dataFields and uid == parentUid:
-                    if feature['properties']['raw_images'] == Parent_rawimages:
-                        pass
-                    else:
-                        feature['properties']['raw_images'] = Parent_rawimages
-                        feature['properties']['attachments'] = Parent_rawimages
-                elif parentUid in listType_dataFields and uid != parentUid:
+                if parentUid in listType_dataFields:
                         feature['properties']['raw_images'] = Parent_rawimages
                         feature['properties']['attachments'] = Parent_rawimages
                 else:
