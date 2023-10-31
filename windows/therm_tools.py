@@ -86,7 +86,10 @@ class ThermToolsWidget(QtWidgets.QWidget):
         ortho_url = requests.get(url, headers=headers).json().get("ortho", None)
         return ortho_url
     
+<<<<<<< HEAD
 
+=======
+>>>>>>> 49a235f3ba12736ac30a37e393b8e926980f7702
     def enable_custom_label(self, field_name):
         create_custom_label(self.project.vlayer, field_name)
 
