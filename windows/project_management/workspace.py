@@ -227,18 +227,24 @@ class WorkspaceWindow(QtWidgets.QWidget):
                     shutil.rmtree(folderpath)
             self.qgis_project.removeMapLayers(self.layers_id)
             #close active tool widget 
-            self.group_workspace.therm_project_tabs_widget.docktool_widget.close()
-            self.group_workspace.terra_project_tabs_widget.docktool_widget.close()
-            del self.group_workspace.therm_project_tabs_widget.docktool_widget
-            del self.group_workspace.terra_project_tabs_widget.docktool_widget
+            if self.group_workspace.therm_project_tabs_widget:
+                self.group_workspace.therm_project_tabs_widget.docktool_widget.close()
+                self.iface.removeDockWidget(self.group_workspace.therm_project_tabs_widget.docktool_widget)
+                del self.group_workspace.therm_project_tabs_widget.docktool_widget
+            if self.group_workspace.terra_project_tabs_widget:
+                self.group_workspace.terra_project_tabs_widget.docktool_widget.close()
+                self.iface.removeDockWidget(self.group_workspace.therm_project_tabs_widget.docktool_widget)
+                del self.group_workspace.terra_project_tabs_widget.docktool_widget
+
         except Exception as e:
-            pass
+            self.logger(e)
+            
         if window:
             self.dock_widget.setWidget(self.home_window)
             self.dock_widget.setFixedSize(300, 830)
             self.hide()
         else:
+            self.iface.removeDockWidget(self.dock_widget)
             del self.home_window.login_obj
             del self.dock_widget
             del self.home_window
-            del self

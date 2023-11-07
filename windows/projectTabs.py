@@ -90,11 +90,16 @@ class Project:
                           'tracker_malfunction': '#c50000', 'string_reverse_polarity': '#f531bd',
                           'dirt': '#b5b0b0', 'cracked_modules': '#9b9e33', 'table': '#ffff00'}
         else:
-            self.color_code = {
+            self.raw_color_code = {
                 i: self.class_maps[i]["properties"]["color"].replace("rgb(", "").replace(")", "").replace(" ", "").split(",")
-                for i in self.class_maps}
-            self.color_code = {i: "#%02x%02x%02x" % tuple(int(x) for x in self.color_code[i]) for i in self.color_code}
-    
+                for i in self.class_maps if self.class_maps[i]['properties']['color']}
+            self.color_code = {}
+            for feature_name , feature_color in self.raw_color_code.items():
+                if len(feature_color) > 1:
+                    self.color_code[feature_name] =  "#%02x%02x%02x" % tuple(int(x) for x in self.raw_color_code[feature_name])
+                else:
+                    self.color_code[feature_name] = feature_color[0]
+
     # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
     def save_and_parse_listType_dataFields(self):  
         if self.application_type == 'therm' :
@@ -402,6 +407,12 @@ class Project:
                             "reload":True,
                             "bounds":self.bounds}
             self.disabled_features.clear()
+            for i in self.features_table_items.values():
+                feature_type_item = i['feature_item']
+                feature_type_item.setCheckState(Qt.Checked)
+                font = feature_type_item.font()
+                font.setStrikeOut(False)
+                feature_type_item.setFont(font)
             project_load_task = QgsTask.fromFunction(f"{self.project_details['name']} Project Reload", project_loadtask, load_task_inputs)
             QgsApplication.taskManager().addTask(project_load_task)
             project_load_task.statusChanged.connect(lambda load_task_status: self.project_load_callback(load_task_status, project_load_task))

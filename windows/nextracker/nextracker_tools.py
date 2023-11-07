@@ -40,7 +40,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'nextracker_tools.ui'), self)
         self.project = project
         self.clip_button.clicked.connect(self.start_clip_task)
-        self.csv_button.clicked.connect(self.download_csv)
+        self.csv_button.clicked.connect(lambda : self.download_csv(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "ZIP (*.zip)")[0]))
         self.points_button.clicked.connect(self.generate_points)
     
     # def logger(self, message, level=Qgis.Info):
@@ -80,9 +80,9 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         group_validate_task.statusChanged.connect(lambda:validate_group_callback(group_validate_task, self.project.logger))
         QgsApplication.taskManager().addTask(group_validate_task)
 
-    def download_csv(self):
+    def download_csv(self, download_path):
         project_uid = self.project.project_details["uid"]
-        download_path = f"{project_uid}_csvs.zip"
+        # download_path = f"{project_uid}_csvs.zip"
         csvs_service_obj = None
         url = CORE_URL + f"/api/v1/projects/{project_uid}/?reports=true"
         reports = requests.get(url, headers={"Authorization": f"Token {self.project.core_token}"}).json().get("reports", [])
@@ -94,9 +94,9 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         if csvs_service_obj:
             csvs_url = self.get_csv_url(csvs_service_obj)
             urllib.request.urlretrieve(csvs_url, download_path)
-            self.project.logger("CSV download successful.", level=Qgis.Success)
+            self.project.canvas_logger("CSV download successful.", level=Qgis.Success)
         else:
-            self.project.logger("CSV does not exist. Please generate using `Points` feature first.", level=Qgis.Warning)
+            self.project.canvas_logger("CSV does not exist. Please generate using `Points` feature first.", level=Qgis.Warning)
     
     def get_csv_url(self, csv_service_obj):
         body = {"project_uid": self.project.project_details["uid"],

@@ -1,0 +1,11 @@
+Key,Feature Type
+0,Piles installed
+1,Piles Incomplete
+2,Piles Staged
+3,TR Piles Incomplete
+4,TR Piles Staged
+5,TR Piles in progress
+6,TR Piles Complete
+7,Trackers Installed
+8,Module In Progress
+9,Modules complete

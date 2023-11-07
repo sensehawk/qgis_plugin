@@ -207,7 +207,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     # Save geojson
     d_path = str(Path.home() / "Downloads")
     rpath = os.path.join(d_path+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
-    geojson_path = os.path.join(rpath+'\\'+project_details['name']+'.geojson')
+    geojson_path = os.path.join(rpath+'\\'+project_details['name']+'.geojson').replace("/","_")
     if not os.path.exists(rpath):
         os.makedirs(rpath)
     # geojson_path = os.path.join(tempfile.gettempdir(), "{}.geojson".format(project_uid))
@@ -302,7 +302,7 @@ def file_existent(project_uid, org, token):
 
         return existing_file
 
-def convert_and_upload(path, image_path, projectUid, post_urls_data):
+def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
     image_name = image_path.split('\\')[-1]
     image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
     dpath = os.path.join(f'{path}', image_name)
@@ -316,21 +316,23 @@ def convert_and_upload(path, image_path, projectUid, post_urls_data):
         post_data = post_urls_data[image_key]["fields"]
         files = {'file': open(dpath, 'rb')}
         requests.post(post_url, data=post_data, files=files)
+        logger(f'Uploading Tagged Image {image_name}')
     else:
-        print("Unable to write inferno image")
+        logger("Unable to write inferno image ")
 
 def upload(task ,inputs):
     images = inputs['imageslist']
     image_path = inputs['img_dir']
     projectUid = inputs['projectUid']
     post_urls_data = inputs['post_urls_data']
+    logger = inputs['logger']
     path = os.path.join(f'{image_path}', 'inferno_scale')
 
     if not os.path.exists(path):
         os.mkdir(path)
 
     for image in images:
-        t = threading.Thread(target=convert_and_upload, args=(path, image, projectUid, post_urls_data))
+        t = threading.Thread(target=convert_and_upload, args=(path, image, projectUid, post_urls_data, logger))
         t.start()
     
     if images:

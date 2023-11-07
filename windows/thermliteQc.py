@@ -506,7 +506,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         upload_task_inputs = {'imageslist':self.upload_image_list,
                               'projectUid':self.projectUid,
                               'img_dir': self.images_dir,
-                              'post_urls_data': post_urls_data}
+                              'post_urls_data': post_urls_data,
+                              'logger':self.logger}
         upload_task = QgsTask.fromFunction("Upload", upload, upload_task_inputs)
         QgsApplication.taskManager().addTask(upload_task)
         upload_task.statusChanged.connect(lambda upload_task_status: self.upload_callback(upload_task_status, upload_task))

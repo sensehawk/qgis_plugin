@@ -22,24 +22,17 @@
 #  ***************************************************************************/
 # """
 
-from ..sensehawk_apis.core_apis import get_ortho_tiles_url, get_project_geojson, get_project_details
-from ..sensehawk_apis.terra_apis import get_terra_classmaps
-from ..utils import containers_details, load_vectors, categorize_layer , organization_details, combobox_modifier, asset_details, groups_details
-# from ..windows.projectLoad import ProjectLoadWindow
+from ..utils import containers_details, combobox_modifier, asset_details, groups_details
 from ..windows.project_management.workspace import WorkspaceWindow
 
 
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
-from qgis.core import QgsMessageLog, Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer, QgsRectangle, QgsFeature, \
-    QgsGeometry, QgsField, QgsCategorizedSymbolRenderer, QgsApplication, QgsTask
-from qgis.PyQt.QtCore import Qt, QVariant, QSize
-from qgis.gui import QgsMessageBar
-import qgis
+from qgis.core import  Qgis,  QgsApplication, QgsTask
+from qgis.PyQt.QtCore import Qt
 from qgis.utils import iface
 from .project_management.datatypes import Asset, Container, Group
 
 import os
-import time
 
 
 class HomeWindow(QtWidgets.QWidget):
@@ -61,7 +54,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.projectbutton.setText("👉🏼")
         self.projectbutton.setStyleSheet("background-color:#dcf6f7;")
         self.projectbutton.clicked.connect(self.show_asset_workspace)
-        self.asset_combobox.currentIndexChanged.connect(self.asset_tree)
+        self.asset_combobox.currentIndexChanged.connect(self.asset_tree) 
         self.asset_uid = None  
         logo_label = QtWidgets.QLabel(self)
         logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))
@@ -90,7 +83,8 @@ class HomeWindow(QtWidgets.QWidget):
         asset_list = list(a["name"] for a in self.asset_details.values()) 
         self.asset_combobox.setEnabled(True)
         self.asset_combobox.clear()
-        self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list) 
+        self.asset_combobox = combobox_modifier(self.asset_combobox, asset_list)
+        self.asset_tree()
         self.canvas_logger(f'{self.org.currentText()} assets loaded..')
         
 
@@ -116,7 +110,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.projectbutton.setEnabled(True)
         self.projectbutton.setStyleSheet("background-color:#dcf6f7;")
         self.containers_details = result['containers_dict']
-        print('extracted asset level container details')
+        print('extracted asset level container details', self.asset_combobox.currentText())
         
     def asset_tree(self):
         self.projectbutton.setEnabled(False)
@@ -166,7 +160,6 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset = Asset(asset_dict, self.org_uid)
         self.parse_containers_info()
         self.parse_groups_info()
-        time.sleep(1)
         self.asset_workspace = WorkspaceWindow(self, self.iface)
         self.hide()
         self.asset_workspace.show()
