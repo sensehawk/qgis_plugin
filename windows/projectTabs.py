@@ -277,18 +277,18 @@ class Project:
     # synch  feature count in project table
     def load_feature_count(self):
         # Get feature count by class_name
-        feature_count_dict = {}
+        self.feature_count_dict = {}
         class_name_keyword = {"terra": "class", "therm": "class_name"}[self.project_details["project_type"]]
         for f in list(self.vlayer.getFeatures()) + self.disabled_features:
             feature_class = f[class_name_keyword]
-            class_count = feature_count_dict.get(str(feature_class), 0)
+            class_count = self.feature_count_dict.get(str(feature_class), 0)
             class_count += 1
-            feature_count_dict[str(feature_class)] = class_count
+            self.feature_count_dict[str(feature_class)] = class_count
         
         removed_features = []
         for i in self.features_table_items.values():
             feature_name = i['feature_item'].text()
-            if not feature_count_dict.get(feature_name, None) :
+            if not self.feature_count_dict.get(feature_name, None) :
                 row, _ = i['feature_item'].row(),i['feature_item'].column()
                 self.features_table.removeRow(row)
                 removed_features.append(str(feature_name))
@@ -296,7 +296,7 @@ class Project:
         if removed_features:
             [self.features_table_items.pop(i) for i in removed_features]
 
-        for feature_type, feature_count in feature_count_dict.items():
+        for feature_type, feature_count in self.feature_count_dict.items():
             feature_label = self.container_class_map.get(feature_type, str(feature_type))
             if str(feature_label) in self.features_table_items:
                 feature_count_item = self.features_table_items[feature_label]["count_item"]
@@ -836,26 +836,6 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         # Remove project tab
         self.project_tabs_widget.removeTab(self.project_tabs_widget.currentIndex())
         self.docktool_widget.close()
+        self.iface.removeDockWidget(self.docktool_widget)
     
-    def constrain_canvas_zoom(self):
-        # Set max zoom and min zoom 
-        canvas = self.iface.mapCanvas()
-
-        # Disable mousewheel if you want
-        # QSettings().setValue("/qgis/zoom_factor", 1)
-
-        minScale = 10
-        maxScale = 5000
-
-        def renderStart():
-            scale = canvas.scale()
-            if scale < minScale:
-                canvas.zoomScale(minScale)
-            if scale > maxScale:
-                canvas.zoomScale(maxScale)
-            if scale < minScale or scale > maxScale:
-                self.iface.actionPan().trigger() # Disable zoom in favor of pan
-
-        canvas.renderStarting.connect(renderStart)
-
-        # canvas.renderStarting.disconnect(renderStart)
+    

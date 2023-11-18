@@ -597,7 +597,7 @@ def download_asset_logo(asset_name, url):
 def features_to_polygons(features, project_obj):
     polygon_features = []
     for f in features:
-        f["properties"]["uid"] = project_obj.create_uid()
+        # f["properties"]["uid"] = project_obj.create_uid()
         if "class" not in f["properties"].keys():
             f["properties"]["class"] = None
         if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
