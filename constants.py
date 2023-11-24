@@ -13,6 +13,8 @@ S3_REGION="ap-south-1"
 S3_BUCKET="sh-inc-ap-south-1"
 NEXTRACKER_URL = "https://nextracker-server.sensehawk.com"
 
+SCMAPP_URL = "https://scm-train.sensehawk.com" # update URL
+
 
 # # Staging env
 # CORE_URL = "https://core-stage-server.sensehawk.com"
