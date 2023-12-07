@@ -119,6 +119,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
         sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_lonlat_y, reverse=True)
         Topmost_table = topmost_table(sorted_tables)
         anchor_point = max(Topmost_table.raw_utm_coords, key=lambda x: x[1])
+        print(anchor_point)
         # Adding rotated utm_coords as a attribute to featureObj
         update_rotated_coords(featuresobjlist, anchor_point, angle) 
          #Adding Table_row and Table_column numbers to tableObj

@@ -249,8 +249,8 @@ def groups_details(asset, org, token):
 def asset_details(task ,org_uid, token): # fetching asset and org_container details 
     url = CORE_URL + f'/api/v1/asset-lists/?page_size=1000&page_number=1&organization={org_uid}'
     headers = {"Authorization": f"Token {token}"}
-    response = requests.get(url, headers=headers)
-    asset_details = response.json()['results']
+    asset_response = requests.get(url, headers=headers)
+    asset_details = asset_response.json()['results']
     asset_dict = {}
     for asset in asset_details:
         asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'], "profile_image": asset['properties'].get("cover_image", None)}
@@ -258,6 +258,7 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
     user_id_url = CORE_URL + f'/api/v1/organizations/{org_uid}/?organization={org_uid}'
     org_user_response = requests.get(user_id_url, headers=headers)
     user_id = org_user_response.json()['owner'].get('uid', None)
+    
 
     apptype_url = CORE_URL + f'/api/v1/apptypes/?organization={org_uid}'
     apptype_response = requests.get(apptype_url, headers=headers)

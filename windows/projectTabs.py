@@ -30,7 +30,10 @@ class Project:
         self.bounds = load_task_result['bounds']
         self.geojson_path = load_task_result['geojson_path']
         # self.table_geojson = self.geojson_path.replace('.geojson', '_table.geojson')
-        self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
+        if application_type == "therm":
+            self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
+        else:
+            self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=MultiPolygon", self.project_details['name']+'_Json', "ogr")
         self.vlayer.featureAdded.connect(lambda x: self.updateUid_and_sync_featurecount(new_feature_id=x))
         # self.vlayer.featureDeleted.connect(lambda x: self.updateUid_and_sync_featurecount())
         self.application_type = application_type
@@ -103,6 +106,10 @@ class Project:
     # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
     def save_and_parse_listType_dataFields(self):  
         if self.application_type == 'therm' :
+            # remove Null type geometry
+            for feat in self.vlayer.getFeatures():
+                if feat.geometry().isEmpty():
+                    self.vlayer.deleteFeature(feat.id())
             self.vlayer.commitChanges()
             self.vlayer.startEditing()
             # disconnect any single added to existing vlayer
@@ -117,9 +124,14 @@ class Project:
             save_edits_task.statusChanged.connect(lambda save_edits_status : self.save_edits_callback(save_edits_status, save_edits_task))
 
         else:
+            # remove Null type geometry
+            for feat in self.vlayer.getFeatures():
+                if feat.geometry().isEmpty():
+                    self.vlayer.deleteFeature(feat.id())
             self.vlayer.commitChanges()
             self.vlayer.startEditing()
             self.layer_edit_status = True
+            self.load_feature_count()
             self.canvas_logger(f'{self.project_details.get("name", None)} Geojson Saved...', level=Qgis.Success)
             
     def save_edits_callback(self, save_edits_status, save_edits_task):
@@ -731,7 +743,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                         if feature['properties'].get('workflowProgress', "{\n}\n") == "{\n}\n":
                             feature['properties']['workflowProgress'] = {}
                         if project_type == "terra":
-                            feature['properties'].pop('uid', None)
+                            # feature['properties'].pop('uid', None)
                             feature['properties'].pop('element', None)
                         try:
                             center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)

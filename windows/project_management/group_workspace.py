@@ -1,4 +1,5 @@
 from PyQt5 import QtCore
+from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
 from PyQt5.QtWidgets import  QComboBox
 from ..project_management.datatypes import Container
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
@@ -11,9 +12,12 @@ from ...tasks import project_loadtask
 from ...utils import categorize_layer
 from qgis.utils import iface
 from ...constants import CORE_URL
+from pathlib import Path
 import os
-from ..nextracker.utils import nextracker_org_uid, generate_group_points
+import json
 import requests
+import pprint
+from ..nextracker.utils import nextracker_org_uid, generate_group_points
 from ...event_filters import KeypressEmitter, KeypressFilter
 
 therm_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'therm_logo.svg'))
@@ -112,9 +116,10 @@ class GroupWorkspace(QtWidgets.QWidget):
             edit_btn = QtWidgets.QAction("Edit", self)
             move_btn = QtWidgets.QAction('Move', self)
             delete_btn = QtWidgets.QAction("Delete", self)
+            report_btn = QtWidgets.QAction("Reports", self)
             duplicate_btn = QtWidgets.QAction("Duplicate", self)
             project_menu = QtWidgets.QMenu()
-            project_menu.addActions([edit_btn, move_btn, delete_btn, duplicate_btn])
+            project_menu.addActions([edit_btn, move_btn, delete_btn,  report_btn, duplicate_btn])
             opt_button.setMenu(project_menu)
             hlayout.addWidget(project_button)
             hlayout.addWidget(opt_button)
@@ -123,6 +128,7 @@ class GroupWorkspace(QtWidgets.QWidget):
             move_btn.triggered.connect(partial ( MoveProject, self.workspace_window, self.group_dict, project_uid, self.group_obj, project_name))
             delete_btn.triggered.connect(partial(self.delete_project, project_uid, project_name))
             duplicate_btn.triggered.connect(partial ( DuplicateProject, self.workspace_window, self.group_dict, project_name, project_uid, self.group_obj))
+            report_btn.triggered.connect(partial (ReportsDashboard, self.workspace_window, project_uid, project_name, self))
             self.projects_form.addRow(hlayout)
 
         self.new_project_btn = QtWidgets.QPushButton('+')
@@ -810,3 +816,110 @@ class AssignApplication(QtWidgets.QDialog):
 
     def close_dialogbox(self):
         self.reject()
+
+class ReportsDashboard(QtWidgets.QDialog):
+    def __init__(self, workspace_window, project_uid, project_name, group_obj):
+        super(ReportsDashboard, self).__init__()
+        self.project_uid = project_uid
+        self.project_name = project_name
+        self.group_obj = group_obj
+        self.workspace_window = workspace_window
+        self.setWindowTitle("Reports Upload")
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        layout = QtWidgets.QVBoxLayout(self)
+        self.reports_upload_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'reports_upload.ui'))
+        self.reports_upload_ui.browse_file.clicked.connect(self.select_file)
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Upload", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.upload_files)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        self.progress_bar = QtWidgets.QProgressBar()
+        self.network_manager = QNetworkAccessManager(self)
+        layout.addWidget(self.reports_upload_ui)
+        layout.addWidget(self.progress_bar)
+        layout.addWidget(button_box)
+        self.aws_info = {"Asia Pacific (Mumbai)": {"name": "ap-south-1",     "bucket": "sh-inc-ap-south-1"},
+                "US East (Ohio)"           : {"name": "us-east-2",      "bucket": "sh-inc-us-east-2"},
+                "US West (N. California)"  : {"name": "us-west-1",      "bucket": "sh-inc-us-west-1"},
+                "Asia Pacific (Singapore)" : {"name": "ap-southeast-1", "bucket": "sh-inc-ap-southeast-1"},
+                "Asia Pacific (Sydney)"    : {"name": "ap-southeast-2", "bucket": "sh-inc-ap-southeast-2" },
+                "EU (Stockholm)"           : {"name": "eu-north-1",     "bucket": "sh-inc-eu-north-1"}}
+        self.setup_ui()
+        self.exec_()
+
+    def setup_ui(self):
+        path = os.path.join(os.path.dirname(__file__), 'report_type_info.json')
+        with open(path, "r") as report_json:
+            self.report_type_info = json.load(report_json)
+        reports = list(self.report_type_info.keys())
+        self.reports_upload_ui.report_type.addItems(reports)
+        self.reports_upload_ui.aws_bucket.addItems(list(self.aws_info.keys()))
+
+    
+    def select_file(self):
+        self.filter = self.report_type_info.get(self.reports_upload_ui.report_type.currentText(), {}).get("supported_formats", "All Files (*)")
+        self.file_path, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Open", "", self.filter)
+        if self.file_path:
+            if self.reports_upload_ui.file_name.text():
+                self.file_name = self.reports_upload_ui.file_name.text()
+            else:
+                self.file_name = Path(self.file_path).name
+            self.reports_upload_ui.file_label.setText(Path(self.file_path).name)
+            
+    def upload_file(self, url):
+        url = QtCore.QUrl(url)
+        with open(self.file_path, "rb") as file:
+            file_content = file.read()
+            data = QtCore.QByteArray(file_content)
+            request = QNetworkRequest(url)
+            reply = self.network_manager.put(request, data)
+            reply.uploadProgress.connect(self.upload_progress)  
+
+    def upload_files(self):
+        if not self.file_path:
+            self.group_obj.canvas_logger("Select the file to Upload...", level=Qgis.Warning)
+            return 
+        self.accept()
+        headers = {'Authorization':f'Token {self.workspace_window.core_token}'} 
+        report_type = self.report_type_info.get(self.reports_upload_ui.report_type.currentText(), {}).get("name", "report")
+        region = self.aws_info.get(self.reports_upload_ui.aws_bucket.currentText(), {}).get("name", "ap-south-1")
+        # bucket   = self.aws_info.get(self.reports_upload_ui.aws_bucket.currentText(), {}).get("bucket", "sh-inc-ap-south-1")
+        url = f"https://core-server.sensehawk.com/api/v1/projects/{self.project_uid}/reports/generate/post/?&organization={self.workspace_window.org_uid}"
+        payload = {"report_type":report_type,"filename":self.file_name, "service": {"name": "aws_s3",
+                                                                               "region": region}}
+        s3_policy = requests.post(url=url, json=payload, headers=headers)
+        print("s3",s3_policy.status_code)
+        print("s3",s3_policy.json())
+        if s3_policy.status_code == 200:
+            db_payload = {}
+            response = s3_policy.json()
+            upload_url = response["url"]
+            db_payload["name"] = response["filename"]
+            db_payload["service"] = response["service"]
+            db_payload["report_type"] = response["report_type"]
+            content_type = self.report_type_info.get(self.reports_upload_ui.report_type.currentText(), {}).get("Content-type", "application/octet-stream")
+            files = {"file":open(self.file_path,'rb'), "Content-Type":content_type}
+            #uploading File Using S3 URL
+            print(files, self.file_name, content_type)
+            upload_file = requests.put(url=upload_url, headers={}, files=files)
+            print("upload",upload_file.status_code)
+            if upload_file.status_code == 200:
+                self.group_obj.canvas_logger("File Uploaded to S3 Bucket.", level=Qgis.Success)
+                #Save report in DB
+                update_url = f"https://core-server.sensehawk.com/api/v1/projects/{self.project_uid}/reports/?&organization={self.workspace_window.org_uid}"
+                update_DB = requests.post(url=update_url, json=db_payload, headers=headers)
+                print("update", update_DB.status_code)
+                print("update", update_DB.json())
+                if update_DB.status_code == 201:
+                    self.group_obj.canvas_logger("Report File Uploaded Successfully...", level=Qgis.Success)
+                else:
+                    self.group_obj.canvas_logger(f"{update_DB.json()} Unsuccessful...", level=Qgis.Warning)
+
+        else:
+            self.group_obj.canvas_logger(s3_policy.json()[0], level=Qgis.Warning)
+
+
+    def close_dialogbox(self):
+        self.close()
