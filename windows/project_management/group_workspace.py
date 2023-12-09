@@ -936,12 +936,11 @@ class ReportsDashboard(QtWidgets.QDialog):
     def download_report(self, report_name, url):
         content_type = {"ortho":"TIFF FILES (*.tiff *.tif)", "dsm":"TIFF FILES (*.tiff *.tif)", 
                         "compressedImages":"ZIP (*.zip)", "calibratedParameters":"Text Files (*.txt)", "externalCalibratedParameters":"Text Files (*.txt)"}
-        self.download_file_path = QtWidgets.QFileDialog.getSaveFileName(None, "Title",  directory=report_name,filter=content_type[report_name])
-        print(self.download_file_path)
+        self.download_file_path = QtWidgets.QFileDialog.getSaveFileName(None, "Title",  directory=report_name, filter=content_type[report_name])
         if self.download_file_path[0]:
             response = requests.get(url, stream=True)
             total_size = int(response.headers.get('content-length', 0))
-            block_size = 1000000  # Adjust as needed
+            block_size = 1000000  # 1MB
 
             with open(self.download_file_path[0], 'wb') as file:
                 for data in response.iter_content(block_size):
@@ -950,6 +949,8 @@ class ReportsDashboard(QtWidgets.QDialog):
                     if total_size > 0:
                         percentage = (downloaded_size / total_size) * 100
                         self.progress_bar.setValue(percentage)
+                    if percentage == 100:
+                        self.close()
     
     def close_dialogbox(self):
         self.close()
