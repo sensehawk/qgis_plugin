@@ -825,7 +825,7 @@ class ReportsDashboard(QtWidgets.QDialog):
         self.group_obj = group_obj
         self.workspace_window = workspace_window
         self.setWindowTitle("Reports Upload")
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        # self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         layout = QtWidgets.QVBoxLayout(self)
         self.reports_upload_ui = uic.loadUi(os.path.join(os.path.dirname(__file__),"reports_upload.ui"))
         self.reports_upload_ui.browse_file.clicked.connect(self.select_file)
@@ -841,7 +841,10 @@ class ReportsDashboard(QtWidgets.QDialog):
         layout.addWidget(self.reports_upload_ui)
         layout.addWidget(self.progress_bar)
         layout.addWidget(button_box)
+        self.module_width = None
+        self.module_height = None
         self.upload_file_path = None
+        self.auto_detect = False
         self.download_file_path = ("", "")
         self.aws_info = {"Asia Pacific (Mumbai)": {"name": "ap-south-1",     "bucket": "sh-inc-ap-south-1"},
                 "US East (Ohio)"                : {"name": "us-east-2",      "bucket": "sh-inc-us-east-2"},
@@ -870,6 +873,11 @@ class ReportsDashboard(QtWidgets.QDialog):
 
 
     def select_file(self):
+        # Auto detect option while uploading ortho type report
+        report_type = self.report_type_info.get(self.reports_upload_ui.report_type.currentText(), {}).get("name", "report")
+        if report_type == "ortho":
+            self.module_info()
+
         self.filter = self.report_type_info.get(self.reports_upload_ui.report_type.currentText(), {}).get("supported_formats", "All Files (*)")
         self.upload_file_path, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Open", "", self.filter)
         if self.upload_file_path:
@@ -878,12 +886,39 @@ class ReportsDashboard(QtWidgets.QDialog):
             else:
                 self.file_name = Path(self.upload_file_path).name
             self.reports_upload_ui.file_label.setText(Path(self.upload_file_path).name)
+    
+    def module_info(self):
+        confirmation_dialog = QtWidgets.QDialog()
+        confirmation_dialog.setWindowTitle("Confirmation")
+        layout = QtWidgets.QVBoxLayout()
+        self.module_info_ui = uic.loadUi("C:\\Users\\sande\\AppData\\Roaming\\QGIS\\QGIS3\\profiles\\default\\python\\plugins\\qgis_plugin\\windows\\detection_module_info.ui")
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Detect", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(lambda : self.update_moduel_info(confirmation_dialog))
+        button_box.rejected.connect(lambda : self.close_module_info(confirmation_dialog))
+        button_box.setCenterButtons(True)
+        layout.addWidget(self.module_info_ui)
+        layout.addWidget(button_box)
+        confirmation_dialog.setLayout(layout)
+        confirmation_dialog.exec_()
+    
+    def update_moduel_info(self, qdialog):
+        print(self.module_info_ui.module_height.text(), self.module_info_ui.module_width.text())
+        self.module_width, self.module_height = self.module_info_ui.module_width.text(), self.module_info_ui.module_height.text()
+        self.auto_detect = True
+        qdialog.close()
+    
+    def close_module_info(self, qdialog):
+        self.auto_detect = False
+        qdialog.close()
 
     def upload_reports(self):
         if not self.upload_file_path:
             self.group_obj.canvas_logger("Select the file to Upload...", level=Qgis.Warning)
             return 
         report_type = self.report_type_info.get(self.reports_upload_ui.report_type.currentText(), {}).get("name", "report")
+                
         region = self.aws_info.get(self.reports_upload_ui.aws_bucket.currentText(), {}).get("name", "ap-south-1")
         # bucket   = self.aws_info.get(self.reports_upload_ui.aws_bucket.currentText(), {}).get("bucket", "sh-inc-ap-south-1")
         url = f"https://core-server.sensehawk.com/api/v1/projects/{self.project_uid}/reports/generate/post/?&organization={self.workspace_window.org_uid}"
@@ -929,9 +964,43 @@ class ReportsDashboard(QtWidgets.QDialog):
         update_DB = requests.post(url=update_url, json=self.db_payload, headers=self.headers)
         if update_DB.status_code == 201:
             self.group_obj.canvas_logger("Report File Uploaded Successfully...", level=Qgis.Success)
+            if self.auto_detect:
+                self.detect_issues()
         else:
             self.group_obj.canvas_logger(f"{update_DB.json()} Unsuccessful...", level=Qgis.Warning)
         self.close()
+
+    def get_ortho_url(self):
+        url = f"https://therm-server.sensehawk.com/projects/{self.project_uid}/data?organization={self.workspace_window.org_uid}"
+        response = requests.get(url, headers=self.headers).json()
+        print(response)
+        return response.get("ortho", None)
+    
+    def detect_issues(self):
+        url =  f'https://sid.sensehawk.com/detect-solar-issues'
+        headers = self.headers
+        headers['email_id'] = self.workspace_window.user_email
+        payload = {
+                    "details": {
+                        "projectUID": self.project_uid,
+                        "user_email": self.workspace_window.user_email,
+                        "angle" :iface.mapCanvas().rotation(),
+                        "width":float(self.module_width),
+                        "height":float(self.module_height)
+                    },
+                    # TODO ask udit to fetch ortho url usig project and org uid
+                    "data": {"ortho": ""},
+                    "geojson": {
+                                "type": "FeatureCollection",
+                                "features": []
+                                }
+                }
+        
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 202:
+            self.workspace_window.canvas_logger('Report uploaded and Detection Queued Successfully.',level=Qgis.Success)
+        else:
+            self.workspace_window.canvas_logger(response.json())
 
     def download_report(self, report_name, url):
         content_type = {"ortho":"TIFF FILES (*.tiff *.tif)", "dsm":"TIFF FILES (*.tiff *.tif)", 
@@ -940,7 +1009,7 @@ class ReportsDashboard(QtWidgets.QDialog):
         if self.download_file_path[0]:
             response = requests.get(url, stream=True)
             total_size = int(response.headers.get('content-length', 0))
-            block_size = 1000000  # 1MB
+            block_size = 500000  # 0.5 MB
 
             with open(self.download_file_path[0], 'wb') as file:
                 for data in response.iter_content(block_size):
@@ -950,6 +1019,7 @@ class ReportsDashboard(QtWidgets.QDialog):
                         percentage = (downloaded_size / total_size) * 100
                         self.progress_bar.setValue(percentage)
                     if percentage == 100:
+                        self.group_obj.canvas_logger("Report File Downloaded Successfully")
                         self.close()
     
     def close_dialogbox(self):

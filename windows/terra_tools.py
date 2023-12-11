@@ -54,7 +54,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.detectButton.clicked.connect(self.start_detect_task)
         self.approveButton.clicked.connect(self.start_approve_task)
         self.clipButton.clicked.connect(self.start_clip_task)
-        self.requestModelButton.clicked.connect(self.request_model)
+        self.requestModelButton.clicked.connect(lambda : MLServiceMapWidget(self))
         self.report_update.clicked.connect(lambda : Report_and_update(self))
         self.component_pre_process.clicked.connect(lambda : ComponentPreProcess(self))
         self.core_token = self.project.core_token
@@ -76,16 +76,16 @@ class TerraToolsWidget(QtWidgets.QWidget):
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
-    def request_model(self):
-        if not self.ml_service_map_widget:
-            self.ml_service_map_widget = MLServiceMapWidget(self.project)
-        if self.project.active_tool_widget != self.ml_service_map_widget:
-            self.project.active_tool_widget.hide()
-            self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.ml_service_map_widget)
-            self.project.active_tool_widget = self.ml_service_map_widget
-        self.ml_service_map_widget.show()
-        self.uncheck_all_buttons()
-        self.requestModelButton.setChecked(True)
+    # def request_model(self):
+    #     if not self.ml_service_map_widget:
+    #         self.ml_service_map_widget = MLServiceMapWidget(self.project)
+    #     if self.project.active_tool_widget != self.ml_service_map_widget:
+    #         self.project.active_tool_widget.hide()
+    #         self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.ml_service_map_widget)
+    #         self.project.active_tool_widget = self.ml_service_map_widget
+    #     self.ml_service_map_widget.show()
+    #     self.uncheck_all_buttons()
+    #     self.requestModelButton.setChecked(True)
 
     def load_models(self):
         # Get list of available models

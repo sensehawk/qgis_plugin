@@ -8,7 +8,7 @@ def get_models_list(project_uid, core_token):
     url = SCM_INFERENCE_URL + "/list-models"
     params = {"project_uid": project_uid}
     headers = {"Authorization": f"Token {core_token}"}
-    response = requests.request("GET", url, headers=headers, params=params)
+    response = requests.get(url, headers=headers, params=params)
     return response.json()
 
 def train(task, train_inputs):
