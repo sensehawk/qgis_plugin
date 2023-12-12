@@ -42,7 +42,6 @@ import os
 
 
 class TerraToolsWidget(QtWidgets.QWidget):
-
     def __init__(self, project):
         """Constructor."""
         super(TerraToolsWidget, self).__init__()
@@ -54,7 +53,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.detectButton.clicked.connect(self.start_detect_task)
         self.approveButton.clicked.connect(self.start_approve_task)
         self.clipButton.clicked.connect(self.start_clip_task)
-        self.requestModelButton.clicked.connect(lambda : MLServiceMapWidget(self))
+        self.requestModelButton.clicked.connect(lambda : MLServiceMapWidget(self.project))
         self.report_update.clicked.connect(lambda : Report_and_update(self))
         self.component_pre_process.clicked.connect(lambda : ComponentPreProcess(self))
         self.core_token = self.project.core_token
@@ -76,17 +75,6 @@ class TerraToolsWidget(QtWidgets.QWidget):
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
-    # def request_model(self):
-    #     if not self.ml_service_map_widget:
-    #         self.ml_service_map_widget = MLServiceMapWidget(self.project)
-    #     if self.project.active_tool_widget != self.ml_service_map_widget:
-    #         self.project.active_tool_widget.hide()
-    #         self.project.project_tab_layout.replaceWidget(self.project.active_tool_widget, self.ml_service_map_widget)
-    #         self.project.active_tool_widget = self.ml_service_map_widget
-    #     self.ml_service_map_widget.show()
-    #     self.uncheck_all_buttons()
-    #     self.requestModelButton.setChecked(True)
-
     def load_models(self):
         # Get list of available models
         self.models_dict = get_models_list(self.project_details["uid"], self.core_token)
@@ -95,6 +83,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
             list_items = models_list
         else:
             list_items = ["No models available"]
+        self.uncheck_all_buttons()
         # Clear list to avoid duplicates
         self.detectionModel.clear()
         self.detectionModel.addItems(list_items)
@@ -105,6 +94,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
             if result:
                 logger(str(result["message"]))
         self.logger("Clip task starting...")
+        self.uncheck_all_buttons()
         clip_task_inputs = self.logger, self.project_details, self.load_window.geojson_path, self.class_maps, self.core_token
         clip_task = QgsTask.fromFunction("Clip Request", clip_request, clip_task_input=clip_task_inputs)
         clip_task.statusChanged.connect(lambda:callback(clip_task, self.logger))
@@ -116,6 +106,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
             if result:
                 logger(str(result))
         self.logger("Detection called..")
+        self.uncheck_all_buttons()
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
         self.logger("Getting model information...")
         model_name = self.detectionModel.currentText()
@@ -138,6 +129,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
             if result:
                 logger(str(result))
         self.logger("Approve called...")
+        self.uncheck_all_buttons()
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
         approve_task = QgsTask.fromFunction("Approve", approveTask,
                                             approve_task_input=[self.project_details, geojson,

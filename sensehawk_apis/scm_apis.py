@@ -5,7 +5,8 @@ from .terra_apis import get_terra_classmaps, get_project_data
 
 
 def get_models_list(project_uid, core_token):
-    url = SCM_INFERENCE_URL + "/list-models"
+    # url = SCM_INFERENCE_URL + "/list-models" TODO replace url with updated one 
+    url = "ec2-44-226-252-196.us-west-2.compute.amazonaws.com:8080"
     params = {"project_uid": project_uid}
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(url, headers=headers, params=params)

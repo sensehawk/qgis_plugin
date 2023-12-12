@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>220</width>
-    <height>120</height>
+    <width>376</width>
+    <height>150</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,42 +25,63 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QPushButton" name="trainButton">
-   <property name="geometry">
-    <rect>
-     <x>90</x>
-     <y>80</y>
-     <width>89</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Train</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="classesToModelLabel">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>10</y>
-     <width>121</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Classes to model:</string>
-   </property>
-  </widget>
-  <widget class="QgsCheckableComboBox" name="classesComboBox">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>40</y>
-     <width>151</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="detectionLabel">
+       <property name="text">
+        <string>Detection:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QgsCheckableComboBox" name="detectionComboBox">
+       <property name="minimumSize">
+        <size>
+         <width>260</width>
+         <height>31</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="segmentationLabel">
+       <property name="text">
+        <string>Segmentation:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QgsCheckableComboBox" name="segmentationComboBox">
+       <property name="minimumSize">
+        <size>
+         <width>260</width>
+         <height>31</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="keypointLabel">
+       <property name="text">
+        <string>Keypoint:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QgsCheckableComboBox" name="keypointComboBox">
+       <property name="minimumSize">
+        <size>
+         <width>260</width>
+         <height>31</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <customwidgets>
   <customwidget>
