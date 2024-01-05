@@ -48,7 +48,7 @@ class Project:
                                             'num_modules_horizontal':QVariant.Double,'timestamp':QVariant.String, 
                                             'num_modules_vertical':QVariant.Double,'center':QVariant.String, 
                                             'raw_images':QVariant.String,'attachments':QVariant.String,
-                                            'parent_uid':QVariant.String,'name':QVariant.String,
+                                            'parent_uid':QVariant.String,'name':QVariant.String,'class_name':QVariant.String, 'class_id':QVariant.String,
                                             'idx':QVariant.Double},
                                 "terra": {'projectUid':QVariant.String,'groupUid':QVariant.String,
                                             'table_row':QVariant.Double,'table_column':QVariant.Double, 

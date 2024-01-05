@@ -46,7 +46,7 @@ def project_loadtask(task, load_inputs):
             # Load orthotiles
             # Get base url for ortho tiles
             base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
-
+            print("Ortho tile url", base_orthotiles_url)
             # Get metadata from the base url
             ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
             ortho_bounds = ortho_tiles_details["bounds"]
@@ -57,6 +57,7 @@ def project_loadtask(task, load_inputs):
             orthotiles_url = "type=xyz&url=" + \
                             base_orthotiles_url + "/{z}/{x}/{y}.png" + \
                             "&zmax={}&zmin={}".format(zmax, zmin)
+            print(orthotiles_url)
         else:
             orthotiles_url, class_maps, class_groups, existing_files, container_class_map = None, None, None, None, None
             ortho_bounds = load_inputs['bounds']

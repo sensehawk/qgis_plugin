@@ -118,7 +118,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.logger("Initiating detection request task...")
         detection_task = QgsTask.fromFunction("Detect", detectionTask,
                                               detection_task_input=[self.project_details, geojson,
-                                                                    model_details, self.project.project_tabs_widget.load_window.home.user_email,
+                                                                    model_details, self.project.user_email,
                                                                     self.core_token])
         detection_task.statusChanged.connect(lambda:callback(detection_task, self.logger))
         QgsApplication.taskManager().addTask(detection_task)
@@ -133,7 +133,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
         approve_task = QgsTask.fromFunction("Approve", approveTask,
                                             approve_task_input=[self.project_details, geojson,
-                                                                self.project.project_tabs_widget.load_window.home.user_email,
+                                                                self.project.user_email,
                                                                 self.core_token])
         approve_task.statusChanged.connect(lambda:callback(approve_task, self.logger))
         QgsApplication.taskManager().addTask(approve_task)

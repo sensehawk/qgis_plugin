@@ -61,7 +61,7 @@ class MLServiceMapWidget(QtWidgets.QDialog):
                 logger("Error: " + str(status) + str(result))
 
         train_inputs = [self.project.project_details, geojson, ml_service_map, self.project.class_maps,
-                        self.project.project_tabs_widget.load_window.home.user_email, self.project.project_tabs_widget.load_window.home.user_email]
+                        self.project.user_email, self.project.core_token]
 
         # self.logger("--------- Payload Before calling Train() -----------")
         # self.logger(str(train_inputs))
