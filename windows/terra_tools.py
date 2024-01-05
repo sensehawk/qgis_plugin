@@ -40,7 +40,6 @@ import json
 import os
 
 
-
 class TerraToolsWidget(QtWidgets.QWidget):
     def __init__(self, project):
         """Constructor."""
@@ -53,9 +52,9 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.detectButton.clicked.connect(self.start_detect_task)
         self.approveButton.clicked.connect(self.start_approve_task)
         self.clipButton.clicked.connect(self.start_clip_task)
-        self.requestModelButton.clicked.connect(lambda : MLServiceMapWidget(self.project))
-        self.report_update.clicked.connect(lambda : Report_and_update(self))
-        self.component_pre_process.clicked.connect(lambda : ComponentPreProcess(self))
+        self.requestModelButton.clicked.connect(lambda: MLServiceMapWidget(self.project))
+        self.report_update.clicked.connect(lambda: Report_and_update(self))
+        self.component_pre_process.clicked.connect(lambda: ComponentPreProcess(self))
         self.core_token = self.project.core_token
         self.project_details = self.project.project_details
         self.class_maps = self.project.class_maps
@@ -63,7 +62,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.iface = self.project.iface
         self.active_layer = self.project.vlayer
         self.models_dict = {}
-        self.components_ordered_info = {}   
+        self.components_ordered_info = {}
         # ML Service Map
         self.ml_service_map_widget = None
 
@@ -93,11 +92,12 @@ class TerraToolsWidget(QtWidgets.QWidget):
             result = task.returned_values
             if result:
                 logger(str(result["message"]))
+
         self.logger("Clip task starting...")
         self.uncheck_all_buttons()
         clip_task_inputs = self.logger, self.project_details, self.load_window.geojson_path, self.class_maps, self.core_token
         clip_task = QgsTask.fromFunction("Clip Request", clip_request, clip_task_input=clip_task_inputs)
-        clip_task.statusChanged.connect(lambda:callback(clip_task, self.logger))
+        clip_task.statusChanged.connect(lambda: callback(clip_task, self.logger))
         QgsApplication.taskManager().addTask(clip_task)
 
     def start_detect_task(self):
@@ -105,6 +105,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
             result = task.returned_values
             if result:
                 logger(str(result))
+
         self.logger("Detection called..")
         self.uncheck_all_buttons()
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
@@ -117,10 +118,14 @@ class TerraToolsWidget(QtWidgets.QWidget):
         model_details = [model_name, model_url]
         self.logger("Initiating detection request task...")
         detection_task = QgsTask.fromFunction("Detect", detectionTask,
-                                              detection_task_input=[self.project_details, geojson,
-                                                                    model_details, self.project.user_email,
-                                                                    self.core_token])
-        detection_task.statusChanged.connect(lambda:callback(detection_task, self.logger))
+                                              detection_task_input=[self.project_details,
+                                                                    geojson,
+                                                                    model_details,
+                                                                    self.project.user_email,
+                                                                    self.core_token,
+                                                                    self.logger])
+        detection_task.statusChanged.connect(lambda: callback(detection_task, self.logger))
+
         QgsApplication.taskManager().addTask(detection_task)
 
     def start_approve_task(self):
@@ -128,6 +133,7 @@ class TerraToolsWidget(QtWidgets.QWidget):
             result = task.returned_values
             if result:
                 logger(str(result))
+
         self.logger("Approve called...")
         self.uncheck_all_buttons()
         geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
@@ -135,8 +141,9 @@ class TerraToolsWidget(QtWidgets.QWidget):
                                             approve_task_input=[self.project_details, geojson,
                                                                 self.project.user_email,
                                                                 self.core_token])
-        approve_task.statusChanged.connect(lambda:callback(approve_task, self.logger))
+        approve_task.statusChanged.connect(lambda: callback(approve_task, self.logger))
         QgsApplication.taskManager().addTask(approve_task)
+
 
 class ComponentPreProcess(QtWidgets.QDialog):
     def __init__(self, terra_obj):
@@ -174,30 +181,29 @@ class ComponentPreProcess(QtWidgets.QDialog):
                 self.component_names = list(feat["extraProperties"]["component_info"].keys())
                 self.extraproperties_info = feat["extraProperties"]
                 break
-        
+
         if not self.component_names:
-            self.terra_obj.canvas_logger('component info not found',  level=Qgis.Warning)
+            self.terra_obj.canvas_logger('component info not found', level=Qgis.Warning)
             return None
         else:
             for component in self.component_names:
                 comp_assoc_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'sdp_comp_order_assoc.ui'))
                 comp_assoc_ui.component_btn.setText(component)
-                comp_assoc_ui.component_btn.clicked.connect(partial (self.prepare_data, comp_assoc_ui))
+                comp_assoc_ui.component_btn.clicked.connect(partial(self.prepare_data, comp_assoc_ui))
                 comp_assoc_ui.target_box.addItems(self.extraproperties_info)
                 self.component_pre_process_ui.compenent_order_vlayout.addWidget(comp_assoc_ui)
                 self.component_widgets_list.append(comp_assoc_ui)
-
 
     def prepare_data(self, widget):
         self.update_order(widget)
 
     def update_order(self, widget):
-        if self.component_order_num > len(self.component_names) :
+        if self.component_order_num > len(self.component_names):
             self.component_order_num = 1
             order_num = self.component_order_num
         else:
             order_num = self.component_order_num
-    
+
         widget.order_num.setText(str(order_num))
         self.component_order_num += 1
 
@@ -205,9 +211,11 @@ class ComponentPreProcess(QtWidgets.QDialog):
         self.accept()
         for component_widget in self.component_widgets_list:
             comp_name = component_widget.component_btn.text()
-            self.terra_obj.components_ordered_info[comp_name] = {"order_index":int(component_widget.order_num.text()), "target_value":component_widget.target_box.currentText()}
+            self.terra_obj.components_ordered_info[comp_name] = {"order_index": int(component_widget.order_num.text()),
+                                                                 "target_value": component_widget.target_box.currentText()}
 
-        self.terra_obj.components_ordered_info = sorted(self.terra_obj.components_ordered_info.items(), key=lambda x:x[1]["order_index"])
+        self.terra_obj.components_ordered_info = sorted(self.terra_obj.components_ordered_info.items(),
+                                                        key=lambda x: x[1]["order_index"])
         pprint.pprint(self.terra_obj.components_ordered_info)
 
     def close_dialogbox(self):
@@ -238,7 +246,7 @@ class Report_and_update(QtWidgets.QDialog):
         self.extraproperties_info = None
         self.setup_ui()
         self.exec_()
-    
+
     def setup_ui(self):
         vlayer = self.terra_obj.project.vlayer
         for feat in vlayer.getFeatures():
@@ -249,23 +257,22 @@ class Report_and_update(QtWidgets.QDialog):
                 self.extraproperties_info = feat["extraProperties"]
                 break
 
-        headers = {'Authorization':f'Token {self.terra_obj.project.core_token}'}
+        headers = {'Authorization': f'Token {self.terra_obj.project.core_token}'}
         url = f"https://terra-server.sensehawk.com/workflows/{self.workflow_id}/?organization={self.terra_obj.project.project_details['organization']['uid']}"
         workflow_response = requests.get(url, headers=headers)
         # print(workflow_response.status_code)
         # print(workflow_response.json())
         # print(self.terra_obj.project.feature_count_dict)
         print(self.terra_obj.project.class_maps)
-        
+
         class_maps = self.terra_obj.project.class_maps
         associated_workflow_info = workflow_response.json()['data']
-        
+
         mapped_class_map = {}
         for feature_type in class_maps:
             uid = class_maps[feature_type].get("uid")
             mapped_class_map[uid] = feature_type
-  
-        
+
         self.workflow_detail_info = {}
         for feature_id, workflow_info in associated_workflow_info.items():
             class_name = mapped_class_map[feature_id]
@@ -290,7 +297,7 @@ class Report_and_update(QtWidgets.QDialog):
                 vlayout.addWidget(component_info_ui)
                 workflow['component_ui'] = component_info_ui
                 # workflow['component_total_count'] = self.worflowProgress[uid]["total"]
-                
+
             self.workflow_detail_info[feature_id] = workflow_info
             self.scm_classification_ui.feature_gridlayout.addLayout(vlayout, self.current_position, 1)
             self.current_position += 1
@@ -300,9 +307,9 @@ class Report_and_update(QtWidgets.QDialog):
             line2.setFrameShape(QtWidgets.QFrame.HLine)
             line3 = QtWidgets.QFrame()
             line3.setFrameShape(QtWidgets.QFrame.HLine)
-            self.scm_classification_ui.feature_gridlayout.addWidget(line1, self.current_position,0)
-            self.scm_classification_ui.feature_gridlayout.addWidget(line2, self.current_position,1)
-            self.scm_classification_ui.feature_gridlayout.addWidget(line3, self.current_position,2)
+            self.scm_classification_ui.feature_gridlayout.addWidget(line1, self.current_position, 0)
+            self.scm_classification_ui.feature_gridlayout.addWidget(line2, self.current_position, 1)
+            self.scm_classification_ui.feature_gridlayout.addWidget(line3, self.current_position, 2)
             self.current_position += 1
 
     def run_classification(self):
@@ -310,7 +317,7 @@ class Report_and_update(QtWidgets.QDialog):
         for feature, workflow_info in self.workflow_detail_info.items():
             for workflow in workflow_info["fields"]:
                 workflow["component_name"] = workflow["component_ui"].component_box.currentText()
-                
+
         # pprint.pprint(self.workflow_detail_info)
 
         def check_feature_status_change(current_list, target_list):
@@ -318,28 +325,31 @@ class Report_and_update(QtWidgets.QDialog):
 
         print('order:', self.terra_obj.components_ordered_info)
         features = json.load(open(self.terra_obj.project.geojson_path))['features']
-        cleaned_json = {"type":"FeatureCollection","features":[]}
+        cleaned_json = {"type": "FeatureCollection", "features": []}
         payload = {}
         for feat in features:
             end_the_loop = True
             feature_status_changed = False
             feature_uid = feat["properties"]["uid"]
-            feature_type = feat["properties"]["class_name"]    
-            payload[feature_uid] = {"attachments":[],"category":None, "new_feature_type":None,"notes":"","old_feature_type":feature_type, 
-                                           "progress":{}, "status_changed":False, "timestamp":None}
-            
-            # update components count based user order, if any succeeding component count match with its target count 
+            feature_type = feat["properties"]["class_name"]
+            payload[feature_uid] = {"attachments": [], "category": None, "new_feature_type": None, "notes": "",
+                                    "old_feature_type": feature_type,
+                                    "progress": {}, "status_changed": False, "timestamp": None}
+
+            # update components count based user order, if any succeeding component count match with its target count
             # then all the preceeding component considered as construction compeleted and there component count updated with respect to match there target count
             if self.terra_obj.components_ordered_info:
                 succeeding_status = False
                 for ordered_comp in self.terra_obj.components_ordered_info[::-1]:
-                    comp_name, target_value = ordered_comp[0], ordered_comp[1].get("target_value", None) 
+                    comp_name, target_value = ordered_comp[0], ordered_comp[1].get("target_value", None)
                     if succeeding_status:
-                        feat["properties"]["extraProperties"]["component_info"][comp_name] = feat["properties"]["extraProperties"][target_value]
+                        feat["properties"]["extraProperties"]["component_info"][comp_name] = \
+                        feat["properties"]["extraProperties"][target_value]
                     else:
-                        if int(feat["properties"]["extraProperties"]["component_info"][comp_name]) == int(feat["properties"]["extraProperties"][target_value]):   
+                        if int(feat["properties"]["extraProperties"]["component_info"][comp_name]) == int(
+                                feat["properties"]["extraProperties"][target_value]):
                             succeeding_status = True
-            
+
             while end_the_loop:
                 feature_id = feat["properties"]["class_name"]
                 if self.workflow_detail_info.get(feature_id, None):
@@ -350,9 +360,11 @@ class Report_and_update(QtWidgets.QDialog):
                     for workflow in associated_workflow["fields"]:
                         component_name = workflow["component_name"]
                         completion_value = feature_condition[workflow["uid"]]
-                        component_new_count = int(feat["properties"]["extraProperties"]["component_info"][component_name])
+                        component_new_count = int(
+                            feat["properties"]["extraProperties"]["component_info"][component_name])
                         component_target = int(feat["properties"]["workflowProgress"][workflow["uid"]]["total"])
-                        current_component_count = int(feat["properties"]["workflowProgress"][workflow["uid"]]["current"])
+                        current_component_count = int(
+                            feat["properties"]["workflowProgress"][workflow["uid"]]["current"])
                         if not feature_status_changed:
                             value = abs(component_new_count - current_component_count)
                         else:
@@ -362,8 +374,9 @@ class Report_and_update(QtWidgets.QDialog):
                                 value = abs(component_new_count - current_component_count)
 
                         feat["properties"]["workflowProgress"][workflow["uid"]]["current"] = component_new_count
-                        payload[feature_uid]['progress'][workflow["uid"]] = {"current":component_new_count,"value":value}
-                        component_current_values.append(component_new_count / component_target )
+                        payload[feature_uid]['progress'][workflow["uid"]] = {"current": component_new_count,
+                                                                             "value": value}
+                        component_current_values.append(component_new_count / component_target)
                         component_target_values.append(completion_value)
 
                         # print(feat["properties"]["class"], "-->",associated_workflow["destination_feat_name"], workflow["uid"], completion_value, component_name, component_new_count,component_target)
@@ -384,7 +397,7 @@ class Report_and_update(QtWidgets.QDialog):
                     else:
                         end_the_loop = False
 
-                    # pprint.pprint(payload)  
+                    # pprint.pprint(payload)
                     # pprint.pprint(feat["properties"]["extraProperties"]["component_info"])
 
                 else:
@@ -405,11 +418,11 @@ class Report_and_update(QtWidgets.QDialog):
         self.terra_obj.project.vlayer.startEditing()
         # disconnect any single added to existing vlayer
         self.terra_obj.project.vlayer.selectionChanged.disconnect()
-        # remove existing json 
+        # remove existing json
         QgsProject.instance().removeMapLayers([self.terra_obj.project.vlayer.id()])
         with open(self.terra_obj.project.geojson_path, "w") as fi:
             json.dump(cleaned_json, fi)
-        
+
         self.terra_obj.project.layer_edit_status = True
         # Add and Initializing Vlayer features
         self.terra_obj.project.initialize_vlayer()

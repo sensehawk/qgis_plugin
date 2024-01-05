@@ -2,7 +2,7 @@ import os
 from qgis.PyQt import QtWidgets, uic
 from qgis.gui import QgsCheckableComboBox
 from qgis.core import Qgis, QgsApplication, QgsTask
-from qgis.PyQt import QtCore 
+from qgis.PyQt import QtCore
 from ..sensehawk_apis.scm_apis import train
 import json
 
@@ -43,7 +43,8 @@ class MLServiceMapWidget(QtWidgets.QDialog):
         # Check for mutual exclusivity
         all_checked_items = [j for i in ml_service_map.values() for j in i]
         if len(all_checked_items) != len(set(all_checked_items)):
-            self.logger("Detection list, Segmentation list and Keypoint list are not mutually exclusive!", level=Qgis.Warning)
+            self.logger("Detection list, Segmentation list and Keypoint list are not mutually exclusive!",
+                        level=Qgis.Warning)
             return None
         with open(self.project.geojson_path, 'r') as fi:
             geojson = json.load(fi)
@@ -60,16 +61,21 @@ class MLServiceMapWidget(QtWidgets.QDialog):
             else:
                 logger("Error: " + str(status) + str(result))
 
-        train_inputs = [self.project.project_details, geojson, ml_service_map, self.project.class_maps,
-                        self.project.user_email, self.project.core_token]
+        train_inputs = [self.project.project_details, geojson, ml_service_map,
+                        self.project.class_maps,
+                        self.project.user_email,
+                        self.project.core_token,
+                        self.logger
+                        ]
+
 
         # self.logger("--------- Payload Before calling Train() -----------")
         # self.logger(str(train_inputs))
         # self.logger("--------- End calling Train() -----------")
 
         train_task = QgsTask.fromFunction("Train request", train, train_inputs=train_inputs)
-        train_task.statusChanged.connect(lambda:callback(train_task, self.logger))
+        train_task.statusChanged.connect(lambda: callback(train_task, self.logger))
         QgsApplication.taskManager().addTask(train_task)
-           
+
     def close_dialogbox(self):
         self.close()
