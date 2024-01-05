@@ -107,7 +107,7 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
     for feature in featuresobjlist:
         table_utm_x_y  = []
         for v in feature.raw_utm_coords:
-            rtx, rty = rotate(anchor_point, v , math.radians(angle))
+            rtx, rty = rotate(anchor_point, v, math.radians(angle))
             table_utm_x_y.append([rtx,rty])
         xutm, yutm = np.mean(np.array(table_utm_x_y), axis=0) # Centriod of rotated table
         setattr(feature, 'utm_coords', table_utm_x_y)

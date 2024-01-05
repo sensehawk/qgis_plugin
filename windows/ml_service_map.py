@@ -68,6 +68,7 @@ class MLServiceMapWidget(QtWidgets.QDialog):
                         self.logger
                         ]
 
+
         # self.logger("--------- Payload Before calling Train() -----------")
         # self.logger(str(train_inputs))
         # self.logger("--------- End calling Train() -----------")
