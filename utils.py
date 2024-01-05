@@ -1,4 +1,4 @@
-try :
+try:
     from .windows.packages.cv2 import cv2
 except Exception:
     import cv2
@@ -8,8 +8,10 @@ from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt import QtWidgets
 from PyQt5.QtGui import QImage, QColor, QFont
-from PyQt5.QtWidgets import  QCompleter, QComboBox
-from qgis.core import Qgis, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling, QgsSimpleFillSymbolLayer, QgsSymbol, QgsGeometry, QgsRectangle,QgsCategorizedSymbolRenderer, QgsRendererCategory
+from PyQt5.QtWidgets import QCompleter, QComboBox
+from qgis.core import Qgis, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, \
+    QgsVectorLayerSimpleLabeling, QgsSimpleFillSymbolLayer, QgsSymbol, QgsGeometry, QgsRectangle, \
+    QgsCategorizedSymbolRenderer, QgsRendererCategory
 import re
 import glob
 import json
@@ -22,7 +24,7 @@ import numpy as np
 from pathlib import Path
 from datetime import datetime
 from functools import partial
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from urllib.request import urlopen
 from .sensehawk_apis.core_apis import get_project_geojson
 from .windows.packages.exiftool import ExifToolHelper
@@ -31,20 +33,23 @@ from qgis.PyQt.QtCore import Qt
 from shapely.ops import MultiLineString, Polygon, transform
 from shapely.geometry import mapping
 
+import yaml
+
 
 def project_data_existent(task, input):
     projectUid, org, token = input
-    url  = f'{THERM_URL}/projects/{projectUid}/data?organization={org}'
+    url = f'{THERM_URL}/projects/{projectUid}/data?organization={org}'
     headers = {"Authorization": f"Token {token}"}
     projetJson = requests.get(url, headers=headers)
-    return{'projectjson':projetJson.json(),
-           'task':task.description()} 
+    return {'projectjson': projetJson.json(),
+            'task': task.description()}
+
 
 def sort_images(task, images_dir, logger, reverse=False):
     try:
         logger('Started sorting images using DateTimeOriginal exif tag')
-        images = glob.glob(images_dir+"\\*")
-        supported_image_formats = ('.jpg','.JPG','.tiff','.tif','.TIFF','.TIF')
+        images = glob.glob(images_dir + "\\*")
+        supported_image_formats = ('.jpg', '.JPG', '.tiff', '.tif', '.TIFF', '.TIF')
         images = [i for i in images if i.endswith(supported_image_formats)]
         with ExifToolHelper() as e:
             time_stamps = []
@@ -72,9 +77,9 @@ def sort_images(task, images_dir, logger, reverse=False):
         dt = traceback.format_exc()
         logger(f'Error:{e}')
 
-    return {'sorted_images':images,
-            'sorted_timestamps':timestamps,
-            'sorted_long_lat':np.array(long_lats),
+    return {'sorted_images': images,
+            'sorted_timestamps': timestamps,
+            'sorted_long_lat': np.array(long_lats),
             'task': task.description()}
 
 
@@ -85,7 +90,7 @@ def combobox_modifier(combobox, wordlist):
     convert combobox into an line-editer with auto-word_suggestion widget and drop-down items of passed list
 
     return modified combobox widget
-    
+
     """
     completer = QCompleter(wordlist)
     completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -111,6 +116,7 @@ def download_file(url, logger, output_path=None, directory_path=None):
         fi.write(response.content)
     return output_path
 
+
 def random_color():
     # Generating random color for unlisted issue type
     random_color_pick = (["#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)])])
@@ -126,6 +132,7 @@ def categorize_layer(project):
     active_layer.setRenderer(renderer)
     active_layer.triggerRepaint()
     return renderer
+
 
 def categorized_renderer(project):
     color_code = project.color_code
@@ -173,8 +180,8 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     # Download vectors
     geojson = get_project_geojson(project_uid, core_token, project_type=project_type)
-    
-    #To make qgis support temperature_difference field as decimal Qvariant type
+
+    # To make qgis support temperature_difference field as decimal Qvariant type
     if geojson.get('features', None) and project_type == 'therm':
         try:
             loop = True
@@ -182,7 +189,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
             while loop:
                 feature = geojson['features'][count]
                 if feature['properties']['class_name'] == 'table':
-                    #Assigning one of the table temp_difference with decimal value so that qgis ready this type field as decimal tyep
+                    # Assigning one of the table temp_difference with decimal value so that qgis ready this type field as decimal tyep
                     feature['properties']['temperature_difference'] = 0.67
                     loop = False
                 else:
@@ -200,14 +207,17 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
                                                                        raster_bounds[2],
                                                                        raster_bounds[3])).asJson())
         extent_feature = {"type": "Feature",
-                          "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None, "class": None, "uid": None},
+                          "properties": {"name": "Ortho Extent", "class_name": None, "class_id": None, "class": None,
+                                         "uid": None},
                           "geometry": extent_geometry, "workflow": {}}
         geojson["features"] += [extent_feature]
 
     # Save geojson
     d_path = str(Path.home() / "Downloads")
-    rpath = os.path.join(d_path+'\\'+'Sensehawk_plugin'+'\\'+project_details['asset']['name']+'\\'+project_details['group']['name'])
-    geojson_path = os.path.join(rpath+'\\'+project_details['name']+'.geojson').replace("/","_")
+    rpath = os.path.join(
+        d_path + '\\' + 'Sensehawk_plugin' + '\\' + project_details['asset']['name'] + '\\' + project_details['group'][
+            'name'])
+    geojson_path = os.path.join(rpath + '\\' + project_details['name'] + '.geojson').replace("/", "_")
     if not os.path.exists(rpath):
         os.makedirs(rpath)
     # geojson_path = os.path.join(tempfile.gettempdir(), "{}.geojson".format(project_uid))
@@ -218,6 +228,7 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
 
     return geojson_path
 
+
 def projects_details(group, org, token):
     url = CORE_URL + f'/api/v1/groups/{group}/projects/?reports=true&page=1&page_size=1000&organization={org}'
     headers = {"Authorization": f"Token {token}"}
@@ -227,9 +238,9 @@ def projects_details(group, org, token):
     for project in projects_details:
         projects_dict[project['uid']] = project['name']
 
-    return projects_dict    
+    return projects_dict
     # return {'project_list':project_list,
-            # 'task':task.description()}
+    # 'task':task.description()}
 
 
 def groups_details(asset, org, token):
@@ -246,19 +257,19 @@ def groups_details(asset, org, token):
     return groups_dict
 
 
-def asset_details(task ,org_uid, token): # fetching asset and org_container details 
+def asset_details(task, org_uid, token):  # fetching asset and org_container details
     url = CORE_URL + f'/api/v1/asset-lists/?page_size=1000&page_number=1&organization={org_uid}'
     headers = {"Authorization": f"Token {token}"}
     asset_response = requests.get(url, headers=headers)
     asset_details = asset_response.json()['results']
     asset_dict = {}
     for asset in asset_details:
-        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'], "profile_image": asset['properties'].get("cover_image", None)}
-    
+        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'],
+                                    "profile_image": asset['properties'].get("cover_image", None)}
+
     user_id_url = CORE_URL + f'/api/v1/organizations/{org_uid}/?organization={org_uid}'
     org_user_response = requests.get(user_id_url, headers=headers)
     user_id = org_user_response.json()['owner'].get('uid', None)
-    
 
     apptype_url = CORE_URL + f'/api/v1/apptypes/?organization={org_uid}'
     apptype_response = requests.get(apptype_url, headers=headers)
@@ -266,14 +277,14 @@ def asset_details(task ,org_uid, token): # fetching asset and org_container deta
     apptype_dict = {}
     if apptype_details:
         for apptype in apptype_details:
-            apptype_dict[apptype['name']] = {'uid':apptype['uid'],'name':apptype['name'],'acitve':apptype['active'],'application':apptype['application']}
-
+            apptype_dict[apptype['name']] = {'uid': apptype['uid'], 'name': apptype['name'],
+                                             'acitve': apptype['active'], 'application': apptype['application']}
 
     return {'asset_dict': asset_dict,
             'user_id': user_id,
-            'apptype_dict':apptype_dict,
+            'apptype_dict': apptype_dict,
             'task': task.description()}
-            # 'org_container_details':org_container_details,
+    # 'org_container_details':org_container_details,
 
 
 def organization_details(token):
@@ -286,8 +297,9 @@ def organization_details(token):
         org_list[org['uid']] = org['name']
     return org_list
 
+
 def file_existent(project_uid, org, token):
-    url  = f'{THERM_URL}/projects/{project_uid}/data?organization={org}'
+    url = f'{THERM_URL}/projects/{project_uid}/data?organization={org}'
     headers = {"Authorization": f"Token {token}"}
     project_json = requests.get(url, headers=headers)
     if project_json.status_code == 404:
@@ -299,9 +311,10 @@ def file_existent(project_uid, org, token):
         # if 'ortho' in files:
         #     existing_file =  ['ortho'] + existing_file
         if 'reflectance' in files:
-           existing_file =  ['reflectance'] + existing_file
+            existing_file = ['reflectance'] + existing_file
 
         return existing_file
+
 
 def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
     image_name = image_path.split('\\')[-1]
@@ -309,8 +322,8 @@ def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
     dpath = os.path.join(f'{path}', image_name)
     image = cv2.imread(image_path, 0)
     colormap = plt.get_cmap('inferno')
-    heatmap = (colormap(image) * 2**16)[:,:,:3].astype(np.uint16)
-    heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0/65535.0))
+    heatmap = (colormap(image) * 2 ** 16)[:, :, :3].astype(np.uint16)
+    heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0 / 65535.0))
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
     if cv2.imwrite(dpath, heatmap):
         post_url = post_urls_data[image_key]["url"]
@@ -321,7 +334,8 @@ def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
     else:
         logger("Unable to write inferno image ")
 
-def upload(task ,inputs):
+
+def upload(task, inputs):
     images = inputs['imageslist']
     image_path = inputs['img_dir']
     projectUid = inputs['projectUid']
@@ -335,12 +349,13 @@ def upload(task ,inputs):
     for image in images:
         t = threading.Thread(target=convert_and_upload, args=(path, image, projectUid, post_urls_data, logger))
         t.start()
-    
+
     if images:
         t.join()
 
-    return {'num_images':len(images),
+    return {'num_images': len(images),
             'task': task.description()}
+
 
 def get_presigned_post_urls(task, inputs):
     upload_image_list = inputs["imageslist"]
@@ -358,34 +373,38 @@ def get_presigned_post_urls(task, inputs):
     return {'task': task.description(),
             'response': response}
 
-def get_image_urls(task , inputs):
-    token  = inputs['token']
+
+def get_image_urls(task, inputs):
+    token = inputs['token']
     data = inputs['data']
-    image_urls = requests.get(THERMAL_TAGGING_URL+"/get_object_urls", headers={"Authorization": f"Token {token}"}, json=data).json()
-    return {'task':task.description(),
-            'image_urls':image_urls}
+    image_urls = requests.get(THERMAL_TAGGING_URL + "/get_object_urls", headers={"Authorization": f"Token {token}"},
+                              json=data).json()
+    return {'task': task.description(),
+            'image_urls': image_urls}
+
 
 def fields_validator(required_fields, layer, application_type):
-        required_fields = required_fields.get(application_type, {})
-        layer.startEditing()
-        fname = list(required_fields.keys())
-        for field in fname:
-            variant = required_fields[field]
-            if layer.fields().indexFromName(field) == -1:
-                if field == 'temperature_min' or field == 'temperature_max' or field == 'temperature_difference':# creating decimal supporting fields type
-                    fieldz = QgsField(field , variant, "double", 10, 2)
-                else:
-                     fieldz = QgsField(field , variant)
-                layer.dataProvider().addAttributes([fieldz])
-                layer.updateFields() # update layer fields after creating new one
-        layer.commitChanges()
-        layer.startEditing()
+    required_fields = required_fields.get(application_type, {})
+    layer.startEditing()
+    fname = list(required_fields.keys())
+    for field in fname:
+        variant = required_fields[field]
+        if layer.fields().indexFromName(field) == -1:
+            if field == 'temperature_min' or field == 'temperature_max' or field == 'temperature_difference':  # creating decimal supporting fields type
+                fieldz = QgsField(field, variant, "double", 10, 2)
+            else:
+                fieldz = QgsField(field, variant)
+            layer.dataProvider().addAttributes([fieldz])
+            layer.updateFields()  # update layer fields after creating new one
+    layer.commitChanges()
+    layer.startEditing()
+
 
 def download_images(task, inputs):
     threads = []
     viewerobj, raw_images = inputs
     if not os.path.exists(viewerobj.images_dir):
-            os.makedirs(viewerobj.images_dir)
+        os.makedirs(viewerobj.images_dir)
     for r in raw_images:
         key = r["service"]["key"]
         viewerobj.marker_location.append(r['location'])
@@ -403,9 +422,10 @@ def download_images(task, inputs):
     # Wait for all of them to finish
     for x in threads:
         x.join()
-        
-    return {'task':task.description(),
-            'status':'Downloaded'}
+
+    return {'task': task.description(),
+            'status': 'Downloaded'}
+
 
 def create_custom_label(vlayer, field_name):
     num_images_label = QgsPalLayerSettings()
@@ -433,47 +453,48 @@ def create_custom_label(vlayer, field_name):
     # vlayer.setCustomProperty(field_name, QgsPalLayerSettings.CentroidWhole)
     vlayer.triggerRepaint()
 
+
 # The below code is used for each chunk of file handled
-# by each thread for downloading the content from specified 
+# by each thread for downloading the content from specified
 # location to storage
 def Handler(start, end, url, filename):
-     
     # specify the starting and ending of the file
     headers = {'Range': 'bytes=%d-%d' % (start, end)}
-  
-    # request the specified part and get into variable    
+
+    # request the specified part and get into variable
     r = requests.get(url, headers=headers, stream=True)
-  
-    # open the file and write the content of the html page 
+
+    # open the file and write the content of the html page
     # into file.
     with open(filename, "r+b") as fp:
-       
         fp.seek(int(start))
         var = fp.tell()
         fp.write(r.content)
+
 
 def download_ortho(file_size, number_of_threads, file_name, ortho_url):
     with requests.get(ortho_url, stream=True) as r:
         r.raise_for_status()
         with open(file_name, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192): 
+            for chunk in r.iter_content(chunk_size=8192):
                 # If you have chunk encoded response uncomment if
                 # and set chunk_size parameter to None.
-                #if chunk: 
+                # if chunk:
                 f.write(chunk)
+
 
 def save_edits(task, save_inputs):
     json_path = save_inputs['json_path']
     listType_dataFields = save_inputs['listType_dataFields']
     logger = save_inputs['logger']
     features = json.load(open(json_path))['features']
-    cleaned_json = {"type":"FeatureCollection","features":[]}
+    cleaned_json = {"type": "FeatureCollection", "features": []}
     for feature in features:
         uid = feature['properties'].get('uid', None)
         raw_image = feature['properties'].get('raw_images', None)
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
-        if feature['properties']['class_name'] != 'table' :
+        if feature['properties']['class_name'] != 'table':
             try:
                 if parentUid:
                     parent_item = listType_dataFields.get(parentUid, None)
@@ -483,29 +504,28 @@ def save_edits(task, save_inputs):
                     Parent_rawimages = []
 
                 if parentUid in listType_dataFields:
-                        feature['properties']['raw_images'] = Parent_rawimages
-                        feature['properties']['attachments'] = Parent_rawimages
+                    feature['properties']['raw_images'] = Parent_rawimages
+                    feature['properties']['attachments'] = Parent_rawimages
                 else:
                     if type(raw_image) == str or not raw_image:
                         feature['properties']['raw_images'] = []
                     elif type(attachment) == str or not attachment:
                         feature['properties']['attachments'] = []
 
-            except Exception as e :
-                    tb = traceback.format_exc()
-                    logger(str(tb), level=Qgis.Warning)
-                    pass
+            except Exception as e:
+                tb = traceback.format_exc()
+                logger(str(tb), level=Qgis.Warning)
+                pass
         if feature['geometry']['coordinates'][0]:
             cleaned_json["features"].append(feature)
 
     with open(json_path, "w") as fi:
         json.dump(cleaned_json, fi)
 
-        
-    return {'json_path':json_path, 'task':task.description()}
+    return {'json_path': json_path, 'task': task.description()}
 
 
-#asset level projects 
+# asset level projects
 class ProjectForm:
     def __init__(self, projects_dict, project_selection_layout, project_selection_window):
         self.project_groupbox = QtWidgets.QGroupBox('Projects:')
@@ -523,10 +543,12 @@ class ProjectForm:
         self.scroll_widget.setFixedSize(250, 300)
         # Replace the scroll widget if it exists
         if project_selection_window.projects_form:
-            project_selection_layout.replaceWidget(project_selection_window.projects_form.scroll_widget, self.scroll_widget)
+            project_selection_layout.replaceWidget(project_selection_window.projects_form.scroll_widget,
+                                                   self.scroll_widget)
         else:
             project_selection_layout.addWidget(self.scroll_widget, 1, Qt.AlignTop)
-            
+
+
 class AssetLevelProjects(QtWidgets.QWidget):
     def __init__(self, img_tag_obj):
         super().__init__()
@@ -542,7 +564,7 @@ class AssetLevelProjects(QtWidgets.QWidget):
         for group_uid, group_obj in group_dict.items():
             self.group_details[group_obj.name] = (group_uid, group_obj.projects_details)
         group_list = list(self.group_details.keys())
-        self.group_combobox = QComboBox(self) 
+        self.group_combobox = QComboBox(self)
         self.group = combobox_modifier(self.group_combobox, group_list)
         self.project_selection_layout.addWidget(self.group, 0, Qt.AlignTop)
         self.group.currentIndexChanged.connect(self.group_tree)
@@ -571,23 +593,25 @@ def containers_details(task, asset_uid, org_uid, core_token):
     for container in containers:
         groups = container['groups']
         container_name = container['name']
-        # app_info = [app.get('application', None) for app in container['app_types'] ] 
-        container_level_groups = [group['name'] for group in groups ] # app_type [{'uid':1,'name':'Thermal analaysis','application':{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
-        containers_dict[container['uid']] = {'name':container_name, 'groups':container_level_groups, 'applications_info':container['app_types']}
+        # app_info = [app.get('application', None) for app in container['app_types'] ]
+        container_level_groups = [group['name'] for group in
+                                  groups]  # app_type [{'uid':1,'name':'Thermal analaysis','application':{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
+        containers_dict[container['uid']] = {'name': container_name, 'groups': container_level_groups,
+                                             'applications_info': container['app_types']}
 
-    return {'containers_dict':containers_dict, 'task':task.description()}
+    return {'containers_dict': containers_dict, 'task': task.description()}
+
 
 def download_asset_logo(asset_name, url):
-
     d_path = str(Path.home() / "Downloads")
-    path = os.path.join(d_path+'\\'+'Sensehawk_plugin'+'\\'+asset_name)
+    path = os.path.join(d_path + '\\' + 'Sensehawk_plugin' + '\\' + asset_name)
     if not os.path.exists(path):
         os.makedirs(path)
-    logo_name = asset_name+'.png'
+    logo_name = asset_name + '.png'
     asset_logo_path = os.path.join(path, logo_name)
     response = requests.get(url, stream=True)
     response.raise_for_status()
-    
+
     with open(asset_logo_path, 'wb') as file:
         for chunk in response.iter_content(chunk_size=8192):
             file.write(chunk)
@@ -608,13 +632,21 @@ def features_to_polygons(features, project_obj):
             coords = f["geometry"]["coordinates"]
             # coords = np.array(coords)
             ml = MultiLineString(coords)
-            # Remove 
+            # Remove
             ml = transform(lambda x, y, z=None: (x, y), ml)
             p = mapping(Polygon(ml.convex_hull))
             f = {
-            "type": "Feature",
-            "properties": {},
-            "geometry": p
+                "type": "Feature",
+                "properties": {},
+                "geometry": p
             }
             polygon_features.append(f)
     return polygon_features
+
+
+def load_yaml_file(yaml_path: str):
+    assert os.path.exists(yaml_path), f'{yaml_path} not exists'
+    # Read YAML file
+    with open(yaml_path, 'r') as stream:
+        data_loaded = yaml.safe_load(stream)
+    return data_loaded
