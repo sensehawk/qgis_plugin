@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL
+from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL, API_NEW_SENSEHAWK
 from qgis.core import Qgis
 
 def get_project_reports(project_uid, token):
@@ -17,6 +17,16 @@ def get_project_reports(project_uid, token):
             url = requests.get(REPORT_DOWNLOAD_URL %(project_uid, report['uid']), headers = {'Authorization':HOST_TOKEN}).json()['url']
             all_reports[report['report_type']] = url
     return all_reports
+
+def get_reports_url(bucket: str, key: str, region: str, token: str, save_filename='ortho.zip') -> str:
+    """
+    # https://api-new.sensehawk.com/storage/download?b=<bucket>&k=<key>&r=<region>&f=filename
+    # https://api-new.sensehawk.com/storage/download?b=sensehawk-test-data-management&k=core%2FK4W6yJ1zMP%2Fml_models.zip&r=ap-south-1&f=test1.zip
+    """
+    url = API_NEW_SENSEHAWK + f"/storage/download?b={bucket}&k={key}&r={region}"
+    response = requests.head(url, allow_redirects=True)  # to get only final redirect url
+    assert response.status_code == 403, response.json()
+    return response.url
 
 
 def get_project_details(project_uid, token):

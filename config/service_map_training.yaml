@@ -1,0 +1,134 @@
+# This is single spurce of truth for one project used for training 
+# This is expected to found in QGIS configuration 
+clip_raster: false
+normalized_gsd_value: 0.03
+
+# global
+project_uids:
+  - "K4W6yJ1zMP"
+  - "K4W6yJ1zMP"
+  - "K4W6yJ1zMP"
+val_project_uids:
+  - "VzZHZIwo1K"
+  - "VzZHZIwo1K"
+test_project_uids:
+  - "VzZHZIwo1K"
+  - "VzZHZIwo1K"
+
+
+# project specific
+BASE_PATH: '/app/data/' #"/home/saurav/Documents/Sensehawk/mlsense-data/" # we update this in runtime as /app/data/{project_uid} or /app/data/therm/{train-sha}_{val-sha}
+
+# user specific
+email: "ssolanki@sensehawk"
+
+# dataset and project specific
+#ortho_url: "< https://sensehawk-test-data-management.s3.amazonaws.com/core/VzZHZIwo1K/ml_models.zip >"
+class_maps: "" # From Core API
+ml_service_map:
+  detection:
+    - pallet
+    - rafter
+    - pole
+  segmentation:
+    - string
+    - master_string
+  keypoint:
+    - solarpoint
+
+#geo_json: "dummy" #
+
+# Prepared the dataset
+dataset:
+#  - name: "unets"
+#    format: "Unets" # class names for Unet
+#    target_size: 512
+#    cache: True
+#    dataset_type: "segmentation"
+
+  - name: "yolov8"
+    format: "Yolov8" # class names for Yolo
+    target_size: 512
+    cache: True
+    dataset_type: "detection"
+
+#  - name: "points"
+#    format: "Points" # class names for Unet
+#    target_size:
+#      - 64
+#      - 128
+#    cache: True
+#    dataset_type: "keypoint"
+
+
+detection:
+  - training: true
+    model: yolov8l # ['yolov8n', 'yolov8s', 'yolov8m', 'yolov8l', 'yolov8x']
+    type: binary
+    #    backbone: yolov8l
+    target: # ml_service_map["detection]
+    batchsize: 8
+    epochs: 100
+    learning_rate: 0.01
+    #    focal_loss_gamma: 5
+    early_stop_value:
+      monitor: val_loss
+      patience: 3
+    preprocess:
+      wallis: false
+      grayscale: false
+
+
+# Model Training specific
+segmentation:
+  - training: false
+    model: unets
+    type: binary
+    target:  # ml_service_map["segmentation"][0]
+    batchsize: 8
+    epochs: 30
+    learning_rate: 0.01
+    early_stop_value:
+      monitor: val_loss
+      patience: 3
+    preprocess:
+      wallis: true
+      grayscale: false
+
+  - training: false
+    model: unets
+    type: binary
+    target: master_string # ml_service_map["segmentation"][1]
+    batchsize: 8
+    epochs: 30
+    learning_rate: 0.01
+    early_stop_value:
+      monitor: val_loss
+      patience: 3
+    preprocess:
+      wallis: true
+      grayscale: false
+
+keypoint:
+  - training: false
+    depends_on: # TODO: Implement this
+      - models_type: segmentation
+        target: master_string
+      - models_type: segmentation
+        target: string
+
+    model: point
+    type: binary
+    target: solarpoint
+    batchsize: 16
+    epochs: 50
+    learning_rate: 0.01
+    target_size:
+      - 64
+      - 128
+    early_stop_value:
+      monitor: val_loss
+      patience: 3
+    preprocess:
+      wallis: false
+      grayscale: false
