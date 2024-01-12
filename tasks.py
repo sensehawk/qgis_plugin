@@ -156,8 +156,8 @@ def clip_request(task, clip_task_input):
     return {"task": task.description(), 'title':res_title, 'description':res_description, 'res_status':res_status}
 
 def logintask(task, login_window):
-    login_window.user_email = login_window.userName.text()
-    login_window.user_password = login_window.userPassword.text()
+    login_window.user_email = "sauravs@sensehawk.com" # login_window.userName.text()
+    login_window.user_password ="YwJL9JML97CDtmX@" # login_window.userPassword.text()
 
     login_window.logger('Logging in SenseHawk user {}...'.format(login_window.user_email))
 
@@ -175,12 +175,11 @@ def logintask(task, login_window):
         return None
 
 def detectionTask(task, detection_task_input):
-    project_details, geojson, model_details, user_email, core_token = detection_task_input
+    project_details, geojson, model_details, user_email, core_token, logger = detection_task_input
     try:
-        detect(project_details, geojson, model_details, user_email, core_token)
-        return {"task": task.description(), "Exception": None, "success": True}
+        return detect(project_details, geojson, model_details, user_email, core_token,logger)
     except Exception as e:
-        return {"task": task.description(), "Exception": e, "success": False}
+        return {"task": task.description(), "Exception": e, "success": 404}
 
 def approveTask(task, approve_task_input):
     project_details, geojson, user_email, core_token = approve_task_input

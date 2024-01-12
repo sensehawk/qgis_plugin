@@ -5,22 +5,13 @@ normalized_gsd_value: 0.03
 
 # global
 project_uids:
-  - "K4W6yJ1zMP"
-  - "K4W6yJ1zMP"
-  - "K4W6yJ1zMP"
-val_project_uids:
-  - "VzZHZIwo1K"
-  - "VzZHZIwo1K"
-test_project_uids:
-  - "VzZHZIwo1K"
-  - "VzZHZIwo1K"
-
+  - "TODO"
 
 # project specific
 BASE_PATH: '/app/data/' #"/home/saurav/Documents/Sensehawk/mlsense-data/" # we update this in runtime as /app/data/{project_uid} or /app/data/therm/{train-sha}_{val-sha}
 
 # user specific
-email: "ssolanki@sensehawk"
+email: "TODO"
 
 # dataset and project specific
 #ortho_url: "< https://sensehawk-test-data-management.s3.amazonaws.com/core/VzZHZIwo1K/ml_models.zip >"
@@ -68,7 +59,7 @@ detection:
     #    backbone: yolov8l
     target: # ml_service_map["detection]
     batchsize: 8
-    epochs: 100
+    epochs: 10
     learning_rate: 0.01
     #    focal_loss_gamma: 5
     early_stop_value:

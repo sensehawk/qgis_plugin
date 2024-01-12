@@ -2,10 +2,10 @@
 # This is expected to found in QGIS configuration
 
 # global
-project_uid: "VzZHZIwo1K" #TODO:
+project_uid: "TODO" #TODO:
 
 # user specific
-email: "ssolanki@sensehawk" #TODO:
+email: "TODO" #TODO:
 
 # dataset and project specific
 ortho_url: "< https://sensehawk-test-data-management.s3.amazonaws.com/core/VzZHZIwo1K/ml_models.zip >" # TODO:

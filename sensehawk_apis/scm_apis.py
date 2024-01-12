@@ -26,7 +26,7 @@ def train(task, train_inputs):
 
     request_body = {
         'project_uids': [project_uid],
-        'val_project_uids': [project_uid],
+        'val_project_uids': [],
         'email': user_email,
         'ml_service_map': ml_service_map,
         'class_maps': class_maps
@@ -34,7 +34,7 @@ def train(task, train_inputs):
     try:
         yaml_path = os.path.join(os.path.dirname(__file__), '../config/service_map_training.yaml')
         config_json = load_yaml_file(yaml_path=yaml_path)
-        logger('Loaded Yaml to JSON')
+        logger(f'Loaded Yaml to JSON: {project_uid} {str(ml_service_map)}')
 
         # update target
         for index in range(len(config_json["detection"])):
@@ -51,7 +51,7 @@ def train(task, train_inputs):
         config_json.update(**request_body)
         logger('Updated config')
 
-        train_config_payload = config_json # ConfigModel(**config_json).model_dump_json()
+        train_config_payload = config_json  # ConfigModel(**config_json).model_dump_json()
         logger("Got the Config as per Payload")
     except AssertionError as ae:
         logger(f'Path not exists: {ae}')
@@ -64,19 +64,20 @@ def train(task, train_inputs):
 
 def detect(project_details, geojson, model_details, user_email, core_token, logger):
     project_uid = project_details.get("uid", None)
-    # ortho_url = get_project_reports(project_uid, core_token).get("ortho", None)
+    logger(f'Detect {project_uid} called ...')
 
     ortho_report = {}
     for report in project_details.get('reports'):
         if report.get('report_type') == 'ortho':
             ortho_report = report.get('service')
-
     ortho_url = get_reports_url(ortho_report.get('bucket'),
                                 ortho_report.get('key'),
                                 ortho_report.get('region'),
                                 core_token)
     if not ortho_url:
-        return {"task": '', "status": f"ortho_url: {ortho_url} invalid"}
+        return {"task": "get ortho-url detect() failed",
+                "Exception": f"ortho_url: {ortho_url} invalid",
+                "status": 404}
 
     _, model_url = model_details
     logger('model URL Loaded')
@@ -92,17 +93,17 @@ def detect(project_details, geojson, model_details, user_email, core_token, logg
         "ortho_url": ortho_url
     }
     config_json.update(**new_data)
-    logger('Updated Config')
-
     config_json["inference"]["models_zip_url"] = model_url
     logger('Updated Config')
 
-    infer_config_payload = config_json #InferenceConfigModel(**config_json).model_dump_json()
+    infer_config_payload = config_json  # InferenceConfigModel(**config_json).model_dump_json()
     logger("Got the Config as per Payload")
 
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.post(SCMAPP_URL + '/predict', json=infer_config_payload, headers=headers)
-    return response.json()
+    return {"task": "Detect",
+            "Exception": "",
+            "status": response.status_code}
 
 
 def approve(project_details, geojson, user_email, core_token):

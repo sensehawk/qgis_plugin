@@ -277,8 +277,10 @@ def asset_details(task, org_uid, token):  # fetching asset and org_container det
     apptype_dict = {}
     if apptype_details:
         for apptype in apptype_details:
-            apptype_dict[apptype['name']] = {'uid': apptype['uid'], 'name': apptype['name'],
-
+            apptype_dict[apptype['name']] = {'uid': apptype['uid'],
+                                             'name': apptype['name'],
+                                             'acitve': apptype['active'],
+                                             'application': apptype['application']}
 
     return {'asset_dict': asset_dict,
             'user_id': user_id,

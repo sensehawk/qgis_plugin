@@ -104,7 +104,15 @@ class TerraToolsWidget(QtWidgets.QWidget):
         def callback(task, logger):
             result = task.returned_values
             if result:
-                logger(str(result))
+                status_code = result.get("status")
+                if status_code == 503:
+                    logger("Detect service is off. Please request to turn it on before trying again!", level=Qgis.Warning)
+                elif status_code == 202:
+                    logger("Detect request sent successfully!")
+                else:
+                    logger("Error: " + str(status_code) + str(result))
+            else:
+                logger("Error: No returned value in Detect " + str(result))
 
         self.logger("Detection called..")
         self.uncheck_all_buttons()
