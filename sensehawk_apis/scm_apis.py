@@ -8,7 +8,7 @@ from .core_apis import get_project_details, get_project_geojson, get_project_rep
 from .terra_apis import get_terra_classmaps, get_project_data
 
 
-def get_models_list(project_uid, core_token):
+def get_models_list(project_uid:str,core_token:str):
     params = {"project_uid": project_uid}
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.get(SCMAPP_URL + "/list-models", headers=headers, params=params)

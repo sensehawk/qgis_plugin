@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>304</width>
-    <height>144</height>
+    <width>302</width>
+    <height>125</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -38,8 +38,11 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <item row="0" column="0">
-    <widget class="QPushButton" name="clipButton">
+   <property name="spacing">
+    <number>5</number>
+   </property>
+   <item row="5" column="1">
+    <widget class="QPushButton" name="report_update">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -47,27 +50,27 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Clip Raster</string>
+      <string>Report and Upload</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="1">
-    <widget class="QPushButton" name="loadModelsButton">
+   <item row="2" column="0">
+    <widget class="QPushButton" name="approveButton">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Load Models</string>
+      <string>Post QC</string>
      </property>
     </widget>
    </item>
    <item row="1" column="0">
     <widget class="QPushButton" name="requestModelButton">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -81,41 +84,6 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <widget class="QComboBox" name="detectionModel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="editable">
-      <bool>false</bool>
-     </property>
-     <property name="currentText">
-      <string/>
-     </property>
-     <property name="insertPolicy">
-      <enum>QComboBox::InsertAtBottom</enum>
-     </property>
-     <property name="duplicatesEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QPushButton" name="approveButton">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Approve</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="1">
     <widget class="QPushButton" name="detectButton">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -124,27 +92,27 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Detect</string>
+      <string>Detect Components</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QPushButton" name="component_pre_process">
+   <item row="5" column="0">
+    <widget class="QPushButton" name="orderComponent">
      <property name="text">
-      <string>Component pre process</string>
+      <string>Order Component</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
-    <widget class="QPushButton" name="report_update">
+   <item row="2" column="1">
+    <widget class="QPushButton" name="clipButton">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Report and Upload</string>
+      <string>Clip Raster</string>
      </property>
     </widget>
    </item>

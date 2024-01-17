@@ -48,7 +48,7 @@ def row_wise_sortedTables(tableslist, top, bottom):
     sorted_row = []
     for table in tableslist:
         centriod_utmy =  table.utm_y
-        if centriod_utmy < top and centriod_utmy > bottom:
+        if centriod_utmy < top and centriod_utmy >= bottom-1:
             sorted_row.append(table)
     return sorted_row
 
@@ -108,11 +108,11 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
         table_utm_x_y  = []
         for v in feature.raw_utm_coords:
             rtx, rty = rotate(anchor_point, v, math.radians(angle))
-            table_utm_x_y.append([rtx,rty])
+            table_utm_x_y.append([math.ceil(rtx), math.ceil(rty)])
         xutm, yutm = np.mean(np.array(table_utm_x_y), axis=0) # Centriod of rotated table
         setattr(feature, 'utm_coords', table_utm_x_y)
-        setattr(feature,'utm_x',xutm)
-        setattr(feature,'utm_y',yutm)
+        setattr(feature,'utm_x',math.ceil(xutm))
+        setattr(feature,'utm_y',math.ceil(yutm))
         
         
 def update_issue_Row_column(project_uid, featuresobjlist, Vlayer, Height, Width, angle):

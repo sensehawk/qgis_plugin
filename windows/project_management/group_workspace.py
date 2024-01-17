@@ -1003,7 +1003,7 @@ class ReportsDashboard(QtWidgets.QDialog):
             self.workspace_window.canvas_logger(response.json())
 
     def download_report(self, report_name, url):
-        content_type = {"ortho":"TIFF FILES (*.tiff *.tif)", "dsm":"TIFF FILES (*.tiff *.tif)", 
+        content_type = {"ortho":"TIFF FILES (*.tiff *.tif)", "dsm":"TIFF FILES (*.tiff *.tif)", "reflectance":"TIFF FILES (*.tiff *.tif)","processedImages":"ZIP (*.zip)",
                         "compressedImages":"ZIP (*.zip)", "calibratedParameters":"Text Files (*.txt)", "externalCalibratedParameters":"Text Files (*.txt)"}
         self.download_file_path = QtWidgets.QFileDialog.getSaveFileName(None, "Title",  directory=report_name, filter=content_type[report_name])
         if self.download_file_path[0]:

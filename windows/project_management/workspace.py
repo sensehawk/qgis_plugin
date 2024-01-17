@@ -50,10 +50,11 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.dock_widget = home_window.dock_widget
         self.pm_workspace_grid.addWidget(self.dashboard_ui, 0, 0)
         self.dock_widget.setWidget(self)
-        self.dock_widget.setFixedSize(130, 830)
+        # self.dock_widget.setFixedSize(130, 830)
+        self.dock_widget.setFixedWidth(130)
+        self.dock_widget.setSizePolicy(130, QtWidgets.QSizePolicy.Expanding)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
         
-        # self.dashboard_ui.home_button.clicked.connect(self.load_home)
         self.dashboard_ui.project_management_button.clicked.connect(self.load_project_management)
         self.group_workspace = None
         self.group_selection_widget = None
@@ -83,7 +84,8 @@ class WorkspaceWindow(QtWidgets.QWidget):
 
     def load_home(self):
         self.dock_widget.setWidget(self.home_window)
-        self.dock_widget.setFixedSize(300, 830)
+        self.dock_widget.setFixedWidth(300)
+        self.dock_widget.setSizePolicy(300, QtWidgets.QSizePolicy.Expanding)
         self.hide()
     
     def load_project_management(self):
@@ -97,7 +99,8 @@ class WorkspaceWindow(QtWidgets.QWidget):
                 self.group_selection_widget =  GroupSelectionWidget(self)
                 self.active_widget = self.group_selection_widget
                 self.pm_workspace_grid.addWidget(self.group_selection_widget, 0, 1, Qt.AlignTop)
-                self.dock_widget.setFixedSize(520, 830)
+                self.dock_widget.setFixedWidth(520)
+                self.dock_widget.setSizePolicy(520,  QtWidgets.QSizePolicy.Expanding)
             else:
                 if self.active_widget is self.group_selection_widget:
                     pass
@@ -107,12 +110,16 @@ class WorkspaceWindow(QtWidgets.QWidget):
                     if self.active_widget:
                         self.active_widget.hide()
                     else:
-                        self.dock_widget.setFixedSize(520,830)
+                        self.dock_widget.setFixedWidth(520)
+                        self.dock_widget.setSizePolicy(520,  QtWidgets.QSizePolicy.Expanding)
+                        # self.dock_widget.setFixedSize(520,830)
                     self.active_widget = self.group_selection_widget
         else:
             self.active_widget.hide()
             self.active_widget = None
-            self.dock_widget.setFixedSize(130, 830)
+            # self.dock_widget.setFixedSize(130, 830)
+            self.dock_widget.setFixedWidth(130)
+            self.dock_widget.setSizePolicy(130,  QtWidgets.QSizePolicy.Expanding)
 
     def load_group_window(self, group_uid):
         #uncheck project management button
@@ -120,7 +127,9 @@ class WorkspaceWindow(QtWidgets.QWidget):
         group_obj = self.home_window.groups_dict[group_uid]
         if not self.group_workspace:
             self.group_workspace = GroupWorkspace(self, group_obj, self.home_window.groups_dict)
-            self.dock_widget.setFixedSize(520, 830)
+            # self.dock_widget.setFixedSize(520, 830)
+            self.dock_widget.setFixedWidth(520)
+            self.dock_widget.setSizePolicy(520,  QtWidgets.QSizePolicy.Expanding)
             self.active_widget.hide()
             self.active_widget = self.group_workspace
             self.pm_workspace_grid.addWidget(self.group_workspace, 0, 1, Qt.AlignTop)
@@ -152,12 +161,16 @@ class WorkspaceWindow(QtWidgets.QWidget):
                 if self.active_widget:
                     self.active_widget.hide()
                 else:
-                    self.dock_widget.setFixedSize(520,830)
+                    # self.dock_widget.setFixedSize(520,830)
+                    self.dock_widget.setFixedWidth(520)
+                    self.dock_widget.setSizePolicy(520,  QtWidgets.QSizePolicy.Expanding)
                 self.active_widget = self.therm_project_tabs_widget
         else:
             self.active_widget.hide()
             self.active_widget = None
-            self.dock_widget.setFixedSize(130,830)
+            # self.dock_widget.setFixedSize(130,830)
+            self.dock_widget.setFixedWidth(130)
+            self.dock_widget.setSizePolicy(130,  QtWidgets.QSizePolicy.Expanding)
     
     def load_terra_tab_widget(self):#uncheck project management button
         if self.therm_tab_button:
@@ -180,12 +193,16 @@ class WorkspaceWindow(QtWidgets.QWidget):
                 if self.active_widget:
                     self.active_widget.hide()
                 else:
-                    self.dock_widget.setFixedSize(520,830)
+                    # self.dock_widget.setFixedSize(520,830)
+                    self.dock_widget.setFixedWidth(520)
+                    self.dock_widget.setSizePolicy(520,  QtWidgets.QSizePolicy.Expanding)
                 self.active_widget = self.terra_project_tabs_widget
         else:
             self.active_widget.hide()
             self.active_widget = None
-            self.dock_widget.setFixedSize(130,830)
+            # self.dock_widget.setFixedSize(130,830)
+            self.dock_widget.setFixedWidth(130)
+            self.dock_widget.setSizePolicy(130,  QtWidgets.QSizePolicy.Expanding)
     
 
     def clear_loaded_projects(self, event=None, next_window=None, message=""):
@@ -241,7 +258,9 @@ class WorkspaceWindow(QtWidgets.QWidget):
             
         if window:
             self.dock_widget.setWidget(self.home_window)
-            self.dock_widget.setFixedSize(300, 830)
+            # self.dock_widget.setFixedSize(300, 830)
+            self.dock_widget.setFixedWidth(300)
+            self.dock_widget.setSizePolicy(300,  QtWidgets.QSizePolicy.Expanding)
             self.hide()
         else:
             self.iface.removeDockWidget(self.dock_widget)

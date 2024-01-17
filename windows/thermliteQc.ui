@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>553</width>
-    <height>752</height>
+    <height>677</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -22,10 +22,10 @@
   <widget class="QPushButton" name="save_tagged_data">
    <property name="geometry">
     <rect>
-     <x>242</x>
-     <y>706</y>
+     <x>240</x>
+     <y>648</y>
      <width>307</width>
-     <height>31</height>
+     <height>25</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -33,6 +33,12 @@
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>25</height>
+    </size>
    </property>
    <property name="text">
     <string>Save tagged data</string>
@@ -42,7 +48,7 @@
    <property name="geometry">
     <rect>
      <x>240</x>
-     <y>606</y>
+     <y>546</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -55,16 +61,22 @@
    <property name="geometry">
     <rect>
      <x>306</x>
-     <y>492</y>
+     <y>480</y>
      <width>241</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>25</height>
+    </size>
    </property>
    <property name="text">
     <string>&gt;</string>
@@ -76,8 +88,8 @@
   <widget class="QCheckBox" name="temperature_toggle">
    <property name="geometry">
     <rect>
-     <x>398</x>
-     <y>564</y>
+     <x>390</x>
+     <y>510</y>
      <width>151</width>
      <height>23</height>
     </rect>
@@ -93,7 +105,7 @@
    <property name="geometry">
     <rect>
      <x>240</x>
-     <y>636</y>
+     <y>576</y>
      <width>101</width>
      <height>20</height>
     </rect>
@@ -106,9 +118,9 @@
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>708</y>
-     <width>151</width>
-     <height>31</height>
+     <y>648</y>
+     <width>205</width>
+     <height>25</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -116,6 +128,12 @@
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>25</height>
+    </size>
    </property>
    <property name="text">
     <string>Tag Feature</string>
@@ -125,20 +143,24 @@
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>42</y>
+     <y>30</y>
      <width>541</width>
      <height>445</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="image_layout"/>
+   <layout class="QVBoxLayout" name="image_layout">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetDefaultConstraint</enum>
+    </property>
+   </layout>
   </widget>
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
      <x>216</x>
-     <y>606</y>
+     <y>546</y>
      <width>20</width>
-     <height>91</height>
+     <height>97</height>
     </rect>
    </property>
    <property name="orientation">
@@ -151,7 +173,7 @@
      <x>6</x>
      <y>8</y>
      <width>541</width>
-     <height>25</height>
+     <height>19</height>
     </rect>
    </property>
    <property name="text">
@@ -162,16 +184,22 @@
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>492</y>
+     <y>480</y>
      <width>241</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>25</height>
+    </size>
    </property>
    <property name="text">
     <string>&lt;</string>
@@ -184,9 +212,9 @@
    <property name="geometry">
     <rect>
      <x>334</x>
-     <y>600</y>
-     <width>210</width>
-     <height>57</height>
+     <y>548</y>
+     <width>211</width>
+     <height>53</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -198,7 +226,20 @@
      </widget>
     </item>
     <item row="0" column="1">
-     <widget class="QLineEdit" name="temp_patch_x"/>
+     <widget class="QLineEdit" name="temp_patch_x">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>20</height>
+       </size>
+      </property>
+     </widget>
     </item>
     <item row="0" column="2">
      <widget class="QLabel" name="patch_y">
@@ -208,7 +249,20 @@
      </widget>
     </item>
     <item row="0" column="3">
-     <widget class="QLineEdit" name="temp_patch_y"/>
+     <widget class="QLineEdit" name="temp_patch_y">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>20</height>
+       </size>
+      </property>
+     </widget>
     </item>
     <item row="1" column="0">
      <widget class="QLabel" name="max_percentile_text">
@@ -218,7 +272,20 @@
      </widget>
     </item>
     <item row="1" column="1">
-     <widget class="QLineEdit" name="max_percentile"/>
+     <widget class="QLineEdit" name="max_percentile">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>20</height>
+       </size>
+      </property>
+     </widget>
     </item>
     <item row="1" column="2">
      <widget class="QLabel" name="min_percentile_text">
@@ -228,7 +295,20 @@
      </widget>
     </item>
     <item row="1" column="3">
-     <widget class="QLineEdit" name="min_percentile"/>
+     <widget class="QLineEdit" name="min_percentile">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>20</height>
+       </size>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -236,8 +316,8 @@
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>528</y>
-     <width>541</width>
+     <y>510</y>
+     <width>361</width>
      <height>26</height>
     </rect>
    </property>
@@ -265,8 +345,8 @@
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>570</y>
-     <width>307</width>
+     <y>546</y>
+     <width>205</width>
      <height>26</height>
     </rect>
    </property>
@@ -281,7 +361,7 @@
     <item row="0" column="1">
      <widget class="QLineEdit" name="timestamp">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -297,7 +377,7 @@
    <property name="geometry">
     <rect>
      <x>240</x>
-     <y>666</y>
+     <y>612</y>
      <width>307</width>
      <height>26</height>
     </rect>
@@ -342,7 +422,7 @@
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>612</y>
+     <y>582</y>
      <width>205</width>
      <height>26</height>
     </rect>
@@ -404,12 +484,12 @@
     </item>
    </layout>
   </widget>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>654</y>
-     <width>192</width>
+     <y>612</y>
+     <width>205</width>
      <height>30</height>
     </rect>
    </property>

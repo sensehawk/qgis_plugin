@@ -64,6 +64,7 @@ class HomeWindow(QtWidgets.QWidget):
         logo_label.show()
         self.layout.addWidget(logo_label)
         self.dock_widget = login_obj.dock_widget
+        self.dock_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.dock_widget.setWidget(self)
         # self.dock_widget.setFixedSize(340, 830)
 

@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>567</width>
-    <height>732</height>
+    <width>556</width>
+    <height>688</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -34,14 +34,14 @@
   <widget class="QPushButton" name="nxt_img">
    <property name="geometry">
     <rect>
-     <x>312</x>
+     <x>330</x>
      <y>474</y>
      <width>225</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -55,7 +55,7 @@
    <property name="maximumSize">
     <size>
      <width>400</width>
-     <height>461</height>
+     <height>20</height>
     </size>
    </property>
    <property name="text">
@@ -68,14 +68,14 @@
   <widget class="QPushButton" name="previous_img">
    <property name="geometry">
     <rect>
-     <x>24</x>
+     <x>6</x>
      <y>474</y>
      <width>225</width>
-     <height>25</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
@@ -89,7 +89,7 @@
    <property name="maximumSize">
     <size>
      <width>400</width>
-     <height>461</height>
+     <height>20</height>
     </size>
    </property>
    <property name="text">
@@ -120,140 +120,16 @@
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>25</x>
-     <y>509</y>
-     <width>505</width>
-     <height>101</height>
+     <x>6</x>
+     <y>510</y>
+     <width>547</width>
+     <height>79</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <property name="verticalSpacing">
      <number>12</number>
     </property>
-    <item row="0" column="0">
-     <widget class="QLabel" name="temp_txt_2">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>104</width>
-        <height>17</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>String Number:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QLineEdit" name="string_number">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>321</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
-     <widget class="QPushButton" name="editbutton">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>35</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="3">
-     <widget class="QPushButton" name="savebutton">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>35</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="label">
-      <property name="text">
-       <string>Marker Location:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QLineEdit" name="marker_location_widget">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>321</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2">
-     <widget class="QPushButton" name="change_marker_location">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>35</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>📝</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
     <item row="2" column="0">
      <widget class="QLabel" name="label_2">
       <property name="text">
@@ -261,22 +137,10 @@
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
-     <widget class="QLineEdit" name="raw_image_widget">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>321</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
+    <item row="1" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Marker Location:</string>
       </property>
      </widget>
     </item>
@@ -302,15 +166,151 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="temp_txt_2">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>104</width>
+        <height>17</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>String Number:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QPushButton" name="editbutton">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>35</width>
+        <height>20</height>
+       </size>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLineEdit" name="marker_location_widget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>321</width>
+        <height>20</height>
+       </size>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="raw_image_widget">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>321</width>
+        <height>20</height>
+       </size>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QPushButton" name="change_marker_location">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>35</width>
+        <height>20</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>📝</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="3">
+     <widget class="QPushButton" name="savebutton">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>35</width>
+        <height>20</height>
+       </size>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="string_number">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>321</width>
+        <height>20</height>
+       </size>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>24</x>
-     <y>618</y>
-     <width>421</width>
-     <height>62</height>
+     <x>6</x>
+     <y>594</y>
+     <width>445</width>
+     <height>55</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_3">
@@ -320,7 +320,7 @@
     <item row="0" column="0">
      <widget class="QLabel" name="temp_txt_3">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -332,7 +332,7 @@
        </size>
       </property>
       <property name="text">
-       <string>UID:</string>
+       <string> UID:</string>
       </property>
      </widget>
     </item>
@@ -359,14 +359,14 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>308</width>
+        <width>321</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
         <width>308</width>
-        <height>25</height>
+        <height>20</height>
        </size>
       </property>
       <property name="readOnly">
@@ -377,13 +377,13 @@
     <item row="1" column="0" colspan="2">
      <widget class="QLabel" name="timestamp_label">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
       <property name="text">
-       <string>Timestamp:</string>
+       <string> Timestamp:</string>
       </property>
      </widget>
     </item>
@@ -416,8 +416,8 @@
       </property>
       <property name="maximumSize">
        <size>
-        <width>308</width>
-        <height>25</height>
+        <width>321</width>
+        <height>20</height>
        </size>
       </property>
       <property name="readOnly">
@@ -430,10 +430,10 @@
   <widget class="QWidget" name="">
    <property name="geometry">
     <rect>
-     <x>24</x>
-     <y>690</y>
-     <width>493</width>
-     <height>26</height>
+     <x>6</x>
+     <y>654</y>
+     <width>547</width>
+     <height>22</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -457,19 +457,6 @@
      </widget>
     </item>
     <item>
-     <spacer name="horizontalSpacer_3">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>34</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
-    <item>
      <widget class="QLineEdit" name="delta_temp">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -480,7 +467,7 @@
       <property name="maximumSize">
        <size>
         <width>72</width>
-        <height>25</height>
+        <height>20</height>
        </size>
       </property>
       <property name="readOnly">
@@ -489,19 +476,7 @@
      </widget>
     </item>
     <item>
-     <widget class="Line" name="line_2">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>25</height>
-       </size>
-      </property>
+     <widget class="Line" name="line">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
@@ -537,7 +512,7 @@
       <property name="maximumSize">
        <size>
         <width>68</width>
-        <height>25</height>
+        <height>20</height>
        </size>
       </property>
       <property name="readOnly">
@@ -546,19 +521,7 @@
      </widget>
     </item>
     <item>
-     <widget class="Line" name="line_3">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>25</height>
-       </size>
-      </property>
+     <widget class="Line" name="line_2">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
@@ -594,7 +557,7 @@
       <property name="maximumSize">
        <size>
         <width>68</width>
-        <height>25</height>
+        <height>20</height>
        </size>
       </property>
       <property name="readOnly">

@@ -167,7 +167,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.tag_button.clicked.connect(self.tag_image)
         self.tag_button.setShortcut("Space")
         self.image_index = 0
-        self.setFixedSize(628, 798)
+        # self.setFixedSize(628, 798)
         self.et = ExifToolHelper()
         self.DJI_SDK_PATH = os.path.realpath(os.path.join(os.path.dirname(__file__), "dji_thermal_sdk"))
         self.geojson = json.load(open(self.geojson_path))

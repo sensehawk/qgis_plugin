@@ -28,8 +28,6 @@ from PyQt5.QtCore import QVariant
 from qgis.PyQt import QtWidgets, uic
 from qgis.core import  Qgis, QgsApplication, QgsTask
 
-from ..event_filters import KeypressFilter, KeypressEmitter, KeypressShortcut, MousepressFilter
-from ..sensehawk_apis.core_apis import save_project_geojson, get_project_geojson
 from ..sensehawk_apis.sid_apis import detect_solar_issues
 from ..windows.autoNumbering import ThermNumberingWidget
 from ..windows.ImageTagging import ThermImageTaggingWidget
@@ -153,7 +151,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
             self.thermlite_tagging_widget = ThermliteQcWindow(self, self.project)
         self.project.active_docktool_widget = self.thermlite_tagging_widget
         self.project.docktool_widget.setWidget(self.thermlite_tagging_widget)
-        self.project.docktool_widget.setFixedSize(560, 780)        
+        # self.project.docktool_widget.setFixedSize(560, 780)
+        self.project.docktool_widget.setFixedWidth(560)
+        self.project.docktool_widget.setSizePolicy(560, QtWidgets.QSizePolicy.Expanding)        
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.thermliteQcButton.setChecked(True)
@@ -168,7 +168,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if not self.therm_viewer_widget:
             self.therm_viewer_widget = ThermViewerDockWidget(self, self.iface)
         self.project.docktool_widget.setWidget(self.therm_viewer_widget)
-        self.project.docktool_widget.setFixedSize(585, 780)
+        # self.project.docktool_widget.setFixedSize(585, 780)
+        self.project.docktool_widget.setFixedWidth(585)
+        self.project.docktool_widget.setSizePolicy(585, QtWidgets.QSizePolicy.Expanding) 
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.viewer_button.setChecked(True)
@@ -184,7 +186,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if not self.numbering_widget:
             self.numbering_widget = ThermNumberingWidget(self, self.iface)
         self.project.docktool_widget.setWidget(self.numbering_widget)
-        self.project.docktool_widget.setFixedSize(450, 780)    
+        # self.project.docktool_widget.setFixedSize(450, 780)  
+        self.project.docktool_widget.setFixedWidth(450)
+        self.project.docktool_widget.setSizePolicy(450, QtWidgets.QSizePolicy.Expanding)
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.StringNumberButton.setChecked(True)
@@ -198,7 +202,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         if not self.imagetagging_widget:
             self.imagetagging_widget = ThermImageTaggingWidget(self, self.iface)
         self.project.docktool_widget.setWidget(self.imagetagging_widget)
-        self.project.docktool_widget.setFixedSize(250, 550)   
+        # self.project.docktool_widget.setFixedSize(250, 550)   
+        self.project.docktool_widget.setFixedWidth(250)
+        self.project.docktool_widget.setSizePolicy(250, QtWidgets.QSizePolicy.Expanding)
         self.project.docktool_widget.show()
         self.uncheck_all_buttons()
         self.imagetaggingButton.setChecked(True)

@@ -684,7 +684,8 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         except AttributeError:
             self.load_window.workspace_window.active_widget.hide()
             self.load_window.workspace_window.active_widget = None
-            self.load_window.workspace_window.dock_widget.setFixedSize(130, 830)
+            self.load_window.workspace_window.dock_widget.setFixedWidth(130)
+            self.load_window.workspace_window.dock_widget.setSizePolicy(130, QtWidgets.QSizePolicy.Expanding)
 
     def add_project(self, project):
         self.rlayer_id = project.rlayer.id()

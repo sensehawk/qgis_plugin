@@ -11,7 +11,7 @@ CLIP_FUNCTION_URL = "https://clip-raster-server.sensehawk.com"
 API_SENSEHAWK = "https://api.sensehawk.com"
 S3_REGION="ap-south-1"
 S3_BUCKET="sh-inc-ap-south-1"
-# NEXTRACKER_URL = "https://nextracker-server.sensehawk.com"
+NEXTRACKER_URL = "https://nextracker-server.sensehawk.com"
 
 # MLSense
 SCMAPP_URL = "http://ec2-44-226-252-196.us-west-2.compute.amazonaws.com:8080" # update URL
@@ -30,4 +30,4 @@ API_NEW_SENSEHAWK = "https://api.sensehawk.com"
 THERMAL_TAGGING_URL = "https://thermal-tagging-test-server.sensehawk.com"
 # S3_REGION="ap-south-1"
 # S3_BUCKET="sh-inc-ap-south-1"
-NEXTRACKER_URL = "https://nextracker-test-server.sensehawk.com"
+# NEXTRACKER_URL = "https://nextracker-test-server.sensehawk.com"

@@ -146,7 +146,7 @@
         </size>
        </property>
        <property name="text">
-        <string>Target</string>
+        <string>Target value Prop</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
