@@ -2,10 +2,10 @@
 # This is expected to found in QGIS configuration
 
 # global
-project_uid: "VzZHZIwo1K" #TODO:
+project_uid: "" #TODO:
 
 # user specific
-email: "ssolanki@sensehawk" #TODO:
+email: "" #TODO:
 
 # dataset and project specific
 ortho_url: "< https://sensehawk-test-data-management.s3.amazonaws.com/core/VzZHZIwo1K/ml_models.zip >" # TODO:
@@ -13,11 +13,10 @@ geo_json:
 
 # Inference Specific Config
 inference:
-  models_zip_url: "" # TODO:
   detection:
     conf_score: 0.5
     iou_score: 0.6
-    run_id: ""
+    model_registry_name: ""
     filter_components_by_dimension_in_meter:
       module:
         width: 1.9
@@ -42,8 +41,8 @@ inference:
 
   segmentation:
     conf_score: 0.5
-    run_id: ""
+    model_registry_name: ""
 
   keypoint:
     conf_score: 0.5
-    run_id: ""
+    model_registry_name: ""

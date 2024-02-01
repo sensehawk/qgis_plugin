@@ -216,7 +216,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             os.remove(temp_raw_path)
             degree_map = degree_map / 10
         else:
-            os.system('{} -RawThermalImage -b "{}" > raw.dat'.format(exiftool_path, image_path))
+            subprocess.run('{} -RawThermalImage -b "{}" > raw.dat'.format(exiftool_path, image_path), shell=True)
             img = cv2.imread(os.path.join(os.getcwd(), "raw.dat"), cv2.IMREAD_UNCHANGED)
             os.remove(os.path.join(os.getcwd(), "raw.dat"))
 

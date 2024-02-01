@@ -20,7 +20,7 @@ test_project_uids:
 BASE_PATH: '/app/data/' #"/home/saurav/Documents/Sensehawk/mlsense-data/" # we update this in runtime as /app/data/{project_uid} or /app/data/therm/{train-sha}_{val-sha}
 
 # user specific
-email: "ssolanki@sensehawk"
+email: ""
 
 # dataset and project specific
 #ortho_url: "< https://sensehawk-test-data-management.s3.amazonaws.com/core/VzZHZIwo1K/ml_models.zip >"

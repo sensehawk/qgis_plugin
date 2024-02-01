@@ -73,6 +73,7 @@ class GroupCreate(QtWidgets.QDialog):
     def create_group(self):
         if self.group_create_ui.deal_id.text() and self.group_create_ui.group_name.text():
             self.accept()
+            print(self.workspace_window.user_id)
             url = CORE_URL+f'/api/v1/groups/?organization={self.workspace_window.org_uid}'
             headers = {'Authorization':f'Token {self.workspace_window.core_token}'}
             json = {'name':self.group_create_ui.group_name.text(),'organization':{'uid':self.workspace_window.org_uid},
@@ -88,7 +89,7 @@ class GroupCreate(QtWidgets.QDialog):
                 new_group_obj = Group(new_group_uid, new_group_name, None, {}, self.workspace_window.org_info, self.group_create_ui.deal_id.text(), {})
                 self.workspace_window.home_window.groups_dict[new_group_uid] = new_group_obj
                 self.workspace_window.canvas_logger(f'{self.group_create_ui.group_name.text()} Group is Sucessfully created...')
-                # Re-initialze the Group Selection widget
+                # Re-initialize the Group Selection widget
                 self.workspace_window.group_selection_widget.setup_ui(self.workspace_window)         
             else:
                 self.workspace_window.logger(group_create_response.json(), level=Qgis.Warning)
@@ -100,6 +101,7 @@ class GroupCreate(QtWidgets.QDialog):
                 if group_create_response.status_code != 201:
                     self.workspace_window.canvas_logger(f'Failed to created {self.group_create_ui.group_name.text()} group...')
                 else:
+                    print(container_group_info)
                     json = {'groups':container_group_info}
                     url = CORE_URL + f'/api/v1/containers/{container_uid}/?organization={self.workspace_window.org_uid}'
                     json['groups'].append({'uid':new_group_uid})

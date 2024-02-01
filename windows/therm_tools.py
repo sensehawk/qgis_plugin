@@ -258,28 +258,6 @@ class ThermToolsWidget(QtWidgets.QWidget):
         for button in self.findChildren(QtWidgets.QPushButton):
             if button.isCheckable():
                 button.setChecked(False)
-
-    def detect(self):
-        map_angle = self.canvas.rotation()
-        self.logger("Map canvas angle: {}".format(map_angle))
-        self.logger(str(self.project_details))
-        def detect_task(task, detect_task_inputs):
-            project_details, angle, core_token, user_email = detect_task_inputs
-            status = detect_solar_issues(project_details, angle, core_token, user_email)
-            return {"task": task.description(),
-                    "status": status.json()}
-        def callback(task, logger):
-            returned_values = task.returned_values
-            if returned_values:
-                status = returned_values["status"]
-                logger(str(status))
-
-        dt = QgsTask.fromFunction("Detect Solar Issues", detect_task, detect_task_inputs=[self.project_details,
-                                                                                          map_angle, self.core_token,
-                                                                                          self.load_window.user_email])
-        QgsApplication.taskManager().addTask(dt)
-        dt.statusChanged.connect(lambda: callback(dt, self.logger))
-
    
 class Sid_detection(QtWidgets.QDialog):
     def __init__(self, therm_tool_obj ):
@@ -301,31 +279,28 @@ class Sid_detection(QtWidgets.QDialog):
     
     def detect_issues(self):
         self.accept()
-        url =  f'https://sid.sensehawk.com/detect-solar-issues'
-        headers = {'Authorization': f'Token {self.therm_tool_obj.core_token}', 'email_id':self.therm_tool_obj.project.user_email}
-        payload = {
-                    "details": {
-                        "projectUID": self.therm_tool_obj.project_details['uid'],
-                        "user_email": self.therm_tool_obj.project.user_email,
-                        "angle" :self.therm_tool_obj.canvas.rotation(),
-                        "width":float(self.detect_ui.module_width.text()),
-                        "height":float(self.detect_ui.module_height.text())
-
-                    },
-                    "data": {"ortho": self.therm_tool_obj.get_ortho_url()},
-                    "geojson": {
-                                "type": "FeatureCollection",
-                                "features": []
-                                }
-                }
+        map_angle = self.therm_tool_obj.canvas.rotation()
+        def detect_task(task, detect_task_inputs):
+            project_details, angle, core_token, user_email, width, height = detect_task_inputs
+            status = detect_solar_issues(project_details, angle, core_token, user_email, width, height)
+            return {"task": task.description(),
+                    "status": status.json()}
         
-        response = requests.post(url, json=payload, headers=headers)
-        if response.status_code == 202:
-            self.therm_tool_obj.sidv2_detect_button.setChecked(False)
-            self.therm_tool_obj.canvas_logger('Queued Successfully.',level=Qgis.Success)
-        else:
-            self.therm_tool_obj.canvas_logger(response.json())
+        def callback(task, logger, canvas_logger):
+            returned_values = task.returned_values
+            if returned_values:
+                status = returned_values["status"]
+                logger(str(status))
+                canvas_logger(str(status),  level=Qgis.Success)
 
+        dt = QgsTask.fromFunction("Detect Solar Issues", detect_task, detect_task_inputs=[self.therm_tool_obj.project_details,
+                                                                                          map_angle, self.therm_tool_obj.core_token,
+                                                                                          self.therm_tool_obj.project.user_email,
+                                                                                          float(self.detect_ui.module_width.text()),
+                                                                                          float(self.detect_ui.module_height.text())])
+        QgsApplication.taskManager().addTask(dt)
+        dt.statusChanged.connect(lambda: callback(dt, self.therm_tool_obj.logger, self.therm_tool_obj.canvas_logger))
+        self.therm_tool_obj.uncheck_all_buttons()
     
     def close_dialogbox(self):
         self.reject()

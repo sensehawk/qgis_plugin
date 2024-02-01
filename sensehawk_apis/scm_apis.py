@@ -61,25 +61,23 @@ def train(task, train_inputs):
     response = requests.request("POST", SCMAPP_URL + "/train", json=train_config_payload, headers=headers)
     return {"task": task.description(), "status": response.status_code}
 
-
-def detect(project_details, geojson, model_details, user_email, core_token, logger):
+def detect(project_details, geojson, model_registry_name, user_email, core_token, logger):
     project_uid = project_details.get("uid", None)
-    # ortho_url = get_project_reports(project_uid, core_token).get("ortho", None)
+    logger(f'Detect {project_uid} called ...')
 
     ortho_report = {}
     for report in project_details.get('reports'):
         if report.get('report_type') == 'ortho':
             ortho_report = report.get('service')
-
     ortho_url = get_reports_url(ortho_report.get('bucket'),
                                 ortho_report.get('key'),
                                 ortho_report.get('region'),
                                 core_token)
     if not ortho_url:
-        return {"task": '', "status": f"ortho_url: {ortho_url} invalid"}
+        return {"task": "get ortho-url detect() failed",
+                "Exception": f"ortho_url: {ortho_url} invalid",
+                "status": 404}
 
-    _, model_url = model_details
-    logger('model URL Loaded')
 
     yaml_path = os.path.join(os.path.dirname(__file__), '../config/inference.yaml')
     config_json = load_yaml_file(yaml_path=yaml_path)
@@ -92,17 +90,17 @@ def detect(project_details, geojson, model_details, user_email, core_token, logg
         "ortho_url": ortho_url
     }
     config_json.update(**new_data)
+    config_json["inference"]["detection"]["model_registry_name"] = model_registry_name
     logger('Updated Config')
 
-    config_json["inference"]["models_zip_url"] = model_url
-    logger('Updated Config')
-
-    infer_config_payload = config_json #InferenceConfigModel(**config_json).model_dump_json()
+    infer_config_payload = config_json  # InferenceConfigModel(**config_json).model_dump_json()
     logger("Got the Config as per Payload")
 
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.post(SCMAPP_URL + '/predict', json=infer_config_payload, headers=headers)
-    return response.json()
+    return {"task": "Detect",
+            "Exception": "",
+            "status": response.status_code}
 
 
 def approve(project_details, geojson, user_email, core_token):

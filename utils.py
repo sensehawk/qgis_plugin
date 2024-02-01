@@ -620,7 +620,7 @@ def download_asset_logo(asset_name, url):
     return asset_logo_path
 
 
-def features_to_polygons(features, project_obj):
+def features_to_polygons(features):
     polygon_features = []
     for f in features:
         # f["properties"]["uid"] = project_obj.create_uid()

@@ -107,12 +107,12 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
     for feature in featuresobjlist:
         table_utm_x_y  = []
         for v in feature.raw_utm_coords:
-            rtx, rty = rotate(anchor_point, v, math.radians(angle))
-            table_utm_x_y.append([math.ceil(rtx), math.ceil(rty)])
+            rtx, rty = rotate(anchor_point, v , math.radians(angle))
+            table_utm_x_y.append([rtx,rty])
         xutm, yutm = np.mean(np.array(table_utm_x_y), axis=0) # Centriod of rotated table
         setattr(feature, 'utm_coords', table_utm_x_y)
-        setattr(feature,'utm_x',math.ceil(xutm))
-        setattr(feature,'utm_y',math.ceil(yutm))
+        setattr(feature,'utm_x',xutm)
+        setattr(feature,'utm_y',yutm)
         
         
 def update_issue_Row_column(project_uid, featuresobjlist, Vlayer, Height, Width, angle):

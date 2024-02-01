@@ -29,6 +29,8 @@ class Project:
         self.project_details = load_task_result['project_details']
         self.bounds = load_task_result['bounds']
         self.geojson_path = load_task_result['geojson_path']
+        self.container_uid = load_task_result['container_uid']
+        self.container_name = load_task_result['container_name']
         # self.table_geojson = self.geojson_path.replace('.geojson', '_table.geojson')
         if application_type == "therm":
             self.vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
@@ -159,7 +161,8 @@ class Project:
         # self.vlayer.featureDeleted.connect(lambda x: self.updateUid_and_sync_featurecount())
         #Re-collecting list type data fields after parsing list type data field to copy pasted one
         self.initialize_parentUid()
-        self.collect_list_Type_dataFields()
+        if self.application_type == 'therm' :
+            self.collect_list_Type_dataFields()
         self.vlayer.startEditing()
         #if any Tool-Dockwidget is already opened enable the respective label
         try:
@@ -215,7 +218,7 @@ class Project:
             with open(geojson_path, 'r') as g:
                 imported_features = json.load(g)['features']
             # Convert the features to polygons
-            imported_features = features_to_polygons(imported_features, self)
+            imported_features = features_to_polygons(imported_features)
             with open(self.geojson_path , 'r') as g:
                 existing_geojson = json.load(g)
 

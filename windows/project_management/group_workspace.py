@@ -180,8 +180,7 @@ class GroupWorkspace(QtWidgets.QWidget):
             pass
 
     def checkapp_and_loadproject(self, project_uid, project_name):
-        # Each project button when clicked will be opened in the associated application if only one is associated, 
-        # or user is notified to choose if multiple applications are associated or if no app is associated 
+        # If multiple application assigned then user will be promated with an option to load project by either of them (Therm OR Terra)
         clicked_button = self.sender()
         clicked_button.setEnabled(False)
         clicked_button.setStyleSheet("background-color:#f7b7ad;")
@@ -279,6 +278,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         project.group_dict = group_dict
         project.group_obj = group_obj
         project.org_uid = self.group_obj.org_info.get('uid', None)
+        project.home_window = self.workspace_window.home_window 
         
         # Add project to therm project tab
         if application_type == 'therm':
@@ -330,6 +330,7 @@ class GroupWorkspace(QtWidgets.QWidget):
                             "core_token": self.core_token,
                             "org_uid":self.group_obj.org_info.get('uid', None),
                             "container_uid":self.group_obj.container.uid,
+                            "container_name":self.group_obj.container.name,
                             "logger": self.logger}
         project_load_task = QgsTask.fromFunction(f"{project_name} Project Load", project_loadtask, load_task_inputs)
         QgsApplication.taskManager().addTask(project_load_task)
@@ -895,7 +896,7 @@ class ReportsDashboard(QtWidgets.QDialog):
         button_box = QtWidgets.QDialogButtonBox()
         button_box.addButton("Detect", QtWidgets.QDialogButtonBox.AcceptRole)
         button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
-        button_box.accepted.connect(lambda : self.update_moduel_info(confirmation_dialog))
+        button_box.accepted.connect(lambda : self.update_moduelSize_info(confirmation_dialog))
         button_box.rejected.connect(lambda : self.close_module_info(confirmation_dialog))
         button_box.setCenterButtons(True)
         layout.addWidget(self.module_info_ui)
@@ -903,7 +904,7 @@ class ReportsDashboard(QtWidgets.QDialog):
         confirmation_dialog.setLayout(layout)
         confirmation_dialog.exec_()
     
-    def update_moduel_info(self, qdialog):
+    def update_moduelSize_info(self, qdialog):
         print(self.module_info_ui.module_height.text(), self.module_info_ui.module_width.text())
         self.module_width, self.module_height = self.module_info_ui.module_width.text(), self.module_info_ui.module_height.text()
         self.auto_detect = True

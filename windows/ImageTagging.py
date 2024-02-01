@@ -177,21 +177,38 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.No_images.setValue(2)
             self.No_images.setEnabled(False)
 
+
+    def imgTagCallback(self, approve_status, approveTaggingTask):
+            if approve_status != 3:
+                return None
+            result = approveTaggingTask.returned_values
+            if result:
+                response = result['response']
+                if response.status_code == 200:
+                    self.tag_button.setChecked(False)
+                    self.canvas_logger('Thermal tagging Approval Queued Successfully.',level=Qgis.Success)
+                else:
+                    self.tag_button.setChecked(False)
+                    self.canvas_logger(f'Failed to Queue {response.status_code}, {response.json()}',level=Qgis.Warning)
+
+    def thermalTaggingApprove(self, task, json):
+        url =  THERMAL_TAGGING_URL + "/tag" 
+        headers = {'Authorization': f'Token {self.core_token}'}
+        imgtag_response = requests.post(url, json=json, headers=headers)
+        print(imgtag_response.json(), imgtag_response.status_code)
+
+        return  {'task':task.description(),'response':imgtag_response}
+    
     def api(self, json):
         canvas  = self.canvas
         rotation = canvas.rotation()
         json['angle'] = rotation
         json['email_id'] = self.email_id
         print(json)
-        url =  THERMAL_TAGGING_URL + "/tag" 
-        headers = {'Authorization': f'Token {self.core_token}'}
-        imagetag = requests.post(url, json=json, headers=headers)
-        if imagetag.status_code == 200:
-            self.tag_button.setChecked(False)
-            self.canvas_logger('Queued Successfully.',level=Qgis.Success)
-        else:
-            self.tag_button.setChecked(False)
-            self.canvas_logger(f'Failed to Queue {imagetag.status_code}, {imagetag.json()}',level=Qgis.Warning)
+
+        approveTaggingTask = QgsTask.fromFunction("Thermal Approval", self.thermalTaggingApprove, json)
+        QgsApplication.taskManager().addTask(approveTaggingTask)
+        approveTaggingTask.statusChanged.connect(lambda approve_status: self.imgTagCallback(approve_status, approveTaggingTask))
         
         #clear additional Projectuid let user select it again
         self.addl_uid = None

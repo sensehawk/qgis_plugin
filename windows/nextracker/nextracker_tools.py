@@ -55,7 +55,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
                 clip_task_inputs = {'project_uid': self.project.project_details["uid"],
                                     'geojson_path': self.project.geojson_path,
                                     'class_maps': self.project.class_maps,
-                                    'core_core_token': self.project.core_core_token,
+                                    'core_token': self.project.core_token,
                                     'project_type': 'terra',
                                     'user_email': self.project.user_email,
                                     'convert_to_magma': False,
@@ -73,10 +73,10 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         
         # Check if `Clipped Orthos` group exists or not
         self.project.logger("Validating `Clipped Orthos` group")
-        deal_id, asset_uid, container_uid, core_core_token = self.project.group_details.deal_id, self.project.group_details.container.asset.uid, self.project.group_details.container.uid, self.project.core_core_token
+        deal_id, asset_uid, container_uid, core_core_token = self.project.project_details["group"]["uid"], self.project.project_details["asset"]["uid"], self.project.container_uid, self.project.core_token
         group_validate_task = QgsTask.fromFunction("Clipped Orthos group validate", 
                                                 setup_clipped_orthos_group, 
-                                                task_inputs=[deal_id, asset_uid, container_uid, core_core_token, self.project.logger])
+                                                task_inputs=[deal_id, asset_uid, container_uid, core_core_token, self.project.logger, self.project.home_window, self.project.container_name])
         group_validate_task.statusChanged.connect(lambda:validate_group_callback(group_validate_task, self.project.logger))
         QgsApplication.taskManager().addTask(group_validate_task)
 
@@ -111,7 +111,6 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         project_uid = self.project.project_details["uid"]
         org_uid = self.project.project_details.get("organization", {}).get("uid", None)
         url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={org_uid}&user_email={self.project.user_email}"
-        print(url)
         headers = {"Authorization": f"Token {self.project.core_token}"}
         resp = requests.post(url, headers=headers).json()
         self.project.canvas_logger(str(resp))

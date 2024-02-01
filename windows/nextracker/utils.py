@@ -1,9 +1,9 @@
 import requests
 import traceback
-from ...constants import NEXTRACKER_URL
+from ...constants import NEXTRACKER_URL, CORE_URL
 
 nextracker_org_uid = "00g305uhwb3ULo6Em0i7" #"00g7uy87cofqS3X380i7"
-nextracker_owner_uid = "NMHuEVAxXz" #NMHuEVAxXz
+nextracker_owner_uid = "7cqq3r8475" #NMHuEVAxXz
 nextracker_featuretype_groups = ["WcePT5wZkJQs","1Ngg3bHRXe5v"] #["BudsBapby0N0", "tM2NCKQSPW0g"] 
 
 # Works only for projects in NEXTracker organization
@@ -18,7 +18,8 @@ def setup_nextracker_features(container_uid, core_token):
 
 def setup_clipped_orthos_group(task, task_inputs):
     try:
-        deal_id, asset_uid, container_uid, core_token, logger = task_inputs
+        deal_id, asset_uid, container_uid, core_token, logger, home_obj, container_name = task_inputs
+        container_details = { container.name:[container_uid, container.group_info] for container_uid, container in home_obj.containers_dict.items()}
         # First check if `Clipped Orthos` group already exists in the container or not, and create if not
         url = "https://core-server.sensehawk.com/api/v1/groups/"
         params = {"organization": nextracker_org_uid, "container": container_uid}
@@ -34,27 +35,24 @@ def setup_clipped_orthos_group(task, task_inputs):
                     "message": "Clipped Orthos group already exists",
                     "group_uid": group_uid}
         else:
-            body = {
-                "name": clipped_ortho,
-                "organization": {
-                    "uid": nextracker_org_uid
-                },
-                "container": {
-                    "uid": container_uid
-                },
-                "deal_id": deal_id,
-                "asset": {
-                    "uid": asset_uid
-                },
-                "owner": {
-                    "uid": nextracker_owner_uid
-                }
-            }
             # New group will be the first one in the list, return its uid
             logger("Creating new group - Clipped Orthos")
-            resp = requests.post(url, headers=headers, params=params, json=body).json()
+            url = CORE_URL+f'/api/v1/groups/?organization={nextracker_org_uid}'
+            headers = {'Authorization':f'Token {core_token}'}
+            json = {'name':clipped_ortho,'organization':{'uid':nextracker_org_uid},
+                                                                  'deal_id':deal_id,
+                                                                  'asset':{'uid':asset_uid},
+                                                                  'owner':{'uid':nextracker_owner_uid}}
+            
+            resp = requests.post(url, headers=headers, json=json).json()
             group_uid = resp["uid"]
             logger("Successfully created new group - Clipped Orthos")
+            container_group_info = container_details[container_name][1]
+            json = {'groups':container_group_info}
+            url = CORE_URL + f'/api/v1/containers/{container_uid}/?organization={nextracker_org_uid}'
+            json['groups'].append({'uid':group_uid})
+            add_group_response = requests.patch(url, headers=headers, json=json)
+            logger(f'Group added to {container_name} container... ')
             return {"task": task.description(), "success": True,
                     "message": "Clipped Orthos group validated",
                     "group_uid": group_uid}

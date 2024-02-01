@@ -12,7 +12,7 @@ import traceback
 import os
 import tempfile
 import urllib
-from .windows.nextracker.utils import setup_nextracker_features, setup_clipped_orthos_group, nextracker_org_uid
+from .windows.nextracker.utils import setup_nextracker_features, nextracker_org_uid
 
 
 def project_loadtask(task, load_inputs):
@@ -83,6 +83,8 @@ def project_loadtask(task, load_inputs):
             'existing_files':existing_files,
             'container_class_map':container_class_map,
             'bounds':ortho_bounds,
+            'container_uid':container_uid,
+            'container_name':load_inputs.get("container_name",None),
             'task': task.description()}
 
 
@@ -99,7 +101,8 @@ def clip_request(task, clip_task_input):
     convert_to_magma = clip_task_input['convert_to_magma']
     group_uid = clip_task_input.get('group_uid', None)
     logger = clip_task_input.get("logger", None)
-
+    print('working')
+    
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
     if project_type == 'therm':
@@ -108,7 +111,7 @@ def clip_request(task, clip_task_input):
         for i in class_maps.keys():
             if i.lower() == "clip_boundary":
                 clip_boundary_class_name = class_maps[i]["uid"]
-   
+
     if not clip_boundary_class_name:
         return {"task": task.description(), "success": False,
                 "message": "Please add clip_boundary feature type in class maps..."}
@@ -145,12 +148,14 @@ def clip_request(task, clip_task_input):
                         "email_id": user_email,
                         "convert_to_magma": convert_to_magma,
                         "group_uid": group_uid}
-
+        
+        print('working', request_body)
         headers = {"Authorization": f"Token {core_token}"}
         response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
         res_status = response.status_code
-        logger(str(response.json()))
+        # logger(str(response.json()))
         res_title, res_description = response.json()['title'], response.json()['description']
+
     except Exception:
         logger(traceback.format_exc())
     return {"task": task.description(), 'title':res_title, 'description':res_description, 'res_status':res_status}
@@ -175,12 +180,11 @@ def logintask(task, login_window):
         return None
 
 def detectionTask(task, detection_task_input):
-    project_details, geojson, model_details, user_email, core_token = detection_task_input
+    project_details, geojson, model_details, user_email, core_token,logger = detection_task_input
     try:
-        detect(project_details, geojson, model_details, user_email, core_token)
-        return {"task": task.description(), "Exception": None, "success": True}
+        return detect(project_details, geojson, model_details, user_email, core_token,logger)
     except Exception as e:
-        return {"task": task.description(), "Exception": e, "success": False}
+        return {"task": task.description(), "Exception": e, "success": 404}
 
 def approveTask(task, approve_task_input):
     project_details, geojson, user_email, core_token = approve_task_input
