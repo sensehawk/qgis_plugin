@@ -531,8 +531,9 @@ class Project:
                     feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
                 elif self.project_details["project_type"] == "terra":
                     name = self.class_maps.get(class_name, {}).get("name", None)
-                    feature.setAttribute("class", name)
-                    feature.setAttribute("class_name", class_name)
+                    feature.setAttribute("class", class_name)
+                    class_uid = self.class_maps.get(class_name, {}).get('uid', None)
+                    feature.setAttribute("class_name", class_uid)
                     class_id = self.class_maps.get(class_name, {}).get("id", None)
                     feature.setAttribute("class_id", int(class_id))
                 self.vlayer.updateFeature(feature)
@@ -553,8 +554,9 @@ class Project:
                 last_feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
             elif self.project_details["project_type"] == "terra":
                 name = self.class_maps.get(class_name, {}).get("name", None)
-                last_feature.setAttribute("class", name)
-                last_feature.setAttribute("class_name", class_name)
+                last_feature.setAttribute("class", class_name)
+                class_uid = self.class_maps.get(class_name, {}).get('uid', None)
+                last_feature.setAttribute("class_name", class_uid)
                 class_id = self.class_maps.get(class_name, {}).get("id", None)
                 last_feature.setAttribute("class_id", int(class_id))
             self.vlayer.updateFeature(last_feature)

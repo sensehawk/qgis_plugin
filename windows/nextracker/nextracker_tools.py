@@ -42,6 +42,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         self.clip_button.clicked.connect(self.start_clip_task)
         self.csv_button.clicked.connect(lambda : self.download_csv(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "ZIP (*.zip)")[0]))
         self.points_button.clicked.connect(self.generate_points)
+        self.org_uid = self.project.project_details.get("organization", {}).get("uid", None)
     
     # def logger(self, message, level=Qgis.Info):
     #     QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
@@ -60,7 +61,9 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
                                     'user_email': self.project.user_email,
                                     'convert_to_magma': False,
                                     'group_uid': result["group_uid"],
-                                    'logger': self.project.logger}
+                                    'logger': self.project.logger,
+                                    'container_uid':self.project.container_uid,
+                                    'org_uid':self.org_uid}
                 self.project.logger("Clip task starting...")
                 clip_task = QgsTask.fromFunction("Clip Request", clip_request, clip_task_input=clip_task_inputs)
                 clip_task.statusChanged.connect(lambda:clip_callback(clip_task, self.project.canvas_logger))
@@ -69,7 +72,10 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         def clip_callback(task, canvas_logger):
             result = task.returned_values
             if result:
-                canvas_logger(str(result))
+                if 'res_status' in result:
+                    canvas_logger(str(result), level=Qgis.Success)
+                else:
+                    canvas_logger(str(result), level=Qgis.Warning)
         
         # Check if `Clipped Orthos` group exists or not
         self.project.logger("Validating `Clipped Orthos` group")
@@ -109,8 +115,7 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
 
     def generate_points(self):
         project_uid = self.project.project_details["uid"]
-        org_uid = self.project.project_details.get("organization", {}).get("uid", None)
-        url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={org_uid}&user_email={self.project.user_email}"
+        url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={self.org_uid}&user_email={self.project.user_email}"
         headers = {"Authorization": f"Token {self.project.core_token}"}
         resp = requests.post(url, headers=headers).json()
         self.project.canvas_logger(str(resp))

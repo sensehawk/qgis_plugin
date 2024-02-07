@@ -4,19 +4,14 @@ import os
 from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL, API_NEW_SENSEHAWK
 from qgis.core import Qgis
 
-def get_project_reports(project_uid, token):
-    PROJECT_REPORT_URL = CORE_URL + "/api/v1/projects/%s/reports/"
-    REPORT_DOWNLOAD_URL = CORE_URL + "/api/v1/projects/%s/reports/%s/download/"
-    HOST_TOKEN = f'Token {token}'
-
-    all_reports = {}
-    reports = requests.get(PROJECT_REPORT_URL %project_uid, headers = {'Authorization': HOST_TOKEN}).json()['results']
-
-    for report in reports:
-        if report['report_type'] != 'processed':
-            url = requests.get(REPORT_DOWNLOAD_URL %(project_uid, report['uid']), headers = {'Authorization':HOST_TOKEN}).json()['url']
-            all_reports[report['report_type']] = url
-    return all_reports
+def get_project_reports(project_uid, container_uid, org_uid, core_token):
+    headers = {'Authorization':f'Token {core_token}'}
+    url = f"https://terra-server.sensehawk.com/container-views/{container_uid}/projects/{project_uid}/?organization={org_uid}"
+    res = requests.get(url, headers=headers).json()["reports"]
+    ortho_url = res.get("ortho", {}).get('url', None)
+    dsm_url = res.get("dsm", {}).get('url', None)
+    
+    return ortho_url, dsm_url
 
 def get_reports_url(bucket: str, key: str, region: str, token: str, save_filename='ortho.zip') -> str:
     """

@@ -38,10 +38,11 @@ class Table:
     def __init__(self, table): # table =>  Qgsfeature object => fields, geometry, attributes
         self.feature = table
         self.uid = table['uid']
-        self.raw_lonlat_x, self.raw_lonlat_y = table.geometry().centroid().asPoint().x(), table.geometry().centroid().asPoint().y()
-        self.raw_utm_x , self.raw_utm_y = from_latlon(self.raw_lonlat_y, self.raw_lonlat_x)[:2]
         table_lonlat = table.geometry().asPolygon()[0] 
         self.raw_utm_coords = table_vertex(table_lonlat)  #[[x,y],[x,y]]
+        tb1, _, tb3, *_ = self.raw_utm_coords
+        self.raw_utm_x = (tb1[0] + tb3[0])/2
+        self.raw_utm_y = (tb1[1] + tb3[1])/2
         
 
 def row_wise_sortedTables(tableslist, top, bottom): 
@@ -109,7 +110,9 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
         for v in feature.raw_utm_coords:
             rtx, rty = rotate(anchor_point, v , math.radians(angle))
             table_utm_x_y.append([rtx,rty])
-        xutm, yutm = np.mean(np.array(table_utm_x_y), axis=0) # Centriod of rotated table
+        tb1, _, tb3, _ = table_utm_x_y
+        xutm = (tb1[0] + tb3[0])/2
+        yutm = (tb1[1] + tb3[1])/2
         setattr(feature, 'utm_coords', table_utm_x_y)
         setattr(feature,'utm_x',xutm)
         setattr(feature,'utm_y',yutm)

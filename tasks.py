@@ -101,7 +101,8 @@ def clip_request(task, clip_task_input):
     convert_to_magma = clip_task_input['convert_to_magma']
     group_uid = clip_task_input.get('group_uid', None)
     logger = clip_task_input.get("logger", None)
-    print('working')
+    container_uid = clip_task_input.get("container_uid", None)
+    org_uid = clip_task_input.get("org_uid", None)
     
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
@@ -119,12 +120,11 @@ def clip_request(task, clip_task_input):
     with open(geojson_path, "r") as fi:
         geojson = json.load(fi)
     try:
-
         all_clip_feature_names = []
 
         for f in geojson["features"]:
             properties = f["properties"]
-            if properties["class_name"] == clip_boundary_class_name:
+            if properties["class_name"] == clip_boundary_class_name or properties["class"] == clip_boundary_class_name:
                 name = properties.get("name", None)
                 all_clip_feature_names.append(name)
         n_clip_features = len(all_clip_feature_names)
@@ -133,15 +133,22 @@ def clip_request(task, clip_task_input):
         # If there are no unique clip feature names or if any of them has None
         if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
             return {"task": task.description(), "title": 'Need unique clip boundary names',
-                    "description": "Please provide unique name property to all clip_boundary features before clipping...", 'level':Qgis.Warning}
+                    "description": "Please provide unique name property to all clip_boundary features before clipping..."}
 
-        ortho_url = get_project_reports(project_uid, core_token).get("ortho", None)
+        ortho_url, dsm_url = get_project_reports(project_uid, container_uid, org_uid,  core_token)
+
         if not ortho_url:
             return {"task": task.description(), "title": "Ortho doesn't exist",
-                    "description": "No ortho found for project...", 'level':Qgis.Warning}
+                    "description": "No ortho found for project..."}
         
+        if not dsm_url:
+            return {"task": task.description(), "title": "DSM doesn't exist",
+                    "description": "No DSM found for project..."}
+
+        print(ortho_url, dsm_url)
         request_body = {"project_uid": project_uid,
                         "raster_url": ortho_url,
+                        "dsm_url":dsm_url,
                         "geojson": geojson,
                         "clip_boundary_class_name": clip_boundary_class_name,
                         "project_type": project_type,
@@ -149,11 +156,10 @@ def clip_request(task, clip_task_input):
                         "convert_to_magma": convert_to_magma,
                         "group_uid": group_uid}
         
-        print('working', request_body)
+        
         headers = {"Authorization": f"Token {core_token}"}
         response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
         res_status = response.status_code
-        # logger(str(response.json()))
         res_title, res_description = response.json()['title'], response.json()['description']
 
     except Exception:
