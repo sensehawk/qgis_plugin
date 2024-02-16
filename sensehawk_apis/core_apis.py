@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL, API_NEW_SENSEHAWK
+from ..constants import CORE_URL, TERRA_URL, THERM_URL, MAP_SERVER_URL, API_NEW_SENSEHAWK, V2_MAP_SERVER_UTL
 from qgis.core import Qgis
 
 def get_project_reports(project_uid, container_uid, org_uid, core_token):
@@ -40,8 +40,12 @@ def get_ortho_tiles_url(project_uid, token):
     if not orthotiles:
         return None
     orthotiles_uid = orthotiles[0]["uid"]
-    orthotiles_url = MAP_SERVER_URL + orthotiles_uid
-    return orthotiles_url
+    version = orthotiles[0]['properties'].get('version', None)
+    if version == 2:
+        orthotiles_url = V2_MAP_SERVER_UTL + orthotiles_uid
+    else:
+        orthotiles_url = MAP_SERVER_URL + orthotiles_uid
+    return orthotiles_url, version
 
 def get_ortho_url(project_uid, org, token):
     url  = f'https://therm-server.sensehawk.com/projects/{project_uid}/data?organization={org}'

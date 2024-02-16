@@ -45,14 +45,21 @@ def project_loadtask(task, load_inputs):
 
             # Load orthotiles
             # Get base url for ortho tiles
-            base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
-            print("Ortho tile url", base_orthotiles_url)
+            base_orthotiles_url, version = get_ortho_tiles_url(project_uid, core_token)
             # Get metadata from the base url
             ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
-            ortho_bounds = ortho_tiles_details["bounds"]
-           
-            zmax = ortho_tiles_details["maxzoom"]
-            zmin = 1
+            print("Ortho tile url", base_orthotiles_url, "ortho Bounds",ortho_tiles_details["bounds"] )
+            if version != 2:
+                ortho_bounds = ortho_tiles_details["bounds"]
+                zmax = ortho_tiles_details["maxzoom"]
+                zmin = 1
+            else:
+                if isinstance(ortho_tiles_details['bounds'], str):
+                    ortho_bounds = [float(v) for v in ortho_tiles_details["bounds"].split(',')]
+                else:
+                    ortho_bounds = ortho_tiles_details["bounds"]
+                zmax = int(ortho_tiles_details.get("maxzoom", 22))
+                zmin = 1
 
             orthotiles_url = "type=xyz&url=" + \
                             base_orthotiles_url + "/{z}/{x}/{y}.png" + \

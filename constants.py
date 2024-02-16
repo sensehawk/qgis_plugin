@@ -1,6 +1,7 @@
 # Production env
 CORE_URL = "https://core-server.sensehawk.com"
 MAP_SERVER_URL = "https://mapserver.sensehawk.com/"
+V2_MAP_SERVER_UTL = "https://maps-server.sensehawk.com/"
 TERRA_URL = "https://terra-server.sensehawk.com"
 THERM_URL = "https://therm-server.sensehawk.com"
 SCM_TRAIN_URL = "https://scm-train.sensehawk.com"
