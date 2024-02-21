@@ -75,6 +75,11 @@
          <string>Temp Extraction</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>String Number</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item>
@@ -103,6 +108,16 @@
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="stringNumCheckbox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>String Number</string>
        </property>
       </widget>
      </item>

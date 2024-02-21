@@ -892,7 +892,7 @@ class ReportsDashboard(QtWidgets.QDialog):
         confirmation_dialog = QtWidgets.QDialog()
         confirmation_dialog.setWindowTitle("Confirmation")
         layout = QtWidgets.QVBoxLayout()
-        self.module_info_ui = uic.loadUi("C:\\Users\\sande\\AppData\\Roaming\\QGIS\\QGIS3\\profiles\\default\\python\\plugins\\qgis_plugin\\windows\\detection_module_info.ui")
+        self.module_info_ui = uic.loadUi(os.path.join(os.path.dirname(__file__),"detection_module_info.ui"))
         button_box = QtWidgets.QDialogButtonBox()
         button_box.addButton("Detect", QtWidgets.QDialogButtonBox.AcceptRole)
         button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
