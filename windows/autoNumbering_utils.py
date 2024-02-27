@@ -53,7 +53,7 @@ def row_wise_sortedTables(tableslist, top, bottom):
             sorted_row.append(table)
     return sorted_row
 
-def update_TableRowAndColumn(sorted_row, Vlayer, current_row, projectuid):
+def update_TableRowAndColumn(sorted_row, vlayer, current_row, projectuid):
     x_sorted = sorted(sorted_row, key=lambda x: x.utm_x, reverse=False)
     t_column = 1
     t_row = current_row
@@ -72,19 +72,19 @@ def update_TableRowAndColumn(sorted_row, Vlayer, current_row, projectuid):
         rs_tables.feature['name'] = f"{projectuid}-{rs_tables.feature['table_row']}:{rs_tables.feature['table_column']}"
         rs_tables.feature['idx'] = t_column
         t_column += 1
-        Vlayer.updateFeature(rs_tables.feature) 
+        vlayer.updateFeature(rs_tables.feature) 
 
 
-def table_numbering(featuresobjlist, Vlayer, projectuid):
+def table_numbering(featuresobjlist, vlayer, projectuid):
     tableslist = [table for table in featuresobjlist if table.feature['class_name'] == 'table' ]
     current_row = 1
     while len(tableslist) > 0:
         sorted_tables = sorted(tableslist, key=lambda x : x.utm_y, reverse=True) 
         topmost_table = sorted_tables[0] 
-        N_top = np.max(np.array(topmost_table.utm_coords), axis=0)[1] 
-        N_bottom = np.min(np.array(topmost_table.utm_coords), axis=0)[1] 
-        sorted_row = row_wise_sortedTables(tableslist, N_top, N_bottom)
-        update_TableRowAndColumn(sorted_row, Vlayer, current_row, projectuid)
+        north_top = np.max(np.array(topmost_table.utm_coords), axis=0)[1] 
+        north_bottom = np.min(np.array(topmost_table.utm_coords), axis=0)[1] 
+        sorted_row = row_wise_sortedTables(tableslist, north_top, north_bottom)
+        update_TableRowAndColumn(sorted_row, vlayer, current_row, projectuid)
         current_row += 1
         for usedObj in sorted_row:
             tableslist.remove(usedObj)
@@ -110,7 +110,7 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
         for v in feature.raw_utm_coords:
             rtx, rty = rotate(anchor_point, v , math.radians(angle))
             table_utm_x_y.append([rtx,rty])
-        tb1, _, tb3, _ = table_utm_x_y
+        tb1, _, tb3, *_ = table_utm_x_y
         xutm = (tb1[0] + tb3[0])/2
         yutm = (tb1[1] + tb3[1])/2
         setattr(feature, 'utm_coords', table_utm_x_y)
@@ -118,29 +118,29 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
         setattr(feature,'utm_y',yutm)
         
         
-def update_issue_Row_column(project_uid, featuresobjlist, Vlayer, Height, Width, angle):
+def update_issue_Row_column(project_uid, featuresobjlist, vlayer, height, width):
     tablelist = [table for table in featuresobjlist if table.feature['class_name'] == 'table' and table.issue_obj]
     for table in tablelist:
         parentTableIssueObj = [issue for issue in table.issue_obj]
-        abjx = Width/2
-        abjy = Height/2
+        abjx = width/2
+        abjy = height/2
         leftTop_y = max(table.utm_coords, key=lambda x: x[1])[1]
         leftTop_x = min(table.utm_coords, key=lambda x: x[0])[0]
         issue_num = 1
-        for IssueObj in parentTableIssueObj:
-            x = (IssueObj.utm_x-leftTop_x)/Width
-            y = (leftTop_y-IssueObj.utm_y)/Height
+        for issueObj in parentTableIssueObj:
+            x = (issueObj.utm_x-leftTop_x)/width
+            y = (leftTop_y-issueObj.utm_y)/height
             column = ceil(x)
             row = ceil(y)
             if row < abjy: row = 1
             if column < abjx: column =1
-            IssueObj.feature['row']= row 
-            IssueObj.feature['column'] = column
-            IssueObj.feature['uid'] = f"{project_uid}-{IssueObj.feature['table_row']}:{IssueObj.feature['table_column']}~{issue_num}"
-            IssueObj.feature['name'] = f"{project_uid}-{IssueObj.feature['table_row']}:{IssueObj.feature['table_column']}~{issue_num}"
-            IssueObj.feature['idx'] = issue_num
+            issueObj.feature['row']= row 
+            issueObj.feature['column'] = column
+            issueObj.feature['uid'] = f"{project_uid}-{issueObj.feature['table_row']}:{issueObj.feature['table_column']}~{issue_num}"
+            issueObj.feature['name'] = f"{project_uid}-{issueObj.feature['table_row']}:{issueObj.feature['table_column']}~{issue_num}"
+            issueObj.feature['idx'] = issue_num
             issue_num += 1
-            Vlayer.updateFeature(IssueObj.feature)
+            vlayer.updateFeature(issueObj.feature)
 
 
 

@@ -13,7 +13,7 @@ def get_project_reports(project_uid, container_uid, org_uid, core_token):
     
     return ortho_url, dsm_url
 
-def get_reports_url(bucket: str, key: str, region: str, token: str, save_filename='ortho.zip') -> str:
+def get_reports_url(bucket: str, key: str, region: str) -> str:
     """
     # https://api-new.sensehawk.com/storage/download?b=<bucket>&k=<key>&r=<region>&f=filename
     # https://api-new.sensehawk.com/storage/download?b=sensehawk-test-data-management&k=core%2FK4W6yJ1zMP%2Fml_models.zip&r=ap-south-1&f=test1.zip

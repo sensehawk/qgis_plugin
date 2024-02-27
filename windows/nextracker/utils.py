@@ -52,11 +52,12 @@ def setup_clipped_orthos_group(task, task_inputs):
             url = CORE_URL + f'/api/v1/containers/{container_uid}/?organization={nextracker_org_uid}'
             json['groups'].append({'uid':group_uid})
             add_group_response = requests.patch(url, headers=headers, json=json)
-            logger(f'Group added to {container_name} container... ')
+            if add_group_response.status_code == 200:
+                logger(f'Group added to {container_name} container... ')
             return {"task": task.description(), "success": True,
                     "message": "Clipped Orthos group validated",
                     "group_uid": group_uid}
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
         return {"task": task.description(), "success": False,
                 "message": str(tb),

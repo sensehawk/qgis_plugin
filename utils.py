@@ -73,9 +73,9 @@ def sort_images(task, images_dir, logger, reverse=False):
         images = [i[1] for i in sorted_tuples]
         timestamps = [i[0] for i in sorted_tuples]
         long_lats = [i[2] for i in sorted_tuples]
-    except Exception as e:
+    except Exception:
         dt = traceback.format_exc()
-        logger(f'Error:{e}')
+        logger(f'Error:{dt}')
 
     return {'sorted_images': images,
             'sorted_timestamps': timestamps,
@@ -102,7 +102,7 @@ def combobox_modifier(combobox, wordlist):
     return combobox
 
 
-def download_file(url, logger, output_path=None, directory_path=None):
+def download_file(url, logger, output_path=None):
     logger("Downloading {} to {}...".format(url, output_path))
     if not url or url == "None":
         logger("Invalid file url...")
@@ -119,7 +119,7 @@ def download_file(url, logger, output_path=None, directory_path=None):
 
 def random_color():
     # Generating random color for unlisted issue type
-    random_color_pick = (["#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)])])
+    random_color_pick = (["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)])])
     color = ''
     for i in random_color_pick:
         color += i
@@ -220,9 +220,8 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
     geojson_path = os.path.join(rpath + '\\' + project_details['name'] + '.geojson').replace("/", "_")
     if not os.path.exists(rpath):
         os.makedirs(rpath)
-    # geojson_path = os.path.join(tempfile.gettempdir(), "{}.geojson".format(project_uid))
-    with open(geojson_path, "w") as fi:
-        json.dump(geojson, fi)
+        with open(geojson_path, "w") as fi:
+            json.dump(geojson, fi)
 
     logger("Saving project geojson...")
 
@@ -239,8 +238,6 @@ def projects_details(group, org, token):
         projects_dict[project['uid']] = project['name']
 
     return projects_dict
-    # return {'project_list':project_list,
-    # 'task':task.description()}
 
 
 def groups_details(asset, org, token):
@@ -309,8 +306,6 @@ def file_existent(project_uid, org, token):
         existing_file = ['None']
         json = project_json.json()
         files = list(json.keys())
-        # if 'ortho' in files:
-        #     existing_file =  ['ortho'] + existing_file
         if 'reflectance' in files:
             existing_file = ['reflectance'] + existing_file
 
@@ -445,43 +440,12 @@ def create_custom_label(vlayer, field_name):
     textformat.setBuffer(buffer)
 
     num_images_label.setFormat(textformat)
-    # num_images_label.placement = QgsPalLayerSettings.Line
 
     labeler = QgsVectorLayerSimpleLabeling(num_images_label)
     labeler.requiresAdvancedEffects()
     vlayer.setLabelsEnabled(True)
     vlayer.setLabeling(labeler)
-    # vlayer.setCustomProperty(field_name, QgsPalLayerSettings.CentroidWhole)
     vlayer.triggerRepaint()
-
-
-# The below code is used for each chunk of file handled
-# by each thread for downloading the content from specified
-# location to storage
-def Handler(start, end, url, filename):
-    # specify the starting and ending of the file
-    headers = {'Range': 'bytes=%d-%d' % (start, end)}
-
-    # request the specified part and get into variable
-    r = requests.get(url, headers=headers, stream=True)
-
-    # open the file and write the content of the html page
-    # into file.
-    with open(filename, "r+b") as fp:
-        fp.seek(int(start))
-        var = fp.tell()
-        fp.write(r.content)
-
-
-def download_ortho(file_size, number_of_threads, file_name, ortho_url):
-    with requests.get(ortho_url, stream=True) as r:
-        r.raise_for_status()
-        with open(file_name, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                # If you have chunk encoded response uncomment if
-                # and set chunk_size parameter to None.
-                # if chunk:
-                f.write(chunk)
 
 
 def save_edits(task, save_inputs):
@@ -491,7 +455,6 @@ def save_edits(task, save_inputs):
     features = json.load(open(json_path))['features']
     cleaned_json = {"type": "FeatureCollection", "features": []}
     for feature in features:
-        uid = feature['properties'].get('uid', None)
         raw_image = feature['properties'].get('raw_images', None)
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
@@ -500,23 +463,23 @@ def save_edits(task, save_inputs):
                 if parentUid:
                     parent_item = listType_dataFields.get(parentUid, None)
                     if parent_item:
-                        Parent_rawimages = parent_item.get('raw_images', [])
+                        parent_rawimages = parent_item.get('raw_images', [])
                 else:
-                    Parent_rawimages = []
+                    parent_rawimages = []
 
                 if parentUid in listType_dataFields:
-                    feature['properties']['raw_images'] = Parent_rawimages
-                    feature['properties']['attachments'] = Parent_rawimages
+                    feature['properties']['raw_images'] = parent_rawimages
+                    feature['properties']['attachments'] = parent_rawimages
                 else:
-                    if type(raw_image) == str or not raw_image:
+                    if isinstance(raw_image, str) or not raw_image:
                         feature['properties']['raw_images'] = []
-                    elif type(attachment) == str or not attachment:
+                    elif isinstance(raw_image, str) or not attachment:
                         feature['properties']['attachments'] = []
 
-            except Exception as e:
+            except Exception:
                 tb = traceback.format_exc()
                 logger(str(tb), level=Qgis.Warning)
-                pass
+
         if feature['geometry']['coordinates'][0]:
             cleaned_json["features"].append(feature)
 
@@ -594,7 +557,6 @@ def containers_details(task, asset_uid, org_uid, core_token):
     for container in containers:
         groups = container['groups']
         container_name = container['name']
-        # app_info = [app.get('application', None) for app in container['app_types'] ]
         container_level_groups = [group['name'] for group in
                                   groups]  # app_type [{'uid':1,'name':'Thermal analaysis','application':{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
         containers_dict[container['uid']] = {'name': container_name, 'groups': container_level_groups,
@@ -623,15 +585,12 @@ def download_asset_logo(asset_name, url):
 def features_to_polygons(features):
     polygon_features = []
     for f in features:
-        # f["properties"]["uid"] = project_obj.create_uid()
         if "class" not in f["properties"].keys():
             f["properties"]["class"] = None
         if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
             polygon_features.append(f)
-            continue
         elif f["geometry"]["type"] in ["MultiLineString"]:
             coords = f["geometry"]["coordinates"]
-            # coords = np.array(coords)
             ml = MultiLineString(coords)
             # Remove
             ml = transform(lambda x, y, z=None: (x, y), ml)

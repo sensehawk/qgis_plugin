@@ -43,9 +43,6 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
         self.csv_button.clicked.connect(lambda : self.download_csv(QtWidgets.QFileDialog.getSaveFileName(None, "Title", "", "ZIP (*.zip)")[0]))
         self.points_button.clicked.connect(self.generate_points)
         self.org_uid = self.project.project_details.get("organization", {}).get("uid", None)
-    
-    # def logger(self, message, level=Qgis.Info):
-    #     QgsMessageLog.logMessage(message, 'SenseHawk QC', level=level)
 
     def start_clip_task(self):
         def validate_group_callback(task, logger):
@@ -88,7 +85,6 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
 
     def download_csv(self, download_path):
         project_uid = self.project.project_details["uid"]
-        # download_path = f"{project_uid}_csvs.zip"
         csvs_service_obj = None
         url = CORE_URL + f"/api/v1/projects/{project_uid}/?reports=true"
         reports = requests.get(url, headers={"Authorization": f"Token {self.project.core_token}"}).json().get("reports", [])

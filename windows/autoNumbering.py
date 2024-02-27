@@ -98,87 +98,85 @@ class ThermNumberingWidget(QtWidgets.QWidget):
     def stringNumber_configuration(self):
         canvas  = self.canvas
         rotation = canvas.rotation()
-        Angle = 0
-        if rotation < 0:Angle = abs(rotation)
-        elif rotation == 0:Angle = abs(rotation)
-        else:Angle = -abs(rotation)
+        angle = 0
+        if rotation < 0:angle = abs(rotation)
+        elif rotation == 0:angle = abs(rotation)
+        else:angle = -abs(rotation)
 
-        return self.Width.value(), self.Height.value(),Angle,self.Prefix.text(),self.Suffix.text()
+        return self.Width.value(), self.Height.value(), angle, self.Prefix.text(), self.Suffix.text()
 
     def string_numbering(self):
-        startTime = time()
-        Vlayer = self.iface.activeLayer()
-        Vlayer.startEditing()
-        Vfeatures = Vlayer.getFeatures()
-        module_width, module_height, angle, Prefix, Suffix = self.stringNumber_configuration()
+        start_time = time()
+        vlayer = self.iface.activeLayer()
+        vlayer.startEditing()
+        vfeatures = vlayer.getFeatures()
+        module_width, module_height, angle, prefix, suffix = self.stringNumber_configuration()
         if not module_height or not module_width:
             self.canvas_logger('Module Width and Height field is empty....', level=Qgis.Warning)
             return None
-        featureslist = [feature for feature in Vfeatures] #QgsfeatureIterator[] => Qgsfeatures
+        featureslist = [feature for feature in vfeatures] #QgsfeatureIterator[] => Qgsfeatures
         featuresobjlist = [Table(feature) for feature in featureslist] 
         sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_utm_y   , reverse=True)
-        Topmost_table = topmost_table(sorted_tables)
-        anchor_point = max(Topmost_table.raw_utm_coords, key=lambda x: x[1])
+        top_most_table = topmost_table(sorted_tables)
+        anchor_point = max(top_most_table.raw_utm_coords, key=lambda x: x[1])
         print(anchor_point)
         # Adding rotated utm_coords as a attribute to featureObj
         update_rotated_coords(featuresobjlist, anchor_point, angle) 
          #Adding Table_row and Table_column numbers to tableObj
-        table_numbering(featuresobjlist, Vlayer, self.projectuid)
+        table_numbering(featuresobjlist, vlayer, self.projectuid)
         #Grouping issues falling in Parent table and updating Parent Trow and Tcolumn number to issuesObj 
-        update_issue_tRow_tColumn(featuresobjlist, Vlayer) 
+        update_issue_tRow_tColumn(featuresobjlist, vlayer) 
         # Updating row and column to issuesObj 
-        update_issue_Row_column(self.projectuid , featuresobjlist, Vlayer, module_height, module_width, angle) 
+        update_issue_Row_column(self.projectuid , featuresobjlist, vlayer, module_height, module_width) 
             
-        Vlayer.startEditing()
+        vlayer.startEditing()
 
 
         """String NUmbering"""
         if self.stringnum_type.currentText() == 'Basic' or self.stringnum_type.currentText() == 'Basic+module':
             for featureobj in featuresobjlist:
                 if featureobj.feature['class_name'] != 'table':
-                    Trow = featureobj.feature['table_row']
-                    Tcolumn = featureobj.feature['table_column']
-                    Irow = featureobj.feature['row']
-                    Icolumn = featureobj.feature['column']
+                    table_row = featureobj.feature['table_row']
+                    table_column = featureobj.feature['table_column']
+                    issue_row = featureobj.feature['row']
+                    issue_column = featureobj.feature['column']
                     if self.stringnum_type.currentText() == 'Basic':
-                        basic_number = f"{Prefix}-R{Trow}-T{Tcolumn}-{Suffix}"
+                        basic_number = f"{prefix}-R{table_row}-T{table_column}-{suffix}"
                         try:
                             featureobj.feature['string_number'] = basic_number.strip('-')
                         except KeyError:
                             self.canvas_logger("String number field does not exist!", level=Qgis.Warning)
-                        Vlayer.updateFeature(featureobj.feature)
+                        vlayer.updateFeature(featureobj.feature)
                     elif self.stringnum_type.currentText() == 'Basic+module':
-                        basicModule_number = f"{Prefix}-R{Trow}-T{Tcolumn}-R{Irow}-C{Icolumn}-{Suffix}"
-                        featureobj.feature['string_number'] = basicModule_number.strip('-')
-                        Vlayer.updateFeature(featureobj.feature)
+                        basic_module_number = f"{prefix}-R{table_row}-T{table_column}-R{issue_row}-C{issue_column}-{suffix}"
+                        featureobj.feature['string_number'] = basic_module_number.strip('-')
+                        vlayer.updateFeature(featureobj.feature)
                     
         elif self.stringnum_type.currentText() == 'Existing+module':
             for featureobj in featuresobjlist:
                 if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
                     if not featureobj.feature['string_number']:
-                        Existing_SN = "Existing string number does not exist"
+                        existing_string_number = "Existing string number does not exist"
                     else:
-                        Existing_SN = featureobj.feature['string_number']
+                        existing_string_number = featureobj.feature['string_number']
                     for issue_obj in featureobj.issue_obj:
-                        Irow = issue_obj.feature['row']
-                        Icolumn = issue_obj.feature['column']
-                        basicModule_number = f"{Prefix}-{Existing_SN}-R{Irow}-C{Icolumn}-{Suffix}"
-                        issue_obj.feature['string_number'] = basicModule_number.strip('-')
-                        Vlayer.updateFeature(issue_obj.feature)
+                        issue_row = issue_obj.feature['row']
+                        issue_column = issue_obj.feature['column']
+                        basic_module_number = f"{prefix}-{existing_string_number}-R{issue_row}-C{issue_column}-{suffix}"
+                        issue_obj.feature['string_number'] = basic_module_number.strip('-')
+                        vlayer.updateFeature(issue_obj.feature)
         
         elif self.stringnum_type.currentText() == 'Existing':
             for featureobj in featuresobjlist:
                 if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
                     if not featureobj.feature['string_number']:
-                        Existing_SN = "Existing string number does not exist"
+                        existing_string_number = "Existing string number does not exist"
                     else:
-                        Existing_SN = featureobj.feature['string_number']
+                        existing_string_number = featureobj.feature['string_number']
                     for issue_obj in featureobj.issue_obj:
-                        Irow = issue_obj.feature['row']
-                        Icolumn = issue_obj.feature['column']
-                        basicModule_number = f"{Prefix}-{Existing_SN}"
-                        issue_obj.feature['string_number'] = basicModule_number.strip('-')
-                        Vlayer.updateFeature(issue_obj.feature)
+                        basic_module_number = f"{prefix}-{existing_string_number}-{suffix}"
+                        issue_obj.feature['string_number'] = basic_module_number.strip('-')
+                        vlayer.updateFeature(issue_obj.feature)
 
         
         elif self.stringnum_type.currentText() == 'UID':
@@ -208,11 +206,11 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                     featureobj.feature['num_modules_vertical'] = table_details[1]
                     featureobj.feature['num_modules_horizontal'] = table_details[2]
                     featureobj.feature['total_num_modules'] = int(table_details[1] * table_details[2])
-                    Vlayer.updateFeature(featureobj.feature)
+                    vlayer.updateFeature(featureobj.feature)
             self.tables_info.clear()
 
-        endTime = time()
-        duration = int(round((endTime - startTime) * 1000))
-        Vlayer.commitChanges()
-        Vlayer.startEditing()
+        end_time = time()
+        duration = int(round((end_time - start_time) * 1000))
+        vlayer.commitChanges()
+        vlayer.startEditing()
         self.canvas_logger(f'<b>String_numbeirng</b> done in {duration}ms.', level=Qgis.Success)

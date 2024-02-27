@@ -83,8 +83,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         reflectance = result['projectjson'].get('reflectance', None)
         calibratedParameters = result['projectjson'].get('calibratedParameters', None)
         externalCalibratedParameters = result['projectjson'].get('externalCalibratedParameters', None)
-        green = "QCheckBox::indicator" "{" "background-color : lightgreen;" "}"
-        red = "QCheckBox::indicator""{" "background-color : red;" "}"
+        green = "QCheckBox::indicator"+"{"+"background-color : lightgreen;"+"}"
+        red = "QCheckBox::indicator"+"{"+"background-color : red;"+"}"
         if dsm : 
             self.get_dsm.setChecked(True)
             self.get_dsm.setStyleSheet(green)
