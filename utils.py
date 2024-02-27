@@ -212,16 +212,18 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
                           "geometry": extent_geometry, "workflow": {}}
         geojson["features"] += [extent_feature]
 
+
     # Save geojson
     d_path = str(Path.home() / "Downloads")
     rpath = os.path.join(
         d_path + '\\' + 'Sensehawk_plugin' + '\\' + project_details['asset']['name'] + '\\' + project_details['group'][
             'name'])
     geojson_path = os.path.join(rpath + '\\' + project_details['name'] + '.geojson').replace("/", "_")
+
     if not os.path.exists(rpath):
         os.makedirs(rpath)
-        with open(geojson_path, "w") as fi:
-            json.dump(geojson, fi)
+    with open(geojson_path, "w") as fi:
+        json.dump(geojson, fi)
 
     logger("Saving project geojson...")
 

@@ -16,7 +16,6 @@ from pathlib import Path
 import os
 import json
 import requests
-import pprint
 from ..nextracker.utils import nextracker_org_uid, generate_group_points
 from ...event_filters import KeypressEmitter, KeypressFilter
 
