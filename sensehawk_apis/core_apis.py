@@ -84,8 +84,8 @@ def save_project_geojson(geojson, project_uid, token, project_type="terra"):
     if project_type == "terra":
         # Return only status code
         if res.status_code == 200:
-            return "Successfully saved to SenseHawk Terra."
-    return res.json()
+            return "Successfully saved to SenseHawk Terra.", res.status_code
+    return res.json(), res.status_code
 
 
 def core_login(username, password, logger):

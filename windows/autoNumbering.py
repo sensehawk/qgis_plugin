@@ -116,7 +116,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
             return None
         featureslist = [feature for feature in vfeatures] #QgsfeatureIterator[] => Qgsfeatures
         featuresobjlist = [Table(feature) for feature in featureslist] 
-        sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_utm_y   , reverse=True)
+        sorted_tables = sorted(featuresobjlist, key=lambda x: x.raw_utm_y, reverse=True)
         top_most_table = topmost_table(sorted_tables)
         anchor_point = max(top_most_table.raw_utm_coords, key=lambda x: x[1])
         print(anchor_point)

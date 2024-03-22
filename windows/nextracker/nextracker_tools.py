@@ -22,14 +22,14 @@
 #  ***************************************************************************/
 # """
 
-from qgis.PyQt import QtWidgets, uic
 import os
-from qgis.core import QgsMessageLog, Qgis, QgsApplication, QgsTask, QgsFeatureRequest, QgsPoint, QgsVectorLayer
-from .utils import setup_clipped_orthos_group
-from ...tasks import clip_request
-from ...constants import CORE_URL, THERMAL_TAGGING_URL, NEXTRACKER_URL
 import requests
+from ...tasks import clip_request
 import urllib.request
+from qgis.PyQt import QtWidgets, uic
+from .utils import setup_clipped_orthos_group
+from qgis.core import  Qgis, QgsApplication, QgsTask
+from ...constants import CORE_URL, THERMAL_TAGGING_URL, NEXTRACKER_URL
 
 
 class NextrackerToolsWidget(QtWidgets.QWidget):

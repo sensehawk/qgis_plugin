@@ -29,17 +29,21 @@ from qgis.PyQt import QtWidgets, uic
 from qgis.core import  Qgis, QgsApplication, QgsTask
 
 from ..sensehawk_apis.sid_apis import detect_solar_issues
-from ..windows.autoNumbering import ThermNumberingWidget
 from ..windows.ImageTagging import ThermImageTaggingWidget
-from ..windows.thermliteQc import ThermliteQcWindow
 from ..windows.therm_viewer import ThermViewerDockWidget
-from ..tasks import clip_request
+from ..windows.autoNumbering import ThermNumberingWidget
+from ..windows.serial_number import SerialNumberWidget
+from ..windows.thermliteQc import ThermliteQcWindow
+from .autoNumbering_utils import Table
 from ..utils import create_custom_label, fields_validator
-
+from ..tasks import clip_request
+from math import ceil
 
 import os
+import re
 import json
 import requests
+
 
 class ThermToolsWidget(QtWidgets.QWidget):
 
@@ -55,9 +59,9 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.existing_files = self.project.existing_files
         self.canvas = self.iface.mapCanvas()
         self.StringNumberButton.clicked.connect(self.string_numbering)
-        # self.StringNumberButton.clicked.connect(lambda : ThermNumberingWidget(self, self.iface))
-        self.imagetaggingButton.clicked.connect(self.ImageTagging)
+        self.serial_number_btn.clicked.connect(self.serial_numbering)
         self.thermliteQcButton.clicked.connect(self.ThermliteTagging)
+        self.imagetaggingButton.clicked.connect(self.ImageTagging)
         self.viewer_button.clicked.connect(self.therm_viewer)
         self.clipButton.clicked.connect(self.clip_raster)
         self.sidv2_detect_button.clicked.connect(lambda : Sid_detection(self))
@@ -68,8 +72,10 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.imagetagging_widget = None
         self.thermlite_tagging_widget = None
         self.therm_viewer_widget = None
+        self.serial_number_widget = None
         self.project.docktool_widget.visibilityChanged.connect(lambda x :self.uncheck_buttons(x))
         self.field_names = [field.name() for field in self.project.vlayer.fields()]
+        self.featuresobjlist = []
         self.custom_label.addItems(self.field_names)
         self.custom_label.setEditable(True)
         self.custom_label.lineEdit().setAlignment(Qt.AlignCenter) 
@@ -162,7 +168,22 @@ class ThermToolsWidget(QtWidgets.QWidget):
             self.therm_viewer_widget.disconnect_signal()
         self.enable_docktool_custom_labels()
         
-    
+    def serial_numbering(self):
+        self.project.active_tool_widget.hide()
+        if not self.serial_number_widget:
+            self.serial_number_widget = SerialNumberWidget(self)
+        self.project.active_docktool_widget = self.serial_number_widget
+        self.project.docktool_widget.setWidget(self.serial_number_widget)
+        self.project.docktool_widget.setFixedWidth(250)
+        self.project.docktool_widget.setSizePolicy(100, QtWidgets.QSizePolicy.Expanding)        
+        self.project.docktool_widget.show()
+        self.uncheck_all_buttons()
+        self.serial_number_btn.setChecked(True)
+        self.project.active_docktool_widget = self.serial_number_widget
+        if self.therm_viewer_widget:
+            self.therm_viewer_widget.disconnect_signal()
+        self.enable_docktool_custom_labels(onlylabel=True)
+
     def therm_viewer(self):
         self.project.active_tool_widget.hide()
         if not self.therm_viewer_widget:
@@ -178,8 +199,6 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.active_docktool_widget = self.therm_viewer_widget
         self.project.docktool_widget.visibilityChanged.connect(lambda x: self.therm_viewer_widget.toggle_signal_connection(x))
         self.enable_docktool_custom_labels()
-        # self.therm_viewer_widget.connect_signal()
-        # self.therm_viewer_widget.reload_required_data()
 
     def string_numbering(self):
         self.project.active_tool_widget.hide()
@@ -213,12 +232,13 @@ class ThermToolsWidget(QtWidgets.QWidget):
         self.project.vlayer.setLabelsEnabled(False)
     
     def enable_docktool_custom_labels(self, onlylabel=None):
-        tool_field_map = {'StringNumber':'string_number', 'ManualTagging':'num_images_tagged', 'ThermViewer':'num_images_tagged'}
+        tool_field_map = {'StringNumber':'string_number', 'ManualTagging':'num_images_tagged', 'ThermViewer':'num_images_tagged', 'Serial Number':'serial_number'}
         for button in self.findChildren(QtWidgets.QPushButton):
             if button.isCheckable():
                 if button.isChecked():
                     current_tool =  button.text()
                     field_name = tool_field_map.get(current_tool, 'uid')
+                    print(field_name)
                     if onlylabel:
                         self.custom_label.setCurrentText(field_name)
                     else:
@@ -277,6 +297,9 @@ class Sid_detection(QtWidgets.QDialog):
         layout.addWidget(button_box)
         self.exec_()
     
+    def closeEvent(self, event):
+        self.therm_tool_obj.uncheck_all_buttons()        
+
     def detect_issues(self):
         self.accept()
         map_angle = self.therm_tool_obj.canvas.rotation()
@@ -304,4 +327,6 @@ class Sid_detection(QtWidgets.QDialog):
     
     def close_dialogbox(self):
         self.reject()
+        self.therm_tool_obj.uncheck_all_buttons()
         self.therm_tool_obj.sidv2_detect_button.setChecked(False)
+

@@ -169,8 +169,10 @@ def categorized_renderer(project):
     renderer = None
     if project.project_details["project_type"] == "terra":
         renderer = QgsCategorizedSymbolRenderer('class', categories)
+        print("Terra class rendered...")
     elif project.project_details["project_type"] == "therm":
         renderer = QgsCategorizedSymbolRenderer('class_name', categories)
+        print("Therm class_name rendered....")
 
     return renderer
 
@@ -583,12 +585,48 @@ def download_asset_logo(asset_name, url):
 
     return asset_logo_path
 
+def datatype_fields_validator(feature, project_type):
+    if project_type == "terra":
+        fields = {"extraProperties":{}, "workflowProgress":{}, "dataProperties":{},"hierarchyProperties":{}}
+        feature['properties'].pop('element', None)
+        feature['properties'].pop("workflow", None)
+        feature['properties'].pop('workflowProgressTimestamp', None)
+    else:
+        fields = {"center":[[]], "assignees":[], "notes":[], "element":{}, "user_attachments":[], "priority":"", "status":""}
+        feature['properties'].pop('workflowProgress', None)
+        feature['properties'].pop('extraProperties', None)
+        feature['properties'].pop('class', None)
+    
+    for field in fields.keys():
+        if isinstance(feature["properties"].get(field, fields[field]), str) or not feature['properties'].get(field, None)   :
+            data_type = fields[field]
+            feature["properties"][field] = data_type
 
-def features_to_polygons(features):
+def features_to_polygons(features, projectuid, groupuid, projectTabObj):
+    projectTabObj.extraProperties = {}
     polygon_features = []
+    project_type = projectTabObj.project_details["project_type"]
     for f in features:
-        if "class" not in f["properties"].keys():
-            f["properties"]["class"] = None
+        therm_violator_fields = ['id', 'description', 'color', 'fill_color', 'opacity', 'dataProperties', 'hierarchyProperties', 'workflowProgress', 'workflow', 'workflowProgressTimestamp', 'project', 'featureType', 'featureTypeId']
+        f['properties']['projectUid'] = projectuid
+        f['properties']['groupUid'] = groupuid
+        extra_properties = f['properties'].get('extraProperties', {})
+        uid = f['properties'].get('uid', None)
+        projectTabObj.extraProperties[uid] = extra_properties
+        datatype_fields_validator(f, project_type)
+        if project_type == 'therm':
+            if f["geometry"]["type"] == "MultiPolygon":
+                if len(f["geometry"]['coordinates'][0]) > 1:
+                    projectTabObj.logger("Wont Support MultiPolygon Geometery...")
+                    continue
+                else:
+                    f["geometry"]['type'] = 'Polygon'
+                    f["geometry"]['coordinates'] = [f["geometry"]['coordinates'][0][0]]
+            for field in therm_violator_fields:
+                f['properties'].pop(field, None)
+        if project_type == 'terra':
+            if "class" not in f["properties"].keys():
+                f["properties"]["class"] = None
         if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
             polygon_features.append(f)
         elif f["geometry"]["type"] in ["MultiLineString"]:

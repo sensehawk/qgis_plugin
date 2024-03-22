@@ -870,6 +870,11 @@ class ReportsDashboard(QtWidgets.QDialog):
             report_download_widget.report_name.setText(report_name)
             report_download_widget.report_download.clicked.connect(partial(self.download_report, report_name, download_url))
             self.reports_upload_ui.download_report_layout.addWidget(report_download_widget)
+        #TODO add support to download terra files
+            # url = f"https://terra-server.sensehawk.com/container-views/{container_uid}/projects/{project_uid}/?organization={org_uid}"
+            # res = requests.get(url, headers=headers).json()["reports"]
+            # ortho_url = res.get("ortho", {}).get('url', None)
+            # dsm_url = res.get("dsm", {}).get('url', None)
 
 
     def select_file(self):
