@@ -5,7 +5,6 @@ from ..project_management.datatypes import Container
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
 from qgis.PyQt.QtCore import Qt
 from qgis.core import Qgis, QgsTask, QgsApplication
-from .groups_homepage import GroupsForm
 from functools import partial
 from ..projectTabs import ProjectTabsWidget, Project
 from ...tasks import project_loadtask 

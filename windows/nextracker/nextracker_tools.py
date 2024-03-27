@@ -29,7 +29,7 @@ import urllib.request
 from qgis.PyQt import QtWidgets, uic
 from .utils import setup_clipped_orthos_group
 from qgis.core import  Qgis, QgsApplication, QgsTask
-from ...constants import CORE_URL, THERMAL_TAGGING_URL, NEXTRACKER_URL
+from ...constants import CORE_URL, THERMAL_TAGGING_URL, NEXTRACKER_URL, NEXTRACKER_V3_URL
 
 
 class NextrackerToolsWidget(QtWidgets.QWidget):
@@ -111,7 +111,9 @@ class NextrackerToolsWidget(QtWidgets.QWidget):
 
     def generate_points(self):
         project_uid = self.project.project_details["uid"]
-        url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={self.org_uid}&user_email={self.project.user_email}"
+        # url = f"{NEXTRACKER_URL}/points?project_uid={project_uid}&organization_uid={self.org_uid}&user_email={self.project.user_email}"
+        params = {"service_name":"nextracker", "endpoint":"points", "project_uid":project_uid, "organization_uid":self.org_uid, "user_email":self.project.user_email}
+        url = NEXTRACKER_V3_URL
         headers = {"Authorization": f"Token {self.project.core_token}"}
-        resp = requests.post(url, headers=headers).json()
+        resp = requests.post(url, headers=headers, params=params).json()
         self.project.canvas_logger(str(resp))

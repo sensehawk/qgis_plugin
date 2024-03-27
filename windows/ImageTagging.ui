@@ -131,6 +131,16 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QCheckBox" name="markerlocation">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Marker Location</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
