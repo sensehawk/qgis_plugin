@@ -316,7 +316,8 @@ def file_existent(project_uid, org, token):
         return existing_file
 
 
-def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
+def convert_and_upload(path, image_info, projectUid, post_urls_data, logger):
+    image_path, max_temp_marker, min_temp_marker = image_info    
     image_name = image_path.split('\\')[-1]
     image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
     dpath = os.path.join(f'{path}', image_name)
@@ -325,6 +326,10 @@ def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
     heatmap = (colormap(image) * 2 ** 16)[:, :, :3].astype(np.uint16)
     heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0 / 65535.0))
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+    if max_temp_marker and min_temp_marker:
+        heatmap = cv2.drawMarker(heatmap, tuple(max_temp_marker),(255,0,0), markerType=5,markerSize=7, thickness=1, line_type=cv2.LINE_AA)
+        heatmap = cv2.drawMarker(heatmap, tuple(min_temp_marker),(0,255,0), markerType=6,markerSize=7, thickness=1, line_type=cv2.LINE_AA)
+
     if cv2.imwrite(dpath, heatmap):
         post_url = post_urls_data[image_key]["url"]
         post_data = post_urls_data[image_key]["fields"]
@@ -363,7 +368,7 @@ def get_presigned_post_urls(task, inputs):
     org_uid = inputs["orgUid"]
     project_uid = inputs["projectUid"]
     core_token = inputs["core_token"]
-    upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{os.path.split(i)[-1]}" for i in upload_image_list]
+    upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{os.path.split(i[0])[-1]}" for i in upload_image_list]
     data = {"project_uid": project_uid, "organization": org_uid, "object_keys": upload_keys}
     # print(f"Data for presigned post urls: {data}")
     url = THERMAL_TAGGING_URL + "/presigned_post_urls"

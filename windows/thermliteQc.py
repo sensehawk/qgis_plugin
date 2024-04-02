@@ -40,6 +40,8 @@ import subprocess
 from ..utils import sort_images, upload, combobox_modifier, categorize_layer, get_presigned_post_urls, fields_validator, create_custom_label
 import json
 from ..constants import S3_BUCKET, S3_REGION
+import shutil
+
 
 exiftool_path = r'{}'.format(os.path.realpath(os.path.join(os.path.dirname(__file__), "exiftool.exe")))
 
@@ -249,6 +251,18 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 self.max_temp = np.percentile(temp_patch, int(self.max_percentile.text().strip() or 1))
                 self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text().strip() or 1))
                 self.delta_temp.setText("{:.2f}".format(float(self.max_temp-self.min_temp)))
+                if self.temperature_markers.isChecked():
+                    # Get points where max and min temperatures are in case temperature_markers checkbox is selected
+                    mx_y, mx_x = min_y + np.where(temp_patch == self.max_temp)[0][0], min_x + np.where(temp_patch == self.max_temp)[1][0]
+                    mn_y, mn_x = min_y + np.where(temp_patch == self.min_temp)[0][0], min_x + np.where(temp_patch == self.min_temp)[1][0]
+                    self.max_temp_marker = [mx_x, mx_y]
+                    self.min_temp_marker = [mn_x, mn_y]
+                    # Show the max and min points on the image viewer
+                    self.painted_image = cv2.drawMarker(self.painted_image, tuple(self.max_temp_marker),(255,0,0), markerType=5,markerSize=7, thickness=1, line_type=cv2.LINE_AA)
+                    self.painted_image = cv2.drawMarker(self.painted_image, tuple(self.min_temp_marker),(255,0,0), markerType=5,markerSize=7, thickness=1, line_type=cv2.LINE_AA)
+                    qImg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+                    self.current_image = QtGui.QPixmap(qImg)
+                    self.viewer.setPhoto(self.current_image)
             except Exception as e:
                 self.canvas_logger(str(e), level=Qgis.Warning)
                 return None
@@ -397,16 +411,21 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 self.therm_tools.num_tagged_rawimages[uid] = int(sfeature['num_images_tagged']) + 1
             
         # If the same marker location and the same image exists, don't add it again
-        if sfeature_image_tagged_info.get(image_path, [0, 0]) != self.markerlocation:        
-            sfeature_image_tagged_info[image_path] = self.markerlocation
+        if sfeature_image_tagged_info.get(image_path, [[0, 0], None, None])[0] != self.markerlocation:
+            if self.temperature_markers.isChecked():
+                sfeature_image_tagged_info[image_path] = [self.markerlocation, self.max_temp_marker, self.min_temp_marker]
+            else:            
+                sfeature_image_tagged_info[image_path] = [self.markerlocation, None, None]
             print(f"Tagged image info: {self.image_tagged_info}")
         else:
             return None
         # Save sfeature tagged info for later use
         self.image_tagged_info[uid] = sfeature_image_tagged_info
         self.project.vlayer.updateFeature(sfeature)
-        # Set the marker location to default [0, 0]
+        # Set the marker location and temperature markers to default values 
         self.markerlocation = [0, 0]
+        self.max_temp_marker = None
+        self.min_temp_marker = None
 
     def parse_tagged_data(self):
         self.canvas_logger('Saving changes to Sensehawk Core')
@@ -418,10 +437,18 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             raw_image = []
             image_num = 0
             for next_image in imgs_info:
-                if next_image not in self.upload_image_list:
-                    self.upload_image_list.append(next_image)
-                image = next_image.split('\\')[-1]
-                markerlocation = imgs_info[next_image]
+                # Avoid duplicate upload of same image in case temperature markers are not required
+                if not self.temperature_markers.isChecked() and next_image not in self.upload_image_list:
+                    self.upload_image_list.append([next_image, None, None])
+                    image = next_image.split('\\')[-1]
+                # In case of temperature markers, add the marker locations inside the upload image list so that we can add markers after converting to magma
+                elif self.temperature_markers.isChecked():
+                    updated_image_path = next_image.replace(next_image.split('\\')[-1], f"{image_num}_{next_image.split('\\')[-1]}")
+                    image = updated_image_path.split('\\')[-1]
+                    shutil.copy(next_image, updated_image_path)
+                    _, max_temp_marker, min_temp_marker = imgs_info[next_image] 
+                    self.upload_image_list.append([updated_image_path, max_temp_marker, min_temp_marker])
+                markerlocation = imgs_info[next_image][0]
                 image_type = 'Thermal Raw Image'
                 aws_image = {"location": markerlocation,
                     "service": {'bucket': S3_BUCKET,

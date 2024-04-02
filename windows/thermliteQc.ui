@@ -88,9 +88,9 @@
   <widget class="QCheckBox" name="temperature_toggle">
    <property name="geometry">
     <rect>
-     <x>390</x>
-     <y>510</y>
-     <width>151</width>
+     <x>380</x>
+     <y>500</y>
+     <width>161</width>
      <height>23</height>
     </rect>
    </property>
@@ -318,7 +318,7 @@
      <x>6</x>
      <y>510</y>
      <width>361</width>
-     <height>26</height>
+     <height>27</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout">
@@ -347,7 +347,7 @@
      <x>6</x>
      <y>546</y>
      <width>205</width>
-     <height>26</height>
+     <height>27</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout_2">
@@ -379,7 +379,7 @@
      <x>240</x>
      <y>612</y>
      <width>307</width>
-     <height>26</height>
+     <height>27</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -489,7 +489,7 @@
     <rect>
      <x>6</x>
      <y>612</y>
-     <width>205</width>
+     <width>211</width>
      <height>30</height>
     </rect>
    </property>
@@ -509,6 +509,22 @@
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QCheckBox" name="temperature_markers">
+   <property name="geometry">
+    <rect>
+     <x>380</x>
+     <y>520</y>
+     <width>171</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Temperature Markers</string>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
   </widget>
  </widget>
  <resources/>
