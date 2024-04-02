@@ -58,7 +58,7 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.string_number_suffix = ''
         self.addl_uid = None # additional Project uid
 
-        self.stringnumber_table_ui = stringNumberTableInfo(self)
+        self.central_stringnumber_widget = thermtool_obj.project.stringnumber_widget
         self.project_details_button.clicked.connect(self.get_project_details)
         self.tag_button.clicked.connect(self.image_tagging)
         self.imagetaggingType.currentTextChanged.connect(self.current_type)
@@ -279,7 +279,8 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
         self.string_number_prefix = ""
         self.string_number_suffix = ""
         if self.stringNumCheckbox.isChecked():
-            self.stringnumber_table_ui.exec_()
+            self.central_stringnumber_widget.stringNumObj = self
+            self.central_stringnumber_widget.exec_()
             if not self.stringnum_updated:
                 self.canvas_logger('Approval request Cancelled',level=Qgis.Warning)
                 return None
@@ -327,80 +328,81 @@ class ThermImageTaggingWidget(QtWidgets.QWidget):
             self.api(json) 
 
 
-from functools import partial
+# from functools import partial
 
-class stringNumberTableInfo(QtWidgets.QDialog):
-    def __init__(self, stringNumObj):
-        super(stringNumberTableInfo, self).__init__()
-        layout = QtWidgets.QVBoxLayout(self)
-        self.string_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'AutoNumbering_V2.ui'))
-        self.stringNumObj = stringNumObj
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowTitle("String Number")
-        self.table_info_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info_V2.ui'))
-        self.tables = [self.table_info_ui]
-        button_box = QtWidgets.QDialogButtonBox()
-        button_box.addButton("Collect", QtWidgets.QDialogButtonBox.AcceptRole)
-        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
-        button_box.accepted.connect(self.tables_info)
-        button_box.rejected.connect(self.close_dialogbox)
-        button_box.setCenterButtons(True)
-        self.add_btn = QtWidgets.QPushButton("➕")
-        self.add_btn.setFixedSize(40, 24)
-        self.add_remove_buttons = [self.add_btn]
-        self.add_btn.clicked.connect(self.add_table_widget)
-        layout.addWidget(self.string_ui)
-        layout.addWidget(button_box)
-        self.add_btn_poistion = 3
-        self.table_and_module_info = {}
-        self.setup_ui()
+# class StringNumberTableWidget(QtWidgets.QDialog):
+#     def __init__(self, group_obj):
+#         super(StringNumberTableWidget, self).__init__()
+#         layout = QtWidgets.QVBoxLayout(self)
+#         self.string_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'AutoNumbering_V2.ui'))
+#         self.stringNumObj = None
+#         self.group_obj = group_obj
+#         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+#         self.setWindowTitle("String Number")
+#         self.table_info_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info_V2.ui'))
+#         self.tables = [self.table_info_ui]
+#         button_box = QtWidgets.QDialogButtonBox()
+#         button_box.addButton("Collect", QtWidgets.QDialogButtonBox.AcceptRole)
+#         button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+#         button_box.accepted.connect(self.tables_info)
+#         button_box.rejected.connect(self.close_dialogbox)
+#         button_box.setCenterButtons(True)
+#         self.add_btn = QtWidgets.QPushButton("➕")
+#         self.add_btn.setFixedSize(40, 24)
+#         self.add_remove_buttons = [self.add_btn]
+#         self.add_btn.clicked.connect(self.add_table_widget)
+#         layout.addWidget(self.string_ui)
+#         layout.addWidget(button_box)
+#         self.add_btn_poistion = 3
+#         self.table_and_module_info = {}
+#         self.setup_ui()
 
-    def setup_ui(self):
-        self.string_ui.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
-        self.string_ui.string_grid_layout.addWidget(self.table_info_ui, self.add_btn_poistion, 1)
+#     def setup_ui(self):
+#         self.string_ui.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
+#         self.string_ui.string_grid_layout.addWidget(self.table_info_ui, self.add_btn_poistion, 1)
     
-    def add_table_widget(self):
-        remove_btn = QtWidgets.QPushButton("❌")
-        remove_btn.setFixedSize(40, 24)
-        remove_btn.clicked.connect(partial (self.remove_table_widget, self.tables[-1], remove_btn))
-        self.add_btn_poistion += 1
-        table_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info_V2.ui'))
-        self.string_ui.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
-        self.string_ui.string_grid_layout.addWidget(remove_btn, self.add_btn_poistion-1, 0, Qt.AlignLeft)
-        self.string_ui.string_grid_layout.addWidget(table_ui, self.add_btn_poistion, 1)
-        self.tables.append(table_ui)
-        self.add_remove_buttons.append(remove_btn)
+#     def add_table_widget(self):
+#         remove_btn = QtWidgets.QPushButton("❌")
+#         remove_btn.setFixedSize(40, 24)
+#         remove_btn.clicked.connect(partial (self.remove_table_widget, self.tables[-1], remove_btn))
+#         self.add_btn_poistion += 1
+#         table_ui = uic.loadUi(os.path.join(os.path.dirname(__file__), 'table_info_V2.ui'))
+#         self.string_ui.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
+#         self.string_ui.string_grid_layout.addWidget(remove_btn, self.add_btn_poistion-1, 0, Qt.AlignLeft)
+#         self.string_ui.string_grid_layout.addWidget(table_ui, self.add_btn_poistion, 1)
+#         self.tables.append(table_ui)
+#         self.add_remove_buttons.append(remove_btn)
     
-    def remove_table_widget(self, table_ui, remove_btn):
-        self.string_ui.string_grid_layout.removeWidget(table_ui)
-        self.string_ui.string_grid_layout.removeWidget(remove_btn)
-        self.tables.remove(table_ui)
-        self.add_remove_buttons.remove(remove_btn)
-        table_ui.deleteLater()
-        remove_btn.deleteLater()
+#     def remove_table_widget(self, table_ui, remove_btn):
+#         self.string_ui.string_grid_layout.removeWidget(table_ui)
+#         self.string_ui.string_grid_layout.removeWidget(remove_btn)
+#         self.tables.remove(table_ui)
+#         self.add_remove_buttons.remove(remove_btn)
+#         table_ui.deleteLater()
+#         remove_btn.deleteLater()
         
-    def tables_info(self):
-        self.table_and_module_info.clear()
-        for table in self.tables:
-            if not table.table_length.text() or not table.table_height.text() or not table.table_row.text() or not table.table_column.text() or not table.module_width.text() or not table.module_height.text():
-                    self.stringNumObj.canvas_logger('Table length | row | column info is missing...', level=Qgis.Warning)
-                    self.stringNumObj.tables_module_info.clear()
-                    return None 
-            else:
-                table_half_perimeter =  float(table.table_length.text()) + float(table.table_height.text())
-                print(table_half_perimeter, type(table_half_perimeter))
-                self.table_and_module_info[float(table_half_perimeter)] = [float(table.table_length.text()),float(table.table_height.text()), int(table.table_column.text()), int(table.table_row.text()),float(table.module_width.text()),float(table.module_height.text())]
-                self.stringNumObj.tables_module_info = self.table_and_module_info
-                self.stringNumObj.stringnum_type = self.string_ui.stringnum_type.currentText()
-                self.stringNumObj.string_number_prefix = self.string_ui.Prefix.text()
-                self.stringNumObj.string_number_suffix = self.string_ui.Suffix.text()
+#     def tables_info(self):
+#         self.table_and_module_info.clear()
+#         for table in self.tables:
+#             if not table.table_length.text() or not table.table_height.text() or not table.table_row.text() or not table.table_column.text() or not table.module_width.text() or not table.module_height.text():
+#                     self.group_obj.canvas_logger('Table length | row | column info is missing...', level=Qgis.Warning)
+#                     self.stringNumObj.tables_module_info.clear()
+#                     return None 
+#             else:
+#                 table_half_perimeter =  float(table.table_length.text()) + float(table.table_height.text())
+#                 print(table_half_perimeter, type(table_half_perimeter))
+#                 self.table_and_module_info[float(table_half_perimeter)] = [float(table.table_length.text()),float(table.table_height.text()), int(table.table_column.text()), int(table.table_row.text()),float(table.module_width.text()),float(table.module_height.text())]
+#                 self.stringNumObj.tables_module_info = self.table_and_module_info
+#                 self.stringNumObj.stringnum_type = self.string_ui.stringnum_type.currentText()
+#                 self.stringNumObj.string_number_prefix = self.string_ui.Prefix.text()
+#                 self.stringNumObj.string_number_suffix = self.string_ui.Suffix.text()
 
-        self.stringNumObj.stringnum_updated = True
-        self.accept()
+#         self.stringNumObj.stringnum_updated = True
+#         self.accept()
         
-    def closeEvent(self, event):
-        self.stringNumObj.tag_button.setChecked(False)
+#     def closeEvent(self, event):
+#         self.stringNumObj.tag_button.setChecked(False)
         
-    def close_dialogbox(self):
-        self.stringNumObj.tag_button.setChecked(False)
-        self.reject()
+#     def close_dialogbox(self):
+#         self.stringNumObj.tag_button.setChecked(False)
+#         self.reject()

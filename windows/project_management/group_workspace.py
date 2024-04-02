@@ -8,7 +8,7 @@ from qgis.core import Qgis, QgsTask, QgsApplication
 from functools import partial
 from ..projectTabs import ProjectTabsWidget, Project
 from ...tasks import project_loadtask 
-from ...utils import categorize_layer
+from ...utils import categorize_layer, StringNumberTableWidget
 from qgis.utils import iface
 from ...constants import CORE_URL
 from pathlib import Path
@@ -17,6 +17,7 @@ import json
 import requests
 from ..nextracker.utils import nextracker_org_uid, generate_group_points
 from ...event_filters import KeypressEmitter, KeypressFilter
+
 
 therm_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'therm_logo.svg'))
 terra_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'terra_logo.svg'))
@@ -44,6 +45,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.project_uids = []
         self.setupUi(group_obj, group_dict)
         self.intialize_keyboard_signals()
+        self.stringnumber_widget = StringNumberTableWidget(self)
     
     def intialize_keyboard_signals(self):
         # Create a key emitter that sends the key presses
@@ -277,6 +279,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         project.group_obj = group_obj
         project.org_uid = self.group_obj.org_info.get('uid', None)
         project.home_window = self.workspace_window.home_window 
+        project.stringnumber_widget = self.stringnumber_widget
         
         # Add project to therm project tab
         if application_type == 'therm':

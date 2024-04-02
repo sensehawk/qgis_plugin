@@ -802,6 +802,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             self.active_project = None
             return None
         project = self.projects_loaded[project_uid]
+        project.stringnumber_widget.stringNumObj = None
         self.active_project = project
         # Connect the key emitter to the key eater that performs required shortcuts
         try:
