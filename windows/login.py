@@ -30,7 +30,6 @@ from qgis.core import QgsMessageLog, Qgis, QgsTask, QgsApplication
 from qgis.PyQt.QtCore import Qt, QCoreApplication, QSize
 
 from ..tasks import logintask
-# from ..utils import organization_details
 import os
 
 class LoginWindow(QtWidgets.QWidget):
@@ -59,8 +58,6 @@ class LoginWindow(QtWidgets.QWidget):
         self.layout.addWidget(logo_label)
         self.dock_widget.setWidget(self)
         self.dock_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        # self.dock_widget.setMinimumSize(QSize(300, 380))
-        # self.dock_widget.setFixedSize(330, 700)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
         self.canvas_logger('Welcome to Sensehawk Qgis plugin')
 

@@ -68,11 +68,6 @@ class MLServiceMapWidget(QtWidgets.QDialog):
                         self.logger
                         ]
 
-
-        # self.logger("--------- Payload Before calling Train() -----------")
-        # self.logger(str(train_inputs))
-        # self.logger("--------- End calling Train() -----------")
-
         train_task = QgsTask.fromFunction("Train request", train, train_inputs=train_inputs)
         train_task.statusChanged.connect(lambda: callback(train_task, self.logger))
         QgsApplication.taskManager().addTask(train_task)

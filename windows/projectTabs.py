@@ -12,7 +12,7 @@ from datetime import datetime
 from ..sensehawk_apis.core_apis import save_project_geojson
 
 from ..tasks import project_loadtask
-from ..utils import fields_validator, categorize_layer, save_edits, features_to_polygons
+from ..utils import fields_validator, categorize_layer, save_edits, features_to_polygons, datatype_fields_validator
 
 import pandas as pd
 import json
@@ -51,12 +51,12 @@ class Project:
                                             'num_modules_vertical':QVariant.Double,'center':QVariant.String, 
                                             'raw_images':QVariant.String,'attachments':QVariant.String,
                                             'parent_uid':QVariant.String,'name':QVariant.String,'class_name':QVariant.String, 'class_id':QVariant.String,
-                                            'idx':QVariant.Double},
+                                            'idx':QVariant.Double, 'extraProperties':QVariant.String},
                                 "terra": {'projectUid':QVariant.String,'groupUid':QVariant.String,
                                             'table_row':QVariant.Double,'table_column':QVariant.Double, 
                                             'row':QVariant.Double,'idx':QVariant.Double,'column':QVariant.Double,
                                             'center':QVariant.String,'parent_uid':QVariant.String,'name':QVariant.String,
-                                            'idx':QVariant.Double, 'class_name':QVariant.String, 'class_id':QVariant.String, 'class':QVariant.String}}
+                                            'idx':QVariant.Double, 'class_name':QVariant.String, 'class_id':QVariant.String, 'class':QVariant.String, 'extraProperties':QVariant.String}}
 
         fields_validator(self.required_fields, self.vlayer, self.application_type)
         #initialize and update parent_uid field 
@@ -149,7 +149,8 @@ class Project:
     # Initialize Vlayer 
     def initialize_vlayer(self):
         #loaded updated layer
-        updated_vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
+        if self.application_type == "therm":updated_vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=Polygon", self.project_details['name']+'_Json', "ogr")
+        else: updated_vlayer = QgsVectorLayer(self.geojson_path+ "|geometrytype=MultiPolygon", self.project_details['name']+'_Json', "ogr")
         self.vlayer = updated_vlayer
         self.qgis_project.addMapLayer(updated_vlayer)
         categorize_layer(self)
@@ -193,6 +194,8 @@ class Project:
         for feature in self.vlayer.getFeatures():
             try:
                 feature['parent_uid'] = feature['uid']
+                if isinstance(feature['extraProperties'], str):
+                    feature['extraProperties'] = {}
                 self.vlayer.updateFeature(feature)
             except KeyError:
                 continue
@@ -214,11 +217,16 @@ class Project:
     def import_geojson(self, geojson_path):
         # Merge with existing geojson and reload from there
         if geojson_path and self.layer_edit_status:
+            if self.disabled_features:
+                self.canvas_logger("Enable Disabled layer to Import Geojson...", level=Qgis.Warning)
+                return None
             self.vlayer.commitChanges()
             with open(geojson_path, 'r') as g:
                 imported_features = json.load(g)['features']
             # Convert the features to polygons
-            imported_features = features_to_polygons(imported_features)
+            projectuid = self.project_details["uid"]
+            groupuid = self.project_details["group"]["uid"]
+            imported_features = features_to_polygons(imported_features, projectuid, groupuid, self)
             with open(self.geojson_path , 'r') as g:
                 existing_geojson = json.load(g)
 
@@ -531,8 +539,9 @@ class Project:
                     feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
                 elif self.project_details["project_type"] == "terra":
                     name = self.class_maps.get(class_name, {}).get("name", None)
-                    feature.setAttribute("class", name)
-                    feature.setAttribute("class_name", class_name)
+                    feature.setAttribute("class", class_name)
+                    class_uid = self.class_maps.get(class_name, {}).get('uid', None)
+                    feature.setAttribute("class_name", class_uid)
                     class_id = self.class_maps.get(class_name, {}).get("id", None)
                     feature.setAttribute("class_id", int(class_id))
                 self.vlayer.updateFeature(feature)
@@ -553,8 +562,9 @@ class Project:
                 last_feature.setAttribute("class_id", self.class_maps[class_name]["class_id"])
             elif self.project_details["project_type"] == "terra":
                 name = self.class_maps.get(class_name, {}).get("name", None)
-                last_feature.setAttribute("class", name)
-                last_feature.setAttribute("class_name", class_name)
+                last_feature.setAttribute("class", class_name)
+                class_uid = self.class_maps.get(class_name, {}).get('uid', None)
+                last_feature.setAttribute("class_name", class_uid)
                 class_id = self.class_maps.get(class_name, {}).get("id", None)
                 last_feature.setAttribute("class_id", int(class_id))
             self.vlayer.updateFeature(last_feature)
@@ -721,10 +731,9 @@ class ProjectTabsWidget(QtWidgets.QWidget):
         if not self.active_project:
             return None
         self.active_project.last_saved = str(datetime.now())
-        self.logger(f"Saving {self.active_project.project_details['uid']} to core...")
+        self.logger(f"Saving {self.active_project.project_details['uid']} to core...")                    
 
         def save_task(task, save_task_input):
-            print('Started Sanitizing')
             geojson_path, core_token, project_uid, project_type, logger = save_task_input
             try:
                 with open(geojson_path, 'r') as fi:
@@ -738,24 +747,13 @@ class ProjectTabsWidget(QtWidgets.QWidget):
 
                 features = []
                 duplicate_geometries = []
-                for feature in geojson['features']: # Vaild Polygon Geometry, remove duplicate geometry, Remove Null geometry
+                for feature in geojson['features']: 
+                    # Vaild Polygon Geometry, remove duplicate geometry, Remove Null geometry
                     if feature['geometry']['type'] in allowed_geometries and feature['geometry'] not in duplicate_geometries and feature['geometry']['coordinates'][0]:
                         feature['properties'].pop('parent_uid', None)
                         feature['properties'].pop('num_images_tagged', None)
-                        if feature['properties'].get('extraProperties', "{\n}\n") == "{\n}\n":
-                            feature['properties']['extraProperties'] = {}
-                        if feature['properties'].get('workflowProgress', "{\n}\n") == "{\n}\n":
-                            feature['properties']['workflowProgress'] = {}
-                        if project_type == "terra":
-                            # feature['properties'].pop('uid', None)
-                            feature['properties'].pop('element', None)
-                        try:
-                            center = np.mean(np.array(feature['geometry']['coordinates'][0]), axis=0)
-                            centroid_x , centroid_y = center
-                            feature['properties']['center'] = [[centroid_x,centroid_y]]
-                        except Exception as e:
-                            feature['properties']['center'] = []
-                            pass
+                        #Validate Fields data type
+                        datatype_fields_validator(feature, project_type)
                         duplicate_geometries.append(feature['geometry'])
                         features.append(feature)
                     
@@ -763,19 +761,24 @@ class ProjectTabsWidget(QtWidgets.QWidget):
                 #Upload vectors
                 print("Uploading")
             
-
-                saved = save_project_geojson(cleaned_json, project_uid, core_token,
+                response, status_code = save_project_geojson(cleaned_json, project_uid, core_token,
                                             project_type=project_type)
+
             except Exception as e:
                 logger(e)
             
-            return {'status': str(saved), 'task': task.description()}
+            return {'status': str(response), 'task': task.description(), "status_code":status_code}
         
         def callback(task, logger):
             result = task.returned_values
             if result:
+                status_code = result["status_code"]
                 self.logger(result["status"])
-                self.canvas_logger(result['status'])
+                print("status_code", status_code)
+                if status_code == 200:
+                    self.canvas_logger(result['status'],  level=Qgis.Success)
+                else:
+                    self.canvas_logger(result['status'],  level=Qgis.Warning)
 
         st = QgsTask.fromFunction("Save", save_task,
                                   save_task_input=[self.active_project.geojson_path,
@@ -799,6 +802,7 @@ class ProjectTabsWidget(QtWidgets.QWidget):
             self.active_project = None
             return None
         project = self.projects_loaded[project_uid]
+        project.stringnumber_widget.stringNumObj = None
         self.active_project = project
         # Connect the key emitter to the key eater that performs required shortcuts
         try:

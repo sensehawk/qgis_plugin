@@ -1,6 +1,6 @@
 import requests
 import traceback
-from ...constants import NEXTRACKER_URL, CORE_URL
+from ...constants import NEXTRACKER_URL, CORE_URL, NEXTRACKER_V3_URL
 
 nextracker_org_uid = "00g305uhwb3ULo6Em0i7" #"00g7uy87cofqS3X380i7"
 nextracker_owner_uid = "7cqq3r8475" #NMHuEVAxXz
@@ -52,11 +52,12 @@ def setup_clipped_orthos_group(task, task_inputs):
             url = CORE_URL + f'/api/v1/containers/{container_uid}/?organization={nextracker_org_uid}'
             json['groups'].append({'uid':group_uid})
             add_group_response = requests.patch(url, headers=headers, json=json)
-            logger(f'Group added to {container_name} container... ')
+            if add_group_response.status_code == 200:
+                logger(f'Group added to {container_name} container... ')
             return {"task": task.description(), "success": True,
                     "message": "Clipped Orthos group validated",
                     "group_uid": group_uid}
-    except Exception as e:
+    except Exception:
         tb = traceback.format_exc()
         return {"task": task.description(), "success": False,
                 "message": str(tb),
@@ -64,7 +65,10 @@ def setup_clipped_orthos_group(task, task_inputs):
     
 def generate_group_points(group_obj, org_uid, user_email, token, logger):
     group_uid, group_name = group_obj.uid, group_obj.name
-    url = f"{NEXTRACKER_URL}/group_points?group_uid={group_uid}&organization_uid={org_uid}&user_email={user_email}&group_name={group_name}"
+    # url = f"{NEXTRACKER_URL}/group_points?group_uid={group_uid}&organization_uid={org_uid}&user_email={user_email}&group_name={group_name}"?
+    url = NEXTRACKER_V3_URL
+    params = {"service_name":"nextracker", "endpoint":"group_points", "group_uid":group_uid, "organization_uid":org_uid, "user_email":user_email, "group_name":group_name}
     headers = {"Authorization": f"Token {token}"}
-    resp = requests.post(url, headers=headers)
+    print(params)
+    resp = requests.post(url, headers=headers, params=params)
     logger(str(resp.json()))

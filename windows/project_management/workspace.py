@@ -245,6 +245,7 @@ class WorkspaceWindow(QtWidgets.QWidget):
             self.qgis_project.removeMapLayers(self.layers_id)
             #close active tool widget 
             if self.group_workspace.therm_project_tabs_widget:
+                del self.group_workspace.stringnumber_widget
                 self.group_workspace.therm_project_tabs_widget.docktool_widget.close()
                 self.iface.removeDockWidget(self.group_workspace.therm_project_tabs_widget.docktool_widget)
                 del self.group_workspace.therm_project_tabs_widget.docktool_widget

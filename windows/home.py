@@ -74,7 +74,7 @@ class HomeWindow(QtWidgets.QWidget):
         
         result = load_asset_task.returned_values
         # task response bit slow in few circumstances Dont remove below peice of code 
-        if not 'asset_dict' in result:
+        if 'asset_dict' not in result:
             return None
         
         self.org.setEnabled(True)
@@ -106,7 +106,7 @@ class HomeWindow(QtWidgets.QWidget):
             return None
         
         result = asset_container.returned_values
-        if not 'containers_dict' in result:
+        if 'containers_dict' not in result:
             return None
         self.projectbutton.setEnabled(True)
         self.projectbutton.setStyleSheet("background-color:#dcf6f7;")

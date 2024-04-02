@@ -3,7 +3,7 @@ from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
 from .sensehawk_apis.core_apis import get_ortho_tiles_url, get_ortho_url, core_login, get_project_geojson, get_project_reports, get_project_details
 from .sensehawk_apis.scm_apis import detect, approve
-from .utils import load_vectors, file_existent, organization_details, download_ortho
+from .utils import load_vectors, file_existent, organization_details
 import requests
 from pathlib import Path
 from .constants import CLIP_FUNCTION_URL
@@ -45,14 +45,25 @@ def project_loadtask(task, load_inputs):
 
             # Load orthotiles
             # Get base url for ortho tiles
-            base_orthotiles_url = get_ortho_tiles_url(project_uid, core_token)
-            print("Ortho tile url", base_orthotiles_url)
+            base_orthotiles_url, version = get_ortho_tiles_url(project_uid, core_token)
             # Get metadata from the base url
             ortho_tiles_details = requests.request("GET", base_orthotiles_url).json()
-            ortho_bounds = ortho_tiles_details["bounds"]
-           
-            zmax = ortho_tiles_details["maxzoom"]
-            zmin = 1
+            print(ortho_tiles_details)
+            print("Ortho tile url", base_orthotiles_url, "ortho Bounds",ortho_tiles_details["bounds"] )
+            if version != 2:
+                ortho_bounds = ortho_tiles_details["bounds"]
+                zmax = ortho_tiles_details["maxzoom"]
+                zmin = 1
+            else:
+                if isinstance(ortho_tiles_details['bounds'], str):
+                    ortho_bounds = [float(v) for v in ortho_tiles_details["bounds"].split(',')]
+                else:
+                    ortho_bounds = ortho_tiles_details["bounds"]
+                zmax = int(ortho_tiles_details.get("maxzoom", 22))
+                zmin = 1
+                
+            if zmax == 0:
+                zmax = 22
 
             orthotiles_url = "type=xyz&url=" + \
                             base_orthotiles_url + "/{z}/{x}/{y}.png" + \
@@ -101,7 +112,8 @@ def clip_request(task, clip_task_input):
     convert_to_magma = clip_task_input['convert_to_magma']
     group_uid = clip_task_input.get('group_uid', None)
     logger = clip_task_input.get("logger", None)
-    print('working')
+    container_uid = clip_task_input.get("container_uid", None)
+    org_uid = clip_task_input.get("org_uid", None)
     
     clip_boundary_class_name = None
     # Get the class_name for clip_boundary
@@ -119,12 +131,11 @@ def clip_request(task, clip_task_input):
     with open(geojson_path, "r") as fi:
         geojson = json.load(fi)
     try:
-
         all_clip_feature_names = []
 
         for f in geojson["features"]:
             properties = f["properties"]
-            if properties["class_name"] == clip_boundary_class_name:
+            if properties["class_name"] == clip_boundary_class_name or properties["class"] == clip_boundary_class_name:
                 name = properties.get("name", None)
                 all_clip_feature_names.append(name)
         n_clip_features = len(all_clip_feature_names)
@@ -133,15 +144,22 @@ def clip_request(task, clip_task_input):
         # If there are no unique clip feature names or if any of them has None
         if n_clip_features != n_unique_clip_names or None in all_clip_feature_names:
             return {"task": task.description(), "title": 'Need unique clip boundary names',
-                    "description": "Please provide unique name property to all clip_boundary features before clipping...", 'level':Qgis.Warning}
+                    "description": "Please provide unique name property to all clip_boundary features before clipping..."}
 
-        ortho_url = get_project_reports(project_uid, core_token).get("ortho", None)
+        ortho_url, dsm_url = get_project_reports(project_uid, container_uid, org_uid,  core_token)
+
         if not ortho_url:
             return {"task": task.description(), "title": "Ortho doesn't exist",
-                    "description": "No ortho found for project...", 'level':Qgis.Warning}
+                    "description": "No ortho found for project..."}
         
+        if not dsm_url:
+            return {"task": task.description(), "title": "DSM doesn't exist",
+                    "description": "No DSM found for project..."}
+
+        print(ortho_url, dsm_url)
         request_body = {"project_uid": project_uid,
                         "raster_url": ortho_url,
+                        "dsm_url":dsm_url,
                         "geojson": geojson,
                         "clip_boundary_class_name": clip_boundary_class_name,
                         "project_type": project_type,
@@ -149,11 +167,10 @@ def clip_request(task, clip_task_input):
                         "convert_to_magma": convert_to_magma,
                         "group_uid": group_uid}
         
-        print('working', request_body)
+        
         headers = {"Authorization": f"Token {core_token}"}
         response = requests.post(CLIP_FUNCTION_URL+'/clip-raster', headers=headers, json=request_body)
         res_status = response.status_code
-        # logger(str(response.json()))
         res_title, res_description = response.json()['title'], response.json()['description']
 
     except Exception:
@@ -187,9 +204,9 @@ def detectionTask(task, detection_task_input):
         return {"task": task.description(), "Exception": e, "success": 404}
 
 def approveTask(task, approve_task_input):
-    project_details, geojson, user_email, core_token = approve_task_input
+    project_details, _, _, core_token = approve_task_input
     try:
-        approve(project_details, geojson, user_email, core_token)
+        approve(project_details, core_token)
         return {"task": task.description(), "Exception": None, "success": True}
     except Exception as e:
         return {"task": task.description(), "Exception": e, "success": False}

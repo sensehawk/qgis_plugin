@@ -1,4 +1,3 @@
-# from ..data_model import ConfigModel, InferenceConfigModel
 import os
 
 from ..utils import load_yaml_file
@@ -16,7 +15,7 @@ def get_models_list(project_uid:str,core_token:str):
 
 
 def train(task, train_inputs):
-    project_details, geojson, ml_service_map, class_maps, user_email, core_token, logger = train_inputs
+    project_details, _, ml_service_map, class_maps, user_email, core_token, logger = train_inputs
 
     project_uid = project_details.get("uid", None)
     ortho_url = get_project_reports(project_uid, core_token).get("ortho", None)
@@ -71,8 +70,7 @@ def detect(project_details, geojson, model_registry_name, user_email, core_token
             ortho_report = report.get('service')
     ortho_url = get_reports_url(ortho_report.get('bucket'),
                                 ortho_report.get('key'),
-                                ortho_report.get('region'),
-                                core_token)
+                                ortho_report.get('region'))
     if not ortho_url:
         return {"task": "get ortho-url detect() failed",
                 "Exception": f"ortho_url: {ortho_url} invalid",
@@ -103,7 +101,7 @@ def detect(project_details, geojson, model_registry_name, user_email, core_token
             "status": response.status_code}
 
 
-def approve(project_details, geojson, user_email, core_token):
+def approve(project_details,core_token):
     project_uid = project_details.get("uid")
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.post(SCMAPP_URL + '/approve', params={"project_uid": project_uid}, headers=headers)

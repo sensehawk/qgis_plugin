@@ -6,7 +6,7 @@ except Exception:
 from PyQt5 import QtCore
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt import QtWidgets
+from qgis.PyQt import QtWidgets, uic
 from PyQt5.QtGui import QImage, QColor, QFont
 from PyQt5.QtWidgets import QCompleter, QComboBox
 from qgis.core import Qgis, QgsField, QgsPalLayerSettings, QgsTextBufferSettings, QgsTextFormat, \
@@ -73,9 +73,9 @@ def sort_images(task, images_dir, logger, reverse=False):
         images = [i[1] for i in sorted_tuples]
         timestamps = [i[0] for i in sorted_tuples]
         long_lats = [i[2] for i in sorted_tuples]
-    except Exception as e:
+    except Exception:
         dt = traceback.format_exc()
-        logger(f'Error:{e}')
+        logger(f'Error:{dt}')
 
     return {'sorted_images': images,
             'sorted_timestamps': timestamps,
@@ -102,7 +102,7 @@ def combobox_modifier(combobox, wordlist):
     return combobox
 
 
-def download_file(url, logger, output_path=None, directory_path=None):
+def download_file(url, logger, output_path=None):
     logger("Downloading {} to {}...".format(url, output_path))
     if not url or url == "None":
         logger("Invalid file url...")
@@ -119,7 +119,7 @@ def download_file(url, logger, output_path=None, directory_path=None):
 
 def random_color():
     # Generating random color for unlisted issue type
-    random_color_pick = (["#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)])])
+    random_color_pick = (["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)])])
     color = ''
     for i in random_color_pick:
         color += i
@@ -169,8 +169,10 @@ def categorized_renderer(project):
     renderer = None
     if project.project_details["project_type"] == "terra":
         renderer = QgsCategorizedSymbolRenderer('class', categories)
+        print("Terra class rendered...")
     elif project.project_details["project_type"] == "therm":
         renderer = QgsCategorizedSymbolRenderer('class_name', categories)
+        print("Therm class_name rendered....")
 
     return renderer
 
@@ -212,15 +214,16 @@ def load_vectors(project_details, project_type, raster_bounds, core_token, logge
                           "geometry": extent_geometry, "workflow": {}}
         geojson["features"] += [extent_feature]
 
+
     # Save geojson
     d_path = str(Path.home() / "Downloads")
     rpath = os.path.join(
         d_path + '\\' + 'Sensehawk_plugin' + '\\' + project_details['asset']['name'] + '\\' + project_details['group'][
             'name'])
     geojson_path = os.path.join(rpath + '\\' + project_details['name'] + '.geojson').replace("/", "_")
+
     if not os.path.exists(rpath):
         os.makedirs(rpath)
-    # geojson_path = os.path.join(tempfile.gettempdir(), "{}.geojson".format(project_uid))
     with open(geojson_path, "w") as fi:
         json.dump(geojson, fi)
 
@@ -239,8 +242,6 @@ def projects_details(group, org, token):
         projects_dict[project['uid']] = project['name']
 
     return projects_dict
-    # return {'project_list':project_list,
-    # 'task':task.description()}
 
 
 def groups_details(asset, org, token):
@@ -309,8 +310,6 @@ def file_existent(project_uid, org, token):
         existing_file = ['None']
         json = project_json.json()
         files = list(json.keys())
-        # if 'ortho' in files:
-        #     existing_file =  ['ortho'] + existing_file
         if 'reflectance' in files:
             existing_file = ['reflectance'] + existing_file
 
@@ -445,43 +444,12 @@ def create_custom_label(vlayer, field_name):
     textformat.setBuffer(buffer)
 
     num_images_label.setFormat(textformat)
-    # num_images_label.placement = QgsPalLayerSettings.Line
 
     labeler = QgsVectorLayerSimpleLabeling(num_images_label)
     labeler.requiresAdvancedEffects()
     vlayer.setLabelsEnabled(True)
     vlayer.setLabeling(labeler)
-    # vlayer.setCustomProperty(field_name, QgsPalLayerSettings.CentroidWhole)
     vlayer.triggerRepaint()
-
-
-# The below code is used for each chunk of file handled
-# by each thread for downloading the content from specified
-# location to storage
-def Handler(start, end, url, filename):
-    # specify the starting and ending of the file
-    headers = {'Range': 'bytes=%d-%d' % (start, end)}
-
-    # request the specified part and get into variable
-    r = requests.get(url, headers=headers, stream=True)
-
-    # open the file and write the content of the html page
-    # into file.
-    with open(filename, "r+b") as fp:
-        fp.seek(int(start))
-        var = fp.tell()
-        fp.write(r.content)
-
-
-def download_ortho(file_size, number_of_threads, file_name, ortho_url):
-    with requests.get(ortho_url, stream=True) as r:
-        r.raise_for_status()
-        with open(file_name, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                # If you have chunk encoded response uncomment if
-                # and set chunk_size parameter to None.
-                # if chunk:
-                f.write(chunk)
 
 
 def save_edits(task, save_inputs):
@@ -491,7 +459,6 @@ def save_edits(task, save_inputs):
     features = json.load(open(json_path))['features']
     cleaned_json = {"type": "FeatureCollection", "features": []}
     for feature in features:
-        uid = feature['properties'].get('uid', None)
         raw_image = feature['properties'].get('raw_images', None)
         parentUid = feature['properties'].get('parent_uid', None)
         attachment = feature['properties'].get('attachments', None)
@@ -500,23 +467,23 @@ def save_edits(task, save_inputs):
                 if parentUid:
                     parent_item = listType_dataFields.get(parentUid, None)
                     if parent_item:
-                        Parent_rawimages = parent_item.get('raw_images', [])
+                        parent_rawimages = parent_item.get('raw_images', [])
                 else:
-                    Parent_rawimages = []
+                    parent_rawimages = []
 
                 if parentUid in listType_dataFields:
-                    feature['properties']['raw_images'] = Parent_rawimages
-                    feature['properties']['attachments'] = Parent_rawimages
+                    feature['properties']['raw_images'] = parent_rawimages
+                    feature['properties']['attachments'] = parent_rawimages
                 else:
-                    if type(raw_image) == str or not raw_image:
+                    if isinstance(raw_image, str) or not raw_image:
                         feature['properties']['raw_images'] = []
-                    elif type(attachment) == str or not attachment:
+                    elif isinstance(raw_image, str) or not attachment:
                         feature['properties']['attachments'] = []
 
-            except Exception as e:
+            except Exception:
                 tb = traceback.format_exc()
                 logger(str(tb), level=Qgis.Warning)
-                pass
+
         if feature['geometry']['coordinates'][0]:
             cleaned_json["features"].append(feature)
 
@@ -594,7 +561,6 @@ def containers_details(task, asset_uid, org_uid, core_token):
     for container in containers:
         groups = container['groups']
         container_name = container['name']
-        # app_info = [app.get('application', None) for app in container['app_types'] ]
         container_level_groups = [group['name'] for group in
                                   groups]  # app_type [{'uid':1,'name':'Thermal analaysis','application':{'uid': 2, 'name': 'therm', 'label': 'Thermal'},{}]
         containers_dict[container['uid']] = {'name': container_name, 'groups': container_level_groups,
@@ -619,19 +585,52 @@ def download_asset_logo(asset_name, url):
 
     return asset_logo_path
 
+def datatype_fields_validator(feature, project_type):
+    if project_type == "terra":
+        fields = {"extraProperties":{}, "workflowProgress":{}, "dataProperties":{},"hierarchyProperties":{}}
+        feature['properties'].pop('element', None)
+        feature['properties'].pop("workflow", None)
+        feature['properties'].pop('workflowProgressTimestamp', None)
+    else:
+        fields = {"center":[[]], "assignees":[], "notes":[], "element":{}, "user_attachments":[], "priority":"", "status":""}
+        feature['properties'].pop('workflowProgress', None)
+        feature['properties'].pop('extraProperties', None)
+        feature['properties'].pop('class', None)
+    
+    for field in fields.keys():
+        if isinstance(feature["properties"].get(field, fields[field]), str) or not feature['properties'].get(field, None)   :
+            data_type = fields[field]
+            feature["properties"][field] = data_type
 
-def features_to_polygons(features):
+def features_to_polygons(features, projectuid, groupuid, projectTabObj):
+    projectTabObj.extraProperties = {}
     polygon_features = []
+    project_type = projectTabObj.project_details["project_type"]
     for f in features:
-        # f["properties"]["uid"] = project_obj.create_uid()
-        if "class" not in f["properties"].keys():
-            f["properties"]["class"] = None
+        therm_violator_fields = ['id', 'description', 'color', 'fill_color', 'opacity', 'dataProperties', 'hierarchyProperties', 'workflowProgress', 'workflow', 'workflowProgressTimestamp', 'project', 'featureType', 'featureTypeId']
+        f['properties']['projectUid'] = projectuid
+        f['properties']['groupUid'] = groupuid
+        extra_properties = f['properties'].get('extraProperties', {})
+        uid = f['properties'].get('uid', None)
+        projectTabObj.extraProperties[uid] = extra_properties
+        datatype_fields_validator(f, project_type)
+        if project_type == 'therm':
+            if f["geometry"]["type"] == "MultiPolygon":
+                if len(f["geometry"]['coordinates'][0]) > 1:
+                    projectTabObj.logger("Wont Support MultiPolygon Geometery...")
+                    continue
+                else:
+                    f["geometry"]['type'] = 'Polygon'
+                    f["geometry"]['coordinates'] = [f["geometry"]['coordinates'][0][0]]
+            for field in therm_violator_fields:
+                f['properties'].pop(field, None)
+        if project_type == 'terra':
+            if "class" not in f["properties"].keys():
+                f["properties"]["class"] = None
         if f["geometry"]["type"] in ["MultiPolygon", "Polygon"]:
             polygon_features.append(f)
-            continue
         elif f["geometry"]["type"] in ["MultiLineString"]:
             coords = f["geometry"]["coordinates"]
-            # coords = np.array(coords)
             ml = MultiLineString(coords)
             # Remove
             ml = transform(lambda x, y, z=None: (x, y), ml)
@@ -651,3 +650,88 @@ def load_yaml_file(yaml_path: str):
     with open(yaml_path, 'r') as stream:
         data_loaded = yaml.safe_load(stream)
     return data_loaded
+
+from functools import partial
+
+class StringNumberTableWidget(QtWidgets.QDialog):
+    def __init__(self, group_obj):
+        super(StringNumberTableWidget, self).__init__()
+        layout = QtWidgets.QVBoxLayout(self)
+        self.string_ui = uic.loadUi(os.path.join(os.path.dirname(__file__)+'\windows', 'AutoNumbering_V2.ui'))
+        self.stringNumObj = None
+        self.group_obj = group_obj
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowTitle("String Number")
+        self.table_info_ui = uic.loadUi(os.path.join(os.path.dirname(__file__)+'\windows', 'table_info_V2.ui'))
+        self.tables = [self.table_info_ui]
+        button_box = QtWidgets.QDialogButtonBox()
+        button_box.addButton("Collect", QtWidgets.QDialogButtonBox.AcceptRole)
+        button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
+        button_box.accepted.connect(self.tables_info)
+        button_box.rejected.connect(self.close_dialogbox)
+        button_box.setCenterButtons(True)
+        self.add_btn = QtWidgets.QPushButton("➕")
+        self.add_btn.setFixedSize(40, 24)
+        self.add_remove_buttons = [self.add_btn]
+        self.add_btn.clicked.connect(self.add_table_widget)
+        layout.addWidget(self.string_ui)
+        layout.addWidget(button_box)
+        self.add_btn_poistion = 3
+        self.table_and_module_info = {}
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.string_ui.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
+        self.string_ui.string_grid_layout.addWidget(self.table_info_ui, self.add_btn_poistion, 1)
+    
+    #Every time this class obj is accessed __getattribute__ method is called and we're assiging stringNumObj to None
+    # def __getattribute__(self, name):
+    #     if self.stringNumObj:
+    #         self.stringNumObj = None
+    
+    def add_table_widget(self):
+        remove_btn = QtWidgets.QPushButton("❌")
+        remove_btn.setFixedSize(40, 24)
+        remove_btn.clicked.connect(partial (self.remove_table_widget, self.tables[-1], remove_btn))
+        self.add_btn_poistion += 1
+        table_ui = uic.loadUi(os.path.join(os.path.dirname(__file__)+'\windows', 'table_info_V2.ui'))
+        self.string_ui.string_grid_layout.addWidget(self.add_btn, self.add_btn_poistion, 0, Qt.AlignLeft)
+        self.string_ui.string_grid_layout.addWidget(remove_btn, self.add_btn_poistion-1, 0, Qt.AlignLeft)
+        self.string_ui.string_grid_layout.addWidget(table_ui, self.add_btn_poistion, 1)
+        self.tables.append(table_ui)
+        self.add_remove_buttons.append(remove_btn)
+    
+    def remove_table_widget(self, table_ui, remove_btn):
+        self.string_ui.string_grid_layout.removeWidget(table_ui)
+        self.string_ui.string_grid_layout.removeWidget(remove_btn)
+        self.tables.remove(table_ui)
+        self.add_remove_buttons.remove(remove_btn)
+        table_ui.deleteLater()
+        remove_btn.deleteLater()
+        
+    def tables_info(self):
+        self.table_and_module_info.clear()
+        for table in self.tables:
+            if not table.table_length.text() or not table.table_height.text() or not table.table_row.text() or not table.table_column.text() or not table.module_width.text() or not table.module_height.text():
+                self.group_obj.canvas_logger('Table length | row | column info is missing...', level=Qgis.Warning)
+                self.stringNumObj.tables_module_info.clear()
+                return None 
+            else:
+                table_half_perimeter =  float(table.table_length.text()) + float(table.table_height.text())
+                print(table_half_perimeter, type(table_half_perimeter))
+                self.table_and_module_info[float(table_half_perimeter)] = [float(table.table_length.text()),float(table.table_height.text()), int(table.table_column.text()), int(table.table_row.text()),float(table.module_width.text()),float(table.module_height.text())]
+                self.stringNumObj.tables_module_info = self.table_and_module_info
+                self.stringNumObj.stringnum_type = self.string_ui.stringnum_type.currentText()
+                self.stringNumObj.string_number_prefix = self.string_ui.Prefix.text()
+                self.stringNumObj.string_number_suffix = self.string_ui.Suffix.text()
+
+        self.stringNumObj.stringnum_updated = True
+        self.accept()
+        
+    def closeEvent(self, event):
+        self.stringNumObj.tag_button.setChecked(False)
+
+    def close_dialogbox(self):
+        self.stringNumObj.tag_button.setChecked(False)
+        self.reject()
+        

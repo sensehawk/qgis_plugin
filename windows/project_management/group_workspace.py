@@ -5,20 +5,19 @@ from ..project_management.datatypes import Container
 from qgis.PyQt import QtGui, QtWidgets, uic, QtGui
 from qgis.PyQt.QtCore import Qt
 from qgis.core import Qgis, QgsTask, QgsApplication
-from .groups_homepage import GroupsForm
 from functools import partial
 from ..projectTabs import ProjectTabsWidget, Project
 from ...tasks import project_loadtask 
-from ...utils import categorize_layer
+from ...utils import categorize_layer, StringNumberTableWidget
 from qgis.utils import iface
 from ...constants import CORE_URL
 from pathlib import Path
 import os
 import json
 import requests
-import pprint
 from ..nextracker.utils import nextracker_org_uid, generate_group_points
 from ...event_filters import KeypressEmitter, KeypressFilter
+
 
 therm_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'therm_logo.svg'))
 terra_logo_png = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'terra_logo.svg'))
@@ -46,6 +45,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         self.project_uids = []
         self.setupUi(group_obj, group_dict)
         self.intialize_keyboard_signals()
+        self.stringnumber_widget = StringNumberTableWidget(self)
     
     def intialize_keyboard_signals(self):
         # Create a key emitter that sends the key presses
@@ -279,6 +279,7 @@ class GroupWorkspace(QtWidgets.QWidget):
         project.group_obj = group_obj
         project.org_uid = self.group_obj.org_info.get('uid', None)
         project.home_window = self.workspace_window.home_window 
+        project.stringnumber_widget = self.stringnumber_widget
         
         # Add project to therm project tab
         if application_type == 'therm':
@@ -871,6 +872,11 @@ class ReportsDashboard(QtWidgets.QDialog):
             report_download_widget.report_name.setText(report_name)
             report_download_widget.report_download.clicked.connect(partial(self.download_report, report_name, download_url))
             self.reports_upload_ui.download_report_layout.addWidget(report_download_widget)
+        #TODO add support to download terra files
+            # url = f"https://terra-server.sensehawk.com/container-views/{container_uid}/projects/{project_uid}/?organization={org_uid}"
+            # res = requests.get(url, headers=headers).json()["reports"]
+            # ortho_url = res.get("ortho", {}).get('url', None)
+            # dsm_url = res.get("dsm", {}).get('url', None)
 
 
     def select_file(self):
@@ -892,7 +898,7 @@ class ReportsDashboard(QtWidgets.QDialog):
         confirmation_dialog = QtWidgets.QDialog()
         confirmation_dialog.setWindowTitle("Confirmation")
         layout = QtWidgets.QVBoxLayout()
-        self.module_info_ui = uic.loadUi("C:\\Users\\sande\\AppData\\Roaming\\QGIS\\QGIS3\\profiles\\default\\python\\plugins\\qgis_plugin\\windows\\detection_module_info.ui")
+        self.module_info_ui = uic.loadUi(os.path.join(os.path.dirname(__file__),"detection_module_info.ui"))
         button_box = QtWidgets.QDialogButtonBox()
         button_box.addButton("Detect", QtWidgets.QDialogButtonBox.AcceptRole)
         button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
@@ -1005,7 +1011,7 @@ class ReportsDashboard(QtWidgets.QDialog):
 
     def download_report(self, report_name, url):
         content_type = {"ortho":"TIFF FILES (*.tiff *.tif)", "dsm":"TIFF FILES (*.tiff *.tif)", "reflectance":"TIFF FILES (*.tiff *.tif)","processedImages":"ZIP (*.zip)",
-                        "compressedImages":"ZIP (*.zip)", "calibratedParameters":"Text Files (*.txt)", "externalCalibratedParameters":"Text Files (*.txt)"}
+                        "compressedImages":"ZIP (*.zip)", "calibratedParameters":"Text Files (*.txt)", "externalCalibratedParameters":"Text Files (*.txt)", "pdfReport":'application/pdf'}
         self.download_file_path = QtWidgets.QFileDialog.getSaveFileName(None, "Title",  directory=report_name, filter=content_type[report_name])
         if self.download_file_path[0]:
             response = requests.get(url, stream=True)
