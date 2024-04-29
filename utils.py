@@ -326,12 +326,12 @@ def convert_and_upload(path, image_info, projectUid, post_urls_data, logger):
     heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0 / 65535.0))
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
     if max_temp_marker and min_temp_marker:
-        heatmap = cv2.drawMarker(heatmap, tuple(max_temp_marker),(255,0,0), markerType=5,markerSize=7, thickness=1, line_type=cv2.LINE_AA)
-        heatmap = cv2.drawMarker(heatmap, tuple(min_temp_marker),(0,255,0), markerType=6,markerSize=7, thickness=1, line_type=cv2.LINE_AA)
+        heatmap = cv2.drawMarker(heatmap, tuple(max_temp_marker),(0,0,255), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
+        heatmap = cv2.drawMarker(heatmap, tuple(min_temp_marker),(0,255,0), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
         # Write temperature values as well on the image
         # Blue for max and green for min
-        heatmap = cv2.putText(heatmap, "Max: %.2f"%max_temp, (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 0, 0), 1, cv2.LINE_AA)
-        heatmap = cv2.putText(heatmap, "Min: %.2f"%min_temp, (10, 60), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
+        heatmap = cv2.putText(heatmap, "Max: %.2f"%max_temp, (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 255, 255), 1, cv2.LINE_AA)
+        heatmap = cv2.putText(heatmap, "Min: %.2f"%min_temp, (10, 60), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 255, 255), 1, cv2.LINE_AA)
 
     if cv2.imwrite(dpath, heatmap):
         post_url = post_urls_data[image_key]["url"]
