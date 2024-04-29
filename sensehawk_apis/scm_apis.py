@@ -14,12 +14,14 @@ def get_models_list(project_uid:str,core_token:str):
     return response.json()
 
 
-def train(task, train_inputs):
-    project_details, _, ml_service_map, class_maps, user_email, core_token, logger = train_inputs
+def train_model(task, train_inputs):
+    project_details, _, ml_service_map, class_maps, user_email, core_token, logger, container_uid = train_inputs
 
+    logger('train function envoked')
     project_uid = project_details.get("uid", None)
-    ortho_url = get_project_reports(project_uid, core_token).get("ortho", None)
-
+    org_uid = project_details.get("organization", {}).get("uid", None)
+    ortho_url, _ = get_project_reports(project_uid, container_uid, org_uid, core_token)
+    logger(ortho_url)
     if not ortho_url:
         return {"task": task.description(), "status": f"ortho_url: {ortho_url} invalid"}
 
@@ -56,6 +58,7 @@ def train(task, train_inputs):
         logger(f'Path not exists: {ae}')
         return {"task": task.description(), "status": 'Path not exists'}
 
+    logger(train_config_payload)
     headers = {"Authorization": f"Token {core_token}"}
     response = requests.request("POST", SCMAPP_URL + "/train", json=train_config_payload, headers=headers)
     return {"task": task.description(), "status": response.status_code}

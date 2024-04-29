@@ -5,15 +5,8 @@ normalized_gsd_value: 0.03
 
 # global
 project_uids:
-  - "K4W6yJ1zMP"
-  - "K4W6yJ1zMP"
-  - "K4W6yJ1zMP"
 val_project_uids:
-  - "VzZHZIwo1K"
-  - "VzZHZIwo1K"
 test_project_uids:
-  - "VzZHZIwo1K"
-  - "VzZHZIwo1K"
 
 
 # project specific

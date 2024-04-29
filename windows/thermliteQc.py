@@ -486,9 +486,6 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             # Saving tagged images meta data for backup
             with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
                 json.dump(aws_tagged_images, g)
-
-        def filter_thermal_images(rawimage):
-            return rawimage.get("filename", 'Nothing')[0] in "Thermal Raw Image"
         
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
@@ -505,17 +502,9 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                     feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
                 if 'num_images_tagged' in feature['properties']:
                     feature['properties'].pop('num_images_tagged')
-                #Make Temperature marker to show up in first place under thermal tagged images
-                if self.temperature_markers.isChecked():
-                    raw_images = feature['properties'].get('uid', None)
-                    thermal_images = list(filter(filter_thermal_images, raw_images))
-                    for image in thermal_images:
-                        raw_images.pop(image)
-                    raw_images += thermal_images[::-1]
-                    feature["properties"]["raw_images"] = raw_images
                 geojson['features'].append(feature)
-            except TypeError:
-                pass
+            except Exception as e:
+                print(e)
                 
         #remove exiting vlayer and add tagged vlayer
         self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])
