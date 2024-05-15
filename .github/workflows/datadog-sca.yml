@@ -1,0 +1,29 @@
+on: [push]
+
+name: Datadog Software Composition Analysis
+
+jobs:
+  software-composition-analysis:
+    runs-on: ubuntu-latest
+    name: Datadog Software Composition Analysis
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Check imported libraries are secure and compliant
+      id: datadog-software-composition-analysis
+      uses: DataDog/datadog-sca-github-action@main
+      with:
+        dd_api_key: ${{ secrets.DD_API_KEY }}
+        dd_app_key: ${{ secrets.DD_APP_KEY }}
+        dd_service: qgis_plugin
+        dd_env: ci
+        dd_site: datadoghq.com
+
+    - name: Evaluate Gate Conditions with Datadog CI
+      run: |
+        npm install -g @datadog/datadog-ci
+        datadog-ci gate evaluate
+      env:
+        DD_API_KEY: ${{ secrets.DD_API_KEY }}
+        DD_APP_KEY: ${{ secrets.DD_APP_KEY }}
