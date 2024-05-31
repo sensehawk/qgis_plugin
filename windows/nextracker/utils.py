@@ -65,7 +65,7 @@ def setup_clipped_orthos_group(task, task_inputs):
     
 def generate_group_points(group_obj, org_uid, user_email, token, logger):
     group_uid, group_name = group_obj.uid, group_obj.name
-    # url = f"{NEXTRACKER_URL}/group_points?group_uid={group_uid}&organization_uid={org_uid}&user_email={user_email}&group_name={group_name}"?
+    # url = f"{NEXTRACKER_URL}/group_points?group_uid={group_uid}&organization_uid={org_uid}&user_email={user_email}&group_name={group_name}"
     url = NEXTRACKER_V3_URL
     params = {"service_name":"nextracker", "endpoint":"group_points", "group_uid":group_uid, "organization_uid":org_uid, "user_email":user_email, "group_name":group_name}
     headers = {"Authorization": f"Token {token}"}

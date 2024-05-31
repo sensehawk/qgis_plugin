@@ -3,7 +3,7 @@ from qgis.PyQt import QtWidgets, uic
 from qgis.gui import QgsCheckableComboBox
 from qgis.core import Qgis, QgsApplication, QgsTask
 from qgis.PyQt import QtCore
-from ..sensehawk_apis.scm_apis import train
+from ..sensehawk_apis.scm_apis import train_model
 import json
 
 
@@ -46,12 +46,14 @@ class MLServiceMapWidget(QtWidgets.QDialog):
             self.logger("Detection list, Segmentation list and Keypoint list are not mutually exclusive!",
                         level=Qgis.Warning)
             return None
+        
         with open(self.project.geojson_path, 'r') as fi:
             geojson = json.load(fi)
 
-        def callback(task, logger):
-            result = task.returned_values
+        def callback(task, train_task, logger):
+            result = train_task.returned_values
             status = None
+            logger(str(result))
             if result:
                 status = result.get("status")
             if status == 503:
@@ -65,12 +67,13 @@ class MLServiceMapWidget(QtWidgets.QDialog):
                         self.project.class_maps,
                         self.project.user_email,
                         self.project.core_token,
-                        self.logger
+                        self.logger,
+                        self.project.container_uid,
                         ]
 
-        train_task = QgsTask.fromFunction("Train request", train, train_inputs=train_inputs)
-        train_task.statusChanged.connect(lambda: callback(train_task, self.logger))
+        train_task = QgsTask.fromFunction("Train request", train_model, train_inputs=train_inputs)
         QgsApplication.taskManager().addTask(train_task)
+        train_task.statusChanged.connect(lambda task_status: callback(task_status, train_task, self.logger))
 
     def close_dialogbox(self):
         self.close()

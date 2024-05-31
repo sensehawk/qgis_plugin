@@ -97,7 +97,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.org.setEnabled(False)
         self.asset_combobox.setEnabled(False)
         print(self.org_uid)
-        load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, self.org_uid, self.core_token)
+        load_asset_task = QgsTask.fromFunction("load_asset_task", asset_details, self.org_uid, self.core_token, self.logger)
         QgsApplication.taskManager().addTask(load_asset_task)
         load_asset_task.statusChanged.connect(lambda load_asset_task_status: self.asset_info(load_asset_task_status, load_asset_task))
 

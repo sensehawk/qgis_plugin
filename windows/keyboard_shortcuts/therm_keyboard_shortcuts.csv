@@ -35,3 +35,7 @@ Key,Feature Type
 C,clip_boundary
 T,train_boundary
 33,junction_box_hot
+34,full_interior_cell_hot
+35,partial_interior_cell_hot
+36,full_edge_cell_hot
+37,partial_edge_cell_hot
