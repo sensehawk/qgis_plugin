@@ -98,12 +98,23 @@ class Project:
             self.raw_color_code = {
                 i: self.class_maps[i]["properties"]["color"].replace("rgb(", "").replace(")", "").replace(" ", "").split(",")
                 for i in self.class_maps if self.class_maps[i]['properties']['color']}
+            
             self.color_code = {}
-            for feature_name , feature_color in self.raw_color_code.items():
-                if len(feature_color) > 1:
-                    self.color_code[feature_name] =  "#%02x%02x%02x" % tuple(int(x) for x in self.raw_color_code[feature_name])
+            for i in self.class_maps:
+                if "rgb" in self.class_maps[i]['properties']['color']:
+                    rgb = self.class_maps[i]["properties"]["color"].replace("rgb(", "").replace(")", "").replace(" ", "").split(",")
+                    color = "#%02x%02x%02x" % tuple(int(x) for x in rgb)
+                    self.class_maps[i]["properties"]["color"] = color
+                    self.color_code[i] = color
                 else:
-                    self.color_code[feature_name] = feature_color[0]
+                    self.color_code[i] = self.class_maps[i]["properties"]["color"]
+
+            # self.color_code = {}
+            # for feature_name , feature_color in self.raw_color_code.items():
+            #     if len(feature_color) > 1:
+            #         self.color_code[feature_name] =  "#%02x%02x%02x" % tuple(int(x) for x in self.raw_color_code[feature_name])
+            #     else:
+            #         self.color_code[feature_name] = feature_color[0]
 
     # parsing collected list type data to copy_pasted issue and validting list_type fields for newly added ones
     def save_and_parse_listType_dataFields(self):  

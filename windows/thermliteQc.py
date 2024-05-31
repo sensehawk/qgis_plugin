@@ -259,11 +259,11 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                     self.min_temp_marker = [mn_x, mn_y]
                     # Show the max and min points on the image viewer
                     self.painted_image = cv2.drawMarker(self.painted_image, tuple(self.max_temp_marker),(0,0,255), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
-                    self.painted_image = cv2.drawMarker(self.painted_image, tuple(self.min_temp_marker),(0,255,0), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
+                    self.painted_image = cv2.drawMarker(self.painted_image, tuple(self.min_temp_marker),(255,0,0), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
                 # Write temperature values as well on the image
                 # Blue for max and green for min
                 self.painted_image = cv2.putText(self.painted_image, "Max: %.2f" %self.max_temp, (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
-                self.painted_image = cv2.putText(self.painted_image, "Min: %.2f" %self.min_temp, (10, 60), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
+                self.painted_image = cv2.putText(self.painted_image, "Min: %.2f" %self.min_temp, (10, 60), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 0, 0), 1, cv2.LINE_AA)
                 qImg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
                 self.current_image = QtGui.QPixmap(qImg)
                 self.viewer.setPhoto(self.current_image)
@@ -344,8 +344,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         y1 = max(int(y-h/2), 0)
         x2 = min(int(x+w/2), image_w)
         y2 = min(int(y+h/2), image_h)
-        image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [255, 0, 0], 2, 1)
-        image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
+        image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0,255,0], 2, 1)
+        image = cv2.drawMarker(imagecopy, (x, y), [0,255,0], cv2.MARKER_CROSS, 2, 2)
         return image
     
     def photoClicked(self, pos=None):
@@ -445,7 +445,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             for next_image in imgs_info:
                 # Avoid duplicate upload of same image in case temperature markers are not required
                 if not self.temperature_markers.isChecked() and next_image not in self.upload_image_list:
-                    self.upload_image_list.append([next_image, None, None])
+                    self.upload_image_list.append([next_image, None, None, None, None])
                     image = next_image.split('\\')[-1]
                 # In case of temperature markers, add the marker locations inside the upload image list so that we can add markers after converting to magma
                 elif self.temperature_markers.isChecked():
@@ -486,7 +486,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             # Saving tagged images meta data for backup
             with open(self.images_dir+f'\\{self.projectUid}_image_metadata.json', 'w') as g:
                 json.dump(aws_tagged_images, g)
-        
+
         geojson = {'type':'FeatureCollection','features':[]}
         features = file['features']
         for feature in features:
@@ -502,6 +502,15 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                     feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
                 if 'num_images_tagged' in feature['properties']:
                     feature['properties'].pop('num_images_tagged')
+
+                taggaed_rawimages = feature['properties']['raw_images']
+                thermal_images = []
+                for image in taggaed_rawimages.copy():
+                    if image['service']['filename'][0] == 'T':
+                        thermal_images.append(image)
+                        taggaed_rawimages.remove(image)
+                taggaed_rawimages += thermal_images[::-1]
+                feature['properties']['raw_images'] = taggaed_rawimages
                 geojson['features'].append(feature)
             except Exception as e:
                 print(e)

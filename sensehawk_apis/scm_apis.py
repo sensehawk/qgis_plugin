@@ -1,8 +1,8 @@
 import os
+import requests
 
 from ..utils import load_yaml_file
 from ..constants import SCM_INFERENCE_URL, SCM_TRAIN_URL, SCMAPP_URL
-import requests
 from .core_apis import get_project_details, get_project_geojson, get_project_reports, get_reports_url
 from .terra_apis import get_terra_classmaps, get_project_data
 

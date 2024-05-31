@@ -6,7 +6,6 @@ normalized_gsd_value: 0.03
 # global
 project_uids:
 val_project_uids:
-test_project_uids:
 
 
 # project specific
@@ -44,9 +43,13 @@ dataset:
     target_size: 512
     cache: True
     dataset_type: "detection"
+    preprocess:
+      wallis: false
+      grayscale: false
+      normalized_gsd_value: false
 
 #  - name: "points"
-#    format: "Points" # class names for Unet
+#    format: "Points" # class names for Unet  
 #    target_size:
 #      - 64
 #      - 128
