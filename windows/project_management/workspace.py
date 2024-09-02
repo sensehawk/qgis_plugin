@@ -12,7 +12,7 @@ import shutil
 
 
 class WorkspaceWindow(QtWidgets.QWidget):
-    def __init__(self, home_window, iface):
+    def __init__(self, home_window, iface, plugin_obj):
         """Constructor."""
         super(WorkspaceWindow, self).__init__()
         self.pm_workspace_grid = QtWidgets.QGridLayout(self)
@@ -43,6 +43,7 @@ class WorkspaceWindow(QtWidgets.QWidget):
         self.apptype_details = home_window.apptype_details
         # self.container_details = home_window.container_details 
         self.home_window = home_window
+        self.plugin_obj = plugin_obj
         self.qgis_project = QgsProject.instance()
         self.layer_tree = self.qgis_project.layerTreeRoot()
         self.set_asset_label()
@@ -265,6 +266,9 @@ class WorkspaceWindow(QtWidgets.QWidget):
             self.hide()
         else:
             self.iface.removeDockWidget(self.dock_widget)
+            self.plugin_obj.pluginIsActive = False
+            self.dock_widget.setFixedWidth(320)
+            self.dock_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding,  QtWidgets.QSizePolicy.Expanding)
             del self.home_window.login_obj
             del self.dock_widget
             del self.home_window

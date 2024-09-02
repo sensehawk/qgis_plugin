@@ -65,7 +65,11 @@ class SensehawkQC:
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&SenseHawk QC')
-        
+
+        # Check if plugin was started the first time in current QGIS session
+        # Must be set in initGui() to survive plugin reloads
+        self.first_start = None
+
         self.toolbar = self.iface.addToolBar(u'SensehawkQC')
         self.toolbar.setObjectName(u'SensehawkQC')
 
@@ -205,6 +209,6 @@ class SensehawkQC:
             self.pluginIsActive = True
 
             # Initialize login window
-            self.login_window = LoginWindow(self.iface, self.dockwidget)
+            self.login_window = LoginWindow(self)
             self.login_window.show()
 

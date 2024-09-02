@@ -34,7 +34,7 @@ import os
 
 class LoginWindow(QtWidgets.QWidget):
 
-    def __init__(self, iface, dockwidget):
+    def __init__(self, plugin_obj):
         """Constructor."""
         super(LoginWindow, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'login.ui'), self)
@@ -44,10 +44,12 @@ class LoginWindow(QtWidgets.QWidget):
         self.user_email = None
         self.user_password = None
         self.core_token = None
-        self.iface = iface
+        self.iface = plugin_obj.iface
+        self.plugin_obj = plugin_obj
 
         self.load_window = None
-        self.dock_widget = dockwidget
+        self.dock_widget = plugin_obj.dockwidget
+        self.dock_widget.closeEvent = lambda x: self.close_dockwidget(event=x)
         # Add to the left docking area by default
         logo_label = QtWidgets.QLabel(self)
         logo = QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'icon.svg'))
@@ -60,6 +62,21 @@ class LoginWindow(QtWidgets.QWidget):
         self.dock_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dock_widget)
         self.canvas_logger('Welcome to Sensehawk Qgis plugin')
+
+    def close_dockwidget(self, event=None, message="Closing Nextracker Plugin. Are you sure?"):
+        # Ignore the event for now until the confimation message is replied to
+        message_box = QtWidgets.QMessageBox()
+        message_box.setIcon(QtWidgets.QMessageBox.Warning)
+        message_box.setWindowTitle('Sensehawk Plugin')
+        message_box.setText(message)
+        message_box.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        ret = message_box.exec()
+        if ret == QtWidgets.QMessageBox.Ok:
+                self.plugin_obj.pluginIsActive = False
+                print(self.plugin_obj.pluginIsActive)
+                event.accept()
+        else:
+            event.ignore()
 
     def logger(self, message, level=Qgis.Info):
         QgsMessageLog.logMessage(str(message), 'SenseHawk QC', level=level)
@@ -85,5 +102,5 @@ class LoginWindow(QtWidgets.QWidget):
 
     def show_load_window(self):
         # Initialize load save window (next window post login)
-        self.load_window = HomeWindow(self)
+        self.load_window = HomeWindow(self, self.plugin_obj)
         self.load_window.show()

@@ -42,6 +42,7 @@ import json
 from ..constants import S3_BUCKET, S3_REGION
 import shutil
 import uuid
+import traceback
 
 exiftool_path = r'{}'.format(os.path.realpath(os.path.join(os.path.dirname(__file__), "exiftool.exe")))
 
@@ -264,11 +265,12 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 # Blue for max and green for min
                 self.painted_image = cv2.putText(self.painted_image, "Max: %.2f" %self.max_temp, (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
                 self.painted_image = cv2.putText(self.painted_image, "Min: %.2f" %self.min_temp, (10, 60), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 0, 0), 1, cv2.LINE_AA)
-                qImg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-                self.current_image = QtGui.QPixmap(qImg)
+                qimg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+                self.current_image = QtGui.QPixmap(qimg)
                 self.viewer.setPhoto(self.current_image)
             except Exception as e:
-                self.canvas_logger(str(e), level=Qgis.Warning)
+                tb = traceback.format_exc()
+                self.canvas_logger(str(e) + str(tb), level=Qgis.Warning)
                 return None
     
     def sort_task_callback(self, sort_task_status, image_sort_task):
@@ -310,8 +312,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.image = cv2.imread(self.image_path)
         self.height, self.width, self.channel = self.image.shape
         self.bytesPerLine = 3 * self.width
-        qImg = QImage(self.image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.current_image = QtGui.QPixmap(qImg)
+        qimg = QImage(self.image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        self.current_image = QtGui.QPixmap(qimg)
         self.viewer.setPhoto(self.current_image)
         # Load temperature map if temperature is enabled
         if self.temperature_toggle.isChecked():

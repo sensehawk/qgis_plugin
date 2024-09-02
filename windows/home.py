@@ -36,15 +36,16 @@ import os
 
 
 class HomeWindow(QtWidgets.QWidget):
-    def __init__(self, login_obj):
+    def __init__(self, login_obj, plugin_obj):
         """Constructor."""
         super(HomeWindow, self).__init__()
         uic.loadUi(os.path.join(os.path.dirname(__file__), 'home.ui'), self)
         self.canvas_logger = login_obj.canvas_logger
         self.logger = login_obj.logger
         self.core_token = login_obj.core_token
-        self.user_email = login_obj.user_email
+        self.user_email = login_obj.user_email  
         self.login_obj = login_obj
+        self.plugin_obj = plugin_obj
         self.iface = iface
         self.org_details = login_obj.org_details
         org_list = list(self.org_details.values())
@@ -161,7 +162,7 @@ class HomeWindow(QtWidgets.QWidget):
         self.asset = Asset(asset_dict, self.org_uid)
         self.parse_containers_info()
         self.parse_groups_info()
-        self.asset_workspace = WorkspaceWindow(self, self.iface)
+        self.asset_workspace = WorkspaceWindow(self, self.iface, self.plugin_obj)
         self.hide()
         self.asset_workspace.show()
     
