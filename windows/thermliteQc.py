@@ -240,6 +240,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
 
     def extract_temperature(self, image_w=640, image_h=512):
         x, y = self.x , self.y
+        w_scale = image_w/self.width
+        h_scale = image_h/self.height
+        x = x * w_scale
+        y = y * h_scale
         temp_patch_x = int(self.temp_patch_x.text().strip() or 1)
         temp_patch_y = int(self.temp_patch_y.text().strip() or 1)
         if temp_patch_x and temp_patch_y:
@@ -344,10 +348,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
         x1 = max(int(x-w/2), 0)
         y1 = max(int(y-h/2), 0)
-        x2 = min(int(x+w/2), image_w)
-        y2 = min(int(y+h/2), image_h)
+        x2 = min(int(x+w/2), self.width)
+        y2 = min(int(y+h/2), self.height)
         image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0,255,0], 2, 1)
-        image = cv2.drawMarker(imagecopy, (x, y), [0,255,0], cv2.MARKER_CROSS, 2, 2)
+        image = cv2.drawMarker(image, (x, y), [0,255,0], cv2.MARKER_CROSS, 2, 2)
         return image
     
     def photoClicked(self, pos=None):

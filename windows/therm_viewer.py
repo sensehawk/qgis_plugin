@@ -277,17 +277,17 @@ class ThermViewerDockWidget(QtWidgets.QWidget, THERM_VIEWER):
             except AttributeError:
                 timestamp = str(self.sfeature["timestamp"])
 
-        if not self.project.vlayer.fields().indexFromName('uid') == -1 and self.sfeature['uid'] :  self.uid_name.setText(self.sfeature['uid']) 
+        if self.project.vlayer.fields().indexFromName('uid') != -1 and self.sfeature['uid'] :  self.uid_name.setText(self.sfeature['uid']) 
         else: self.uid_name.setText("N/A") 
-        if not self.project.vlayer.fields().indexFromName('timestamp') == -1 and self.sfeature['timestamp']: self.timestamp.setText(timestamp)
+        if  self.project.vlayer.fields().indexFromName('timestamp') != -1 and self.sfeature['timestamp']: self.timestamp.setText(timestamp)
         else: self.timestamp.setText("N/A")
-        if not self.project.vlayer.fields().indexFromName('string_number') == -1 and self.sfeature['string_number']:  self.string_number.setText(self.sfeature['string_number'])
+        if self.project.vlayer.fields().indexFromName('string_number') != -1 and self.sfeature['string_number']:  self.string_number.setText(self.sfeature['string_number'])
         else: self.string_number.setText("N/A")
-        if not self.project.vlayer.fields().indexFromName('temperature_min') == -1 and self.sfeature['temperature_min']:  self.min_temp.setText("{:.2f}".format(float(self.sfeature['temperature_min'])))
+        if  self.project.vlayer.fields().indexFromName('temperature_min') != -1 and self.sfeature['temperature_min']:  self.min_temp.setText("{:.2f}".format(float(self.sfeature['temperature_min'])))
         else: self.min_temp.setText("N/A")
-        if not self.project.vlayer.fields().indexFromName('temperature_max') == -1 and self.sfeature['temperature_max']:   self.max_temp.setText("{:.2f}".format(float(self.sfeature['temperature_max'])))
+        if self.project.vlayer.fields().indexFromName('temperature_max') != -1 and self.sfeature['temperature_max']:   self.max_temp.setText("{:.2f}".format(float(self.sfeature['temperature_max'])))
         else: self.max_temp.setText("N/A")
-        if not self.project.vlayer.fields().indexFromName('temperature_difference') == -1 and self.sfeature['temperature_difference']:  self.delta_temp.setText("{:.2f}".format(float(self.sfeature['temperature_difference'])))
+        if self.project.vlayer.fields().indexFromName('temperature_difference') != -1 and self.sfeature['temperature_difference']:  self.delta_temp.setText("{:.2f}".format(float(self.sfeature['temperature_difference'])))
         else: self.delta_temp.setText('N/A')
 
         
