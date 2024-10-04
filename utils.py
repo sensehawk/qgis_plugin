@@ -32,7 +32,6 @@ from .constants import THERM_URL, THERMAL_TAGGING_URL, CORE_URL
 from qgis.PyQt.QtCore import Qt
 from shapely.ops import MultiLineString, Polygon, transform
 from shapely.geometry import mapping
-
 import yaml
 
 
@@ -258,29 +257,31 @@ def groups_details(asset, org, token):
     return groups_dict
 
 
-def asset_details(task, org_uid, token):  # fetching asset and org_container details
+def asset_details(task, org_uid, token, logger):  # fetching asset and org_container details
     url = CORE_URL + f'/api/v1/asset-lists/?page_size=1000&page_number=1&organization={org_uid}'
     headers = {"Authorization": f"Token {token}"}
-    asset_response = requests.get(url, headers=headers)
-    asset_details = asset_response.json()['results']
-    asset_dict = {}
-    for asset in asset_details:
-        asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'],
-                                    "profile_image": asset['properties'].get("cover_image", None)}
+    try:
+        asset_response = requests.get(url, headers=headers)
+        asset_details = asset_response.json()['results']
+        asset_dict = {}
+        for asset in asset_details:
+            asset_dict[asset['uid']] = {"uid": asset["uid"], "name": asset['name'],
+                                        "profile_image": asset['properties'].get("cover_image", None)}
 
-    user_id_url = CORE_URL + f'/api/v1/organizations/{org_uid}/?organization={org_uid}'
-    org_user_response = requests.get(user_id_url, headers=headers)
-    user_id = org_user_response.json()['owner'].get('uid', None)
-
-    apptype_url = CORE_URL + f'/api/v1/apptypes/?organization={org_uid}'
-    apptype_response = requests.get(apptype_url, headers=headers)
-    apptype_details = apptype_response.json()['results']
-    apptype_dict = {}
-    if apptype_details:
-        for apptype in apptype_details:
-            apptype_dict[apptype['name']] = {'uid': apptype['uid'], 'name': apptype['name'],
-            'acitve': apptype['active'], 'application': apptype['application']}
-
+        user_id_url = CORE_URL + f'/api/v1/organizations/{org_uid}/?organization={org_uid}'
+        org_user_response = requests.get(user_id_url, headers=headers)
+        user_id = org_user_response.json().get("owner", {"uid":"no org user"}).get('uid', None)
+        
+        apptype_url = CORE_URL + f'/api/v1/apptypes/?organization={org_uid}'
+        apptype_response = requests.get(apptype_url, headers=headers)
+        apptype_details = apptype_response.json()['results']
+        apptype_dict = {}
+        if apptype_details:
+            for apptype in apptype_details:
+                apptype_dict[apptype['name']] = {'uid': apptype['uid'], 'name': apptype['name'],
+                'acitve': apptype['active'], 'application': apptype['application']}
+    except Exception as e:
+        logger(str(e))
 
     return {'asset_dict': asset_dict,
             'user_id': user_id,
@@ -316,7 +317,8 @@ def file_existent(project_uid, org, token):
         return existing_file
 
 
-def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
+def convert_and_upload(path, image_info, projectUid, post_urls_data, logger):
+    image_path, max_temp_marker, min_temp_marker, max_temp, min_temp = image_info    
     image_name = image_path.split('\\')[-1]
     image_key = f"hawkai/{projectUid}/IR_rawimage/{image_name}"
     dpath = os.path.join(f'{path}', image_name)
@@ -325,6 +327,14 @@ def convert_and_upload(path, image_path, projectUid, post_urls_data, logger):
     heatmap = (colormap(image) * 2 ** 16)[:, :, :3].astype(np.uint16)
     heatmap = cv2.convertScaleAbs(heatmap, alpha=(255.0 / 65535.0))
     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+    if max_temp_marker and min_temp_marker:
+        heatmap = cv2.drawMarker(heatmap, tuple(max_temp_marker),(0,0,255), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
+        heatmap = cv2.drawMarker(heatmap, tuple(min_temp_marker),(255,0,0), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
+        # Write temperature values as well on the image
+        # Blue for max and green for min
+        heatmap = cv2.putText(heatmap, "Max: %.2f"%max_temp, (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 255, 255), 1, cv2.LINE_AA)
+        heatmap = cv2.putText(heatmap, "Min: %.2f"%min_temp, (10, 60), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 255, 255), 1, cv2.LINE_AA)
+
     if cv2.imwrite(dpath, heatmap):
         post_url = post_urls_data[image_key]["url"]
         post_data = post_urls_data[image_key]["fields"]
@@ -363,7 +373,7 @@ def get_presigned_post_urls(task, inputs):
     org_uid = inputs["orgUid"]
     project_uid = inputs["projectUid"]
     core_token = inputs["core_token"]
-    upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{os.path.split(i)[-1]}" for i in upload_image_list]
+    upload_keys = [f"hawkai/{project_uid}/IR_rawimage/{os.path.split(i[0])[-1]}" for i in upload_image_list]
     data = {"project_uid": project_uid, "organization": org_uid, "object_keys": upload_keys}
     # print(f"Data for presigned post urls: {data}")
     url = THERMAL_TAGGING_URL + "/presigned_post_urls"

@@ -40,6 +40,9 @@ import subprocess
 from ..utils import sort_images, upload, combobox_modifier, categorize_layer, get_presigned_post_urls, fields_validator, create_custom_label
 import json
 from ..constants import S3_BUCKET, S3_REGION
+import shutil
+import uuid
+import traceback
 
 exiftool_path = r'{}'.format(os.path.realpath(os.path.join(os.path.dirname(__file__), "exiftool.exe")))
 
@@ -237,6 +240,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
 
     def extract_temperature(self, image_w=640, image_h=512):
         x, y = self.x , self.y
+        w_scale = image_w/self.width
+        h_scale = image_h/self.height
+        x = x * w_scale
+        y = y * h_scale
         temp_patch_x = int(self.temp_patch_x.text().strip() or 1)
         temp_patch_y = int(self.temp_patch_y.text().strip() or 1)
         if temp_patch_x and temp_patch_y:
@@ -249,8 +256,25 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 self.max_temp = np.percentile(temp_patch, int(self.max_percentile.text().strip() or 1))
                 self.min_temp = np.percentile(temp_patch, int(self.min_percentile.text().strip() or 1))
                 self.delta_temp.setText("{:.2f}".format(float(self.max_temp-self.min_temp)))
+                if self.temperature_markers.isChecked():
+                    # Get points where max and min temperatures are in case temperature_markers checkbox is selected
+                    mx_y, mx_x = min_y + np.where(temp_patch.astype(np.int16) == np.int16(self.max_temp))[0][0], min_x + np.where(temp_patch.astype(np.int16) == np.int16(self.max_temp))[1][0]
+                    mn_y, mn_x = min_y + np.where(temp_patch.astype(np.int16) == np.int16(self.min_temp))[0][0], min_x + np.where(temp_patch.astype(np.int16) == np.int16(self.min_temp))[1][0]
+                    self.max_temp_marker = [mx_x, mx_y]
+                    self.min_temp_marker = [mn_x, mn_y]
+                    # Show the max and min points on the image viewer
+                    self.painted_image = cv2.drawMarker(self.painted_image, tuple(self.max_temp_marker),(0,0,255), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
+                    self.painted_image = cv2.drawMarker(self.painted_image, tuple(self.min_temp_marker),(255,0,0), markerType=1, markerSize=8, thickness=1, line_type=cv2.LINE_AA)
+                # Write temperature values as well on the image
+                # Blue for max and green for min
+                self.painted_image = cv2.putText(self.painted_image, "Max: %.2f" %self.max_temp, (10, 30), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (0, 0, 255), 1, cv2.LINE_AA)
+                self.painted_image = cv2.putText(self.painted_image, "Min: %.2f" %self.min_temp, (10, 60), cv2.FONT_HERSHEY_TRIPLEX, 0.7, (255, 0, 0), 1, cv2.LINE_AA)
+                qimg = QImage(self.painted_image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+                self.current_image = QtGui.QPixmap(qimg)
+                self.viewer.setPhoto(self.current_image)
             except Exception as e:
-                self.canvas_logger(str(e), level=Qgis.Warning)
+                tb = traceback.format_exc()
+                self.canvas_logger(str(e) + str(tb), level=Qgis.Warning)
                 return None
     
     def sort_task_callback(self, sort_task_status, image_sort_task):
@@ -292,8 +316,8 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         self.image = cv2.imread(self.image_path)
         self.height, self.width, self.channel = self.image.shape
         self.bytesPerLine = 3 * self.width
-        qImg = QImage(self.image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
-        self.current_image = QtGui.QPixmap(qImg)
+        qimg = QImage(self.image.data, self.width, self.height, self.bytesPerLine, QImage.Format_RGB888).rgbSwapped()
+        self.current_image = QtGui.QPixmap(qimg)
         self.viewer.setPhoto(self.current_image)
         # Load temperature map if temperature is enabled
         if self.temperature_toggle.isChecked():
@@ -324,10 +348,10 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
     def draw_box(self, imagecopy, x, y, w=32, h=32, image_w=640, image_h=512):
         x1 = max(int(x-w/2), 0)
         y1 = max(int(y-h/2), 0)
-        x2 = min(int(x+w/2), image_w)
-        y2 = min(int(y+h/2), image_h)
-        image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0, 0, 255], 2, 1)
-        image = cv2.drawMarker(imagecopy, (x, y), [0, 255, 0], cv2.MARKER_CROSS, 2, 2)
+        x2 = min(int(x+w/2), self.width)
+        y2 = min(int(y+h/2), self.height)
+        image = cv2.rectangle(imagecopy, (x1, y1), (x2, y2), [0,255,0], 2, 1)
+        image = cv2.drawMarker(image, (x, y), [0,255,0], cv2.MARKER_CROSS, 2, 2)
         return image
     
     def photoClicked(self, pos=None):
@@ -397,16 +421,23 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                 self.therm_tools.num_tagged_rawimages[uid] = int(sfeature['num_images_tagged']) + 1
             
         # If the same marker location and the same image exists, don't add it again
-        if sfeature_image_tagged_info.get(image_path, [0, 0]) != self.markerlocation:        
-            sfeature_image_tagged_info[image_path] = self.markerlocation
+        if sfeature_image_tagged_info.get(image_path, [[0, 0], None, None])[0] != self.markerlocation:
+            if self.temperature_markers.isChecked():
+                sfeature_image_tagged_info[image_path] = [self.markerlocation, self.max_temp_marker, self.min_temp_marker, self.max_temp, self.min_temp]
+            else:            
+                sfeature_image_tagged_info[image_path] = [self.markerlocation, None, None, None, None]
             print(f"Tagged image info: {self.image_tagged_info}")
         else:
             return None
         # Save sfeature tagged info for later use
         self.image_tagged_info[uid] = sfeature_image_tagged_info
         self.project.vlayer.updateFeature(sfeature)
-        # Set the marker location to default [0, 0]
+        # Set the marker location, temperature markers and temperatures to default values 
         self.markerlocation = [0, 0]
+        self.max_temp_marker = None
+        self.min_temp_marker = None
+        self.max_temp = 0 
+        self.min_temp = 0
 
     def parse_tagged_data(self):
         self.canvas_logger('Saving changes to Sensehawk Core')
@@ -418,10 +449,18 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
             raw_image = []
             image_num = 0
             for next_image in imgs_info:
-                if next_image not in self.upload_image_list:
-                    self.upload_image_list.append(next_image)
-                image = next_image.split('\\')[-1]
-                markerlocation = imgs_info[next_image]
+                # Avoid duplicate upload of same image in case temperature markers are not required
+                if not self.temperature_markers.isChecked() and next_image not in self.upload_image_list:
+                    self.upload_image_list.append([next_image, None, None, None, None])
+                    image = next_image.split('\\')[-1]
+                # In case of temperature markers, add the marker locations inside the upload image list so that we can add markers after converting to magma
+                elif self.temperature_markers.isChecked():
+                    updated_image_path = next_image.replace(next_image.split('\\')[-1], str(uuid.uuid4())+next_image.split('\\')[-1])
+                    image = updated_image_path.split('\\')[-1]
+                    shutil.copy(next_image, updated_image_path)
+                    _, max_temp_marker, min_temp_marker, max_temp, min_temp = imgs_info[next_image] 
+                    self.upload_image_list.append([updated_image_path, max_temp_marker, min_temp_marker, max_temp, min_temp])
+                markerlocation = imgs_info[next_image][0]
                 image_type = 'Thermal Raw Image'
                 aws_image = {"location": markerlocation,
                     "service": {'bucket': S3_BUCKET,
@@ -458,7 +497,7 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
         features = file['features']
         for feature in features:
             try:
-                mapping_uid  = feature['properties'].get('uid', None)
+                mapping_uid = feature['properties'].get('uid', None)
                 if not mapping_uid:
                     geojson['features'].append(feature)
                     continue
@@ -469,9 +508,18 @@ class ThermliteQcWindow(QtWidgets.QWidget, THERMLITE_QC_UI):
                     feature['properties']['raw_images'] += aws_tagged_images.get(mapping_uid, [])
                 if 'num_images_tagged' in feature['properties']:
                     feature['properties'].pop('num_images_tagged')
+
+                taggaed_rawimages = feature['properties']['raw_images']
+                thermal_images = []
+                for image in taggaed_rawimages.copy():
+                    if image['service']['filename'][0] == 'T':
+                        thermal_images.append(image)
+                        taggaed_rawimages.remove(image)
+                taggaed_rawimages += thermal_images[::-1]
+                feature['properties']['raw_images'] = taggaed_rawimages
                 geojson['features'].append(feature)
-            except TypeError:
-                pass
+            except Exception as e:
+                print(e)
                 
         #remove exiting vlayer and add tagged vlayer
         self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])

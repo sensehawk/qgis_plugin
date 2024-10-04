@@ -117,9 +117,19 @@ def update_rotated_coords(featuresobjlist,anchor_point, angle):
         setattr(feature,'utm_x',xutm)
         setattr(feature,'utm_y',yutm)
         
+def polygon_area(utm_coords):
+       # Ensure the first point is repeated at the end
+       utm_coords = np.vstack([utm_coords, utm_coords[0]])
+       x = utm_coords[:, 0]
+       y = utm_coords[:, 1]
+       
+       # Apply the Shoelace formula
+       area = 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
+       return area
         
 def update_issue_Row_column(project_uid, featuresobjlist, vlayer, height, width):
     tablelist = [table for table in featuresobjlist if table.feature['class_name'] == 'table' and table.issue_obj]
+    module_area = height * width
     for table in tablelist:
         parentTableIssueObj = [issue for issue in table.issue_obj]
         abjx = width/2
@@ -128,6 +138,10 @@ def update_issue_Row_column(project_uid, featuresobjlist, vlayer, height, width)
         leftTop_x = min(table.utm_coords, key=lambda x: x[0])[0]
         issue_num = 1
         for issueObj in parentTableIssueObj:
+            # num of module affected caluculation 
+            issue_area = polygon_area(issueObj.utm_coords)
+            num_module_affected = abs(round(issue_area / module_area ))
+
             x = (issueObj.utm_x-leftTop_x)/width
             y = (leftTop_y-issueObj.utm_y)/height
             column = ceil(x)
@@ -139,6 +153,7 @@ def update_issue_Row_column(project_uid, featuresobjlist, vlayer, height, width)
             issueObj.feature['uid'] = f"{project_uid}-{issueObj.feature['table_row']}:{issueObj.feature['table_column']}~{issue_num}"
             issueObj.feature['name'] = f"{project_uid}-{issueObj.feature['table_row']}:{issueObj.feature['table_column']}~{issue_num}"
             issueObj.feature['idx'] = issue_num
+            issueObj.feature['num_modules_affected'] = num_module_affected
             issue_num += 1
             vlayer.updateFeature(issueObj.feature)
 

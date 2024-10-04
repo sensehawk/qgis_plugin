@@ -35,6 +35,7 @@ from qgis.PyQt import QtWidgets, uic
 from qgis.core import QgsProject
 from PyQt5 import QtCore
 
+import traceback
 import requests
 import json
 import os
@@ -125,33 +126,61 @@ class TerraToolsWidget(QtWidgets.QWidget):
             else:
                 self.canvas_logger(str(response.json()+'|'+response.status_code), level=Qgis.Warning)
 
-    def get_inference_geojson(self, task, inputs):
-            projectUid, token = inputs
-            headers = {"Authorization": f"Token {token}"}
-            url = SCMAPP_URL + f"/last-inferenced-geojson?project_uid={projectUid}"
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
+    def loadInferenceJson(self):
+        # print('load inference file')  
+        # #TODO add this func to qgs task
+        headers = {"Authorization": f"Token {self.core_token}"}
+        project_uid  = self.project_details.get('uid', None)
+        groupuid = self.project_details["group"]["uid"]
+        url = SCMAPP_URL + f"/last-inferenced-geojson?project_uid={project_uid}"
+        response = requests.get(url=url, headers=headers)
+        # print(response.json(), response.status_code)
+        if response.status_code == 200:
                 infernce_geojson = response.json()['features']
-
                 with open(self.project.geojson_path , 'r') as g:
                     existing_geojson = json.load(g)
                 
-                infernce_geojson = features_to_polygons(infernce_geojson)
+                infernce_geojson = features_to_polygons(infernce_geojson, project_uid, groupuid, self.project)
+                existing_geojson['features'] += infernce_geojson
+                #disconnect any single added to existing vlayer
+                self.project.vlayer.selectionChanged.disconnect()
+                # Remove existing Vlayer  
+                self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])
+                #saving merged geojson
+                with open(self.project.geojson_path, "w") as fi:
+                    json.dump(existing_geojson, fi)
+                self.project.initialize_vlayer()
+                self.canvas_logger('Components features loaded', level=Qgis.Success)
+
+        # loadInf_json_task = QgsTask.fromFunction("Load Inference Geojson", get_inference_geojson, inputs=[
+        #                                                                                    project_uid,self.core_token, 
+        #                                                                                    self.logger, self.project.geojson_path, groupuid, self.project])
+        # QgsApplication.taskManager().addTask(loadInf_json_task)
+        # loadInf_json_task.statusChanged.connect(lambda load_status: self.loadInferaCallback(load_status, loadInf_json_task))
+        
+def get_inference_geojson(task, inputs):
+            projectUid, token, logger, geojson_path, groupuid, projecttab = inputs
+            headers = {"Authorization": f"Token {token}"}
+            url = SCMAPP_URL + f"/last-inferenced-geojson?project_uid={projectUid}"
+            logger(url)
+            try:
+                response = requests.get(url=url, headers=headers)
+            except Exception as e:
+                tb = traceback.format_exc()
+                logger(str(tb), str(e))
+            if response.status_code == 200:
+                infernce_geojson = response.json()['features']
+                logger(infernce_geojson, "inference json file")
+                with open(geojson_path , 'r') as g:
+                    existing_geojson = json.load(g)
+                
+                infernce_geojson = features_to_polygons(infernce_geojson, projectUid, groupuid, projecttab)
                 existing_geojson['features'] += infernce_geojson
             else:
                 existing_geojson = {}
 
             return {'response':response, 'existing_geojson':existing_geojson,
                     'task':task.description()}
-    
-    def loadInferenceJson(self):
-        print('load inference file')        
-        loadInf_json_task = QgsTask.fromFunction("Load Inference Geojson", self.get_inference_geojson, inputs=[
-                                                                                           self.project_details.get('uid', None), 
-                                                                                           self.core_token])
-        QgsApplication.taskManager().addTask(loadInf_json_task)
-        loadInf_json_task.statusChanged.connect(lambda load_status: self.loadInferaCallback(load_status, loadInf_json_task))
-        
 
 
 class DetectComponent(QtWidgets.QDialog):

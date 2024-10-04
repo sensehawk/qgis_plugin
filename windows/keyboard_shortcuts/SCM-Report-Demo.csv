@@ -1,22 +1,18 @@
 Key,Feature Type
-0,Module Pallet
-1,Combiner Boxes Installed
-2,module-test
-3,pallet
-4,pole
-5,pole_on_ground
-C,clip_boundary
-6,module
-T,train_boundary
-7,Inverter
-8,Vertical Posts Incomplete
-9,Vertical Posts Complete
-10,CS/Gear Installed
-11,Torque Tube Installed
-12,Modules Complete
-13,Modules In Progress
-14,Trackers Complete
-15,Vertical Posts Completed
-16,Rafters Completed
-17,Purlins Completed
-18,Modules Completed
+0,modules
+1,clip_features
+2,Inverter
+3,CS/Gear Installed
+4,Torque Tube Installed
+5,Modules Complete
+6,Vertical Posts Incomplete
+7,Vertical Posts Complete
+8,Module Pallet
+9,Combiner Boxes Installed
+10,module-test
+11,Trackers Complete
+12,Modules In Progress
+13,Vertical Posts Completed
+14,Rafters Completed
+15,Purlins Completed
+16,Modules Completed
