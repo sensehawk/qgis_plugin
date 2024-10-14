@@ -2,66 +2,10 @@ import os
 import requests
 
 from ..utils import load_yaml_file
-from ..constants import SCM_INFERENCE_URL, SCM_TRAIN_URL, SCMAPP_URL
 from .core_apis import get_project_details, get_project_geojson, get_project_reports, get_reports_url
 from .terra_apis import get_terra_classmaps, get_project_data
 
 
-def get_models_list(project_uid:str,core_token:str):
-    params = {"project_uid": project_uid}
-    headers = {"Authorization": f"Token {core_token}"}
-    response = requests.get(SCMAPP_URL + "/list-models", headers=headers, params=params)
-    return response.json()
-
-
-def train_model(task, train_inputs):
-    project_details, _, ml_service_map, class_maps, user_email, core_token, logger, container_uid = train_inputs
-
-    logger('train function envoked')
-    project_uid = project_details.get("uid", None)
-    org_uid = project_details.get("organization", {}).get("uid", None)
-    ortho_url, _ = get_project_reports(project_uid, container_uid, org_uid, core_token)
-    logger(ortho_url)
-    if not ortho_url:
-        return {"task": task.description(), "status": f"ortho_url: {ortho_url} invalid"}
-
-    request_body = {
-        'project_uids': [project_uid],
-        'val_project_uids': [project_uid],
-        'email': user_email,
-        'ml_service_map': ml_service_map,
-        'class_maps': class_maps
-    }
-    try:
-        yaml_path = os.path.join(os.path.dirname(__file__), '../config/service_map_training.yaml')
-        config_json = load_yaml_file(yaml_path=yaml_path)
-        logger('Loaded Yaml to JSON')
-
-        # update target
-        for index in range(len(config_json["detection"])):
-            config_json["detection"][index]["target"] = list(ml_service_map["detection"])
-        seg_ml_service_map = sorted(ml_service_map["segmentation"])
-        for index in range(len(config_json["segmentation"])):
-            if index < len(seg_ml_service_map):
-                config_json["segmentation"][index]["target"] = seg_ml_service_map[index]
-            else:
-                config_json["segmentation"][index]["target"] = ""
-
-        logger("Added MLService")
-
-        config_json.update(**request_body)
-        logger('Updated config')
-
-        train_config_payload = config_json # ConfigModel(**config_json).model_dump_json()
-        logger("Got the Config as per Payload")
-    except AssertionError as ae:
-        logger(f'Path not exists: {ae}')
-        return {"task": task.description(), "status": 'Path not exists'}
-
-    logger(train_config_payload)
-    headers = {"Authorization": f"Token {core_token}"}
-    response = requests.request("POST", SCMAPP_URL + "/train", json=train_config_payload, headers=headers)
-    return {"task": task.description(), "status": response.status_code}
 
 def detect(project_details, geojson, model_registry_name, user_email, core_token, logger):
     project_uid = project_details.get("uid", None)
@@ -98,14 +42,8 @@ def detect(project_details, geojson, model_registry_name, user_email, core_token
     logger("Got the Config as per Payload")
 
     headers = {"Authorization": f"Token {core_token}"}
-    response = requests.post(SCMAPP_URL + '/predict', json=infer_config_payload, headers=headers)
+    response = requests.post('test' + '/predict', json=infer_config_payload, headers=headers)
     return {"task": "Detect",
             "Exception": "",
             "status": response.status_code}
 
-
-def approve(project_details,core_token):
-    project_uid = project_details.get("uid")
-    headers = {"Authorization": f"Token {core_token}"}
-    response = requests.post(SCMAPP_URL + '/approve', params={"project_uid": project_uid}, headers=headers)
-    return response.json()

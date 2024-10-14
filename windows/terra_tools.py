@@ -22,12 +22,9 @@
 #  ***************************************************************************/
 # """
 
-from ..tasks import clip_request, detectionTask, approveTask
 from ..sensehawk_apis.core_apis import get_project_geojson
-from ..sensehawk_apis.scm_apis import get_models_list 
-from .ml_service_map import MLServiceMapWidget
 from ..utils import features_to_polygons
-from ..constants import SCMAPP_URL
+from ..tasks import clip_request
 from functools import partial
 
 from qgis.core import Qgis, QgsApplication, QgsTask  
@@ -50,13 +47,12 @@ class TerraToolsWidget(QtWidgets.QWidget):
         self.parent = self.project.project_tab
         self.canvas_logger = project.canvas_logger
         self.logger = project.logger
-        self.detectButton.clicked.connect(lambda : DetectComponent(self))
-        self.approveButton.clicked.connect(self.start_approve_task)
-        self.clipButton.clicked.connect(self.start_clip_task)
-        self.requestModelButton.clicked.connect(lambda: MLServiceMapWidget(self.project))
+        self.train_model.clicked.connect(self.model_train)
+        self.detect_button.clicked.connect(lambda : DetectComponent(self))
+        # self.approveButton.clicked.connect(self.start_approve_task)
+        # self.clipButton.clicked.connect(self.start_clip_task)
         self.report_update.clicked.connect(lambda: Report_and_update(self))
         self.orderComponent.clicked.connect(lambda: ComponentPreProcess(self))
-        self.load_inference.clicked.connect(self.loadInferenceJson)
         self.core_token = self.project.core_token
         self.project_details = self.project.project_details
         self.class_maps = self.project.class_maps
@@ -75,6 +71,19 @@ class TerraToolsWidget(QtWidgets.QWidget):
             if button.isCheckable():
                 button.setChecked(False)
 
+    def model_train(self):
+        url = "https://pyufpjfyiw3sbmpte5sb2ta7gy0aedkg.lambda-url.us-west-2.on.aws/"
+        headers = {"Authorization": "Token {}".format(self.core_token)} 
+        endpoint = "train"
+        service_name = "scmv4"
+        params = {
+                "service_name":service_name, "email_id": self.project.user_email,"endpoint":endpoint, 
+                "org_uid":self.project_details['organization']['uid'], "project_uid":self.project_details.get('uid', None)
+                }
+        print(params, headers)
+        resp = requests.post(url, headers=headers, params=params)
+        self.canvas_logger(f"{resp.json()}")
+
     def start_clip_task(self):
         def callback(task, logger):
             result = task.returned_values
@@ -89,21 +98,21 @@ class TerraToolsWidget(QtWidgets.QWidget):
         QgsApplication.taskManager().addTask(clip_task)
 
 
-    def start_approve_task(self):
-        def callback(task, logger):
-            result = task.returned_values
-            if result:
-                logger(str(result))
+    # def start_approve_task(self):
+    #     def callback(task, logger):
+    #         result = task.returned_values
+    #         if result:
+    #             logger(str(result))
 
-        self.logger("Approve called...")
-        self.uncheck_all_buttons()
-        geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
-        approve_task = QgsTask.fromFunction("Approve", approveTask,
-                                            approve_task_input=[self.project_details, geojson,
-                                                                self.project.user_email,
-                                                                self.core_token])
-        QgsApplication.taskManager().addTask(approve_task)
-        approve_task.statusChanged.connect(lambda: callback(approve_task, self.logger))
+    #     self.logger("Approve called...")
+    #     self.uncheck_all_buttons()
+    #     geojson = get_project_geojson(self.project_details.get("uid", None), self.core_token, "terra")
+    #     approve_task = QgsTask.fromFunction("Approve", approveTask,
+    #                                         approve_task_input=[self.project_details, geojson,
+    #                                                             self.project.user_email,
+    #                                                             self.core_token])
+    #     QgsApplication.taskManager().addTask(approve_task)
+    #     approve_task.statusChanged.connect(lambda: callback(approve_task, self.logger))
 
     def loadInferaCallback(self, task_status, loadInfereJsonTask):
         if task_status != 3:
@@ -126,62 +135,6 @@ class TerraToolsWidget(QtWidgets.QWidget):
             else:
                 self.canvas_logger(str(response.json()+'|'+response.status_code), level=Qgis.Warning)
 
-    def loadInferenceJson(self):
-        # print('load inference file')  
-        # #TODO add this func to qgs task
-        headers = {"Authorization": f"Token {self.core_token}"}
-        project_uid  = self.project_details.get('uid', None)
-        groupuid = self.project_details["group"]["uid"]
-        url = SCMAPP_URL + f"/last-inferenced-geojson?project_uid={project_uid}"
-        response = requests.get(url=url, headers=headers)
-        # print(response.json(), response.status_code)
-        if response.status_code == 200:
-                infernce_geojson = response.json()['features']
-                with open(self.project.geojson_path , 'r') as g:
-                    existing_geojson = json.load(g)
-                
-                infernce_geojson = features_to_polygons(infernce_geojson, project_uid, groupuid, self.project)
-                existing_geojson['features'] += infernce_geojson
-                #disconnect any single added to existing vlayer
-                self.project.vlayer.selectionChanged.disconnect()
-                # Remove existing Vlayer  
-                self.project.qgis_project.removeMapLayers([self.project.vlayer.id()])
-                #saving merged geojson
-                with open(self.project.geojson_path, "w") as fi:
-                    json.dump(existing_geojson, fi)
-                self.project.initialize_vlayer()
-                self.canvas_logger('Components features loaded', level=Qgis.Success)
-
-        # loadInf_json_task = QgsTask.fromFunction("Load Inference Geojson", get_inference_geojson, inputs=[
-        #                                                                                    project_uid,self.core_token, 
-        #                                                                                    self.logger, self.project.geojson_path, groupuid, self.project])
-        # QgsApplication.taskManager().addTask(loadInf_json_task)
-        # loadInf_json_task.statusChanged.connect(lambda load_status: self.loadInferaCallback(load_status, loadInf_json_task))
-        
-def get_inference_geojson(task, inputs):
-            projectUid, token, logger, geojson_path, groupuid, projecttab = inputs
-            headers = {"Authorization": f"Token {token}"}
-            url = SCMAPP_URL + f"/last-inferenced-geojson?project_uid={projectUid}"
-            logger(url)
-            try:
-                response = requests.get(url=url, headers=headers)
-            except Exception as e:
-                tb = traceback.format_exc()
-                logger(str(tb), str(e))
-            if response.status_code == 200:
-                infernce_geojson = response.json()['features']
-                logger(infernce_geojson, "inference json file")
-                with open(geojson_path , 'r') as g:
-                    existing_geojson = json.load(g)
-                
-                infernce_geojson = features_to_polygons(infernce_geojson, projectUid, groupuid, projecttab)
-                existing_geojson['features'] += infernce_geojson
-            else:
-                existing_geojson = {}
-
-            return {'response':response, 'existing_geojson':existing_geojson,
-                    'task':task.description()}
-
 
 class DetectComponent(QtWidgets.QDialog):
     def __init__(self, terra_obj):
@@ -191,7 +144,7 @@ class DetectComponent(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         layout = QtWidgets.QVBoxLayout(self)
         self.load_model = uic.loadUi(os.path.join(os.path.dirname(__file__), 'load_model.ui'))
-        self.load_model.detectionModel_cbox.currentTextChanged.connect(self.displayModelcomponent)
+        self.load_model.detection_model_cbox.currentTextChanged.connect(self.detection_model_cbox_fn)
         button_box = QtWidgets.QDialogButtonBox()
         button_box.addButton("DETECT", QtWidgets.QDialogButtonBox.AcceptRole)
         button_box.addButton("Cancel", QtWidgets.QDialogButtonBox.RejectRole)
@@ -206,57 +159,45 @@ class DetectComponent(QtWidgets.QDialog):
     
     def setup_ui(self):
         # Get list of available models
-        self.models_dict = get_models_list(self.terra_obj.project_details.get("uid", None), self.terra_obj.core_token)
-        # self.models_dict = {'model1':['Piles','Tracker'], 'model2':['Module', 'Tester']}
-        models_list = list(self.models_dict.keys())
+        #TODO endpoint to fetch run details
+        self.get_assetlevel_model_details = self.get_assetlevel_model()
+        models_list = list(self.get_assetlevel_model_details.keys())
         if models_list:
             list_items = models_list
         else:
             list_items = ["No models available"]
         self.terra_obj.uncheck_all_buttons()
         # Clear list to avoid duplicates
-        self.load_model.detectionModel_cbox.clear()
-        self.load_model.detectionModel_cbox.addItems(list_items)
+        self.load_model.detection_model_cbox.clear()
+        self.load_model.detection_model_cbox.addItems(list_items)
 
-    def displayModelcomponent(self, model):
-        txt = ",".join(self.models_dict[model])
-        self.load_model.model_component.setText(txt)
+    def get_assetlevel_model(self):
+        run_details = {'4697904d623e': ['7442f8728c3e4d86b5f4cdc0ccf2aeb7', 'segmentation', 'DvTHefWgBd', 'MgWC1IgoN5', 'Rafter,Pole, Module', 'tasteful-pig-659', 'ebce7f63f8524616ba0e358683282946', 'detection', 'DvTHefWgBd', 'MgWC1IgoN5', 'Rafter,Pole, Module', 'flawless-sow-546'], 
+                       '4183b2a619b5': ['a81dee1030ad47d0961573d64b6b4928', 'segmentation', 'DvTHefWgBd', 'MgWC1IgoN5', 'Pole,Rafter, Module', 'wistful-hare-598', '11cae7f635e4464db0dbfad98169bb5e', 'detection', 'DvTHefWgBd', 'MgWC1IgoN5', 'Pole,Rafter, Module', 'suave-squirrel-847']
+                       }
 
+        return run_details
+    
+    def detection_model_cbox_fn(self, model):
+        model_info = self.get_assetlevel_model_details[model]
+        self.load_model.components_label.setText(model_info[4])
 
     def detect_task(self):
         self.accept()
-        def callback(task, logger, canvas_logger):
-            result = task.returned_values
-            if result:
-                status_code = result.get("status")
-                if status_code == 503:
-                    logger("Detect service is off. Please request to turn it on before trying again!", level=Qgis.Warning)
-                elif status_code == 202:
-                    canvas_logger("Detect request sent successfully!")
-                else:
-                    logger("Error: " + str(status_code) + str(result))
-            else:
-                logger("Error: No returned value in Detect " + str(result))
+        url = "https://pyufpjfyiw3sbmpte5sb2ta7gy0aedkg.lambda-url.us-west-2.on.aws/"
+        headers = {"Authorization": "Token {}".format(self.terra_obj.core_token)} 
+        endpoint = "inference"
+        service_name = "scmv4"
+        project_run_uid = self.load_model.detection_model_cbox.currentText()
+        params = {
+                "service_name":service_name, "email_id": self.terra_obj.project.user_email,"endpoint":endpoint, 
+                "org_uid":self.terra_obj.project_details['organization']['uid'], "project_run_uid": project_run_uid,
+                "project_uid":self.terra_obj.project_details.get('uid', None)
+                }
+        print(params, headers)
+        resp = requests.post(url, headers=headers, params=params)
+        self.terra_obj.canvas_logger(f"{resp.json()}")
 
-        self.terra_obj.logger("Detection called..")
-        self.terra_obj.uncheck_all_buttons()
-        geojson = get_project_geojson(self.terra_obj.project_details.get("uid", None), self.terra_obj.core_token, "terra")
-        self.terra_obj.logger("Getting model information...")
-        model_registry_name = self.load_model.detectionModel_cbox.currentText()
-        if model_registry_name not in self.models_dict:
-            self.logger("Invalid model...")
-            return None
-        self.terra_obj.logger("Initiating detection request task...")
-        detection_task = QgsTask.fromFunction("Detect", detectionTask,
-                                              detection_task_input=[self.terra_obj.project_details,
-                                                                    geojson,
-                                                                    model_registry_name,
-                                                                    self.terra_obj.project.user_email,
-                                                                    self.terra_obj.core_token,
-                                                                    self.terra_obj.logger])
-        detection_task.statusChanged.connect(lambda: callback(detection_task, self.terra_obj.logger, self.terra_obj.canvas_logger))
-        QgsApplication.taskManager().addTask(detection_task)
-    
     def close_dialogbox(self):
         self.reject()
 
@@ -295,7 +236,7 @@ class ComponentPreProcess(QtWidgets.QDialog):
                 self.component_names = list(feat["extraProperties"]["component"].keys())
                 self.extraproperties_info = feat["extraProperties"]
                 break
-
+                                
         if not self.component_names:
             self.terra_obj.canvas_logger('component info not found', level=Qgis.Warning)
             return None

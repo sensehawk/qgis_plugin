@@ -2,7 +2,6 @@ from qgis.core import QgsTask, QgsApplication, Qgis, QgsRasterLayer, QgsField
 from .sensehawk_apis.terra_apis import get_terra_classmaps, get_project_data
 from.sensehawk_apis.therm_apis import get_therm_classmaps
 from .sensehawk_apis.core_apis import get_ortho_tiles_url, get_ortho_url, core_login, get_project_geojson, get_project_reports, get_project_details
-from .sensehawk_apis.scm_apis import detect, approve
 from .utils import load_vectors, file_existent, organization_details
 import requests
 from pathlib import Path
@@ -195,20 +194,5 @@ def logintask(task, login_window):
     else:
         login_window.logger("incorrect user email or password...", level=Qgis.Warning)
         return None
-
-def detectionTask(task, detection_task_input):
-    project_details, geojson, model_details, user_email, core_token,logger = detection_task_input
-    try:
-        return detect(project_details, geojson, model_details, user_email, core_token,logger)
-    except Exception as e:
-        return {"task": task.description(), "Exception": e, "success": 404}
-
-def approveTask(task, approve_task_input):
-    project_details, _, _, core_token = approve_task_input
-    try:
-        approve(project_details, core_token)
-        return {"task": task.description(), "Exception": None, "success": True}
-    except Exception as e:
-        return {"task": task.description(), "Exception": e, "success": False}
 
 
