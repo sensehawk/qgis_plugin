@@ -172,10 +172,13 @@ class DetectComponent(QtWidgets.QDialog):
         self.load_model.detection_model_cbox.addItems(list_items)
 
     def get_assetlevel_model(self):
-        run_details = {'4697904d623e': ['7442f8728c3e4d86b5f4cdc0ccf2aeb7', 'segmentation', 'DvTHefWgBd', 'MgWC1IgoN5', 'Rafter,Pole, Module', 'tasteful-pig-659', 'ebce7f63f8524616ba0e358683282946', 'detection', 'DvTHefWgBd', 'MgWC1IgoN5', 'Rafter,Pole, Module', 'flawless-sow-546'], 
-                       '4183b2a619b5': ['a81dee1030ad47d0961573d64b6b4928', 'segmentation', 'DvTHefWgBd', 'MgWC1IgoN5', 'Pole,Rafter, Module', 'wistful-hare-598', '11cae7f635e4464db0dbfad98169bb5e', 'detection', 'DvTHefWgBd', 'MgWC1IgoN5', 'Pole,Rafter, Module', 'suave-squirrel-847']
-                       }
-
+        url = "http://mlflow.sensehawk.com:8080/get_runs"
+        asset_uid = self.terra_obj.project_details["asset"]["uid"]
+        params = {"asset_uid": asset_uid}
+        print(self.terra_obj.project_details)
+        resp = requests.get(url, params=params)
+        run_details = resp.json()
+        print(run_details)
         return run_details
     
     def detection_model_cbox_fn(self, model):
