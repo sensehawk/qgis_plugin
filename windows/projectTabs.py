@@ -44,6 +44,7 @@ class Project:
                                             'temperature_difference':QVariant.Double,'uid':QVariant.String,
                                             'projectUid':QVariant.String,'groupUid':QVariant.String,
                                             'num_images_tagged':QVariant.Double,'string_number':QVariant.String, 
+                                            'modified_string_number':QVariant.String,
                                             'table_row':QVariant.Double,'table_column':QVariant.Double, 
                                             'row':QVariant.Double,'idx':QVariant.Double,
                                             'total_num_modules':QVariant.Double,'column':QVariant.Double, 

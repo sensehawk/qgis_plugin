@@ -133,11 +133,11 @@ class ThermNumberingWidget(QtWidgets.QWidget):
 
 
         """String NUmbering"""
-        # First add the table string number to raw_string_number property irrespective
+        # First add the table string number to string_number property irrespective
         for featureobj in featuresobjlist:
                 if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
                     for issue_obj in featureobj.issue_obj:
-                        issue_obj.feature['raw_string_number'] = featureobj.feature['string_number']
+                        issue_obj.feature['string_number'] = featureobj.feature['string_number']
                         vlayer.updateFeature(issue_obj.feature)
         
         if self.stringnum_type.currentText() == 'Basic' or self.stringnum_type.currentText() == 'Basic+module':
@@ -150,19 +150,19 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                     if self.stringnum_type.currentText() == 'Basic':
                         basic_number = f"{prefix}-R{table_row}-T{table_column}-{suffix}"
                         try:
-                            featureobj.feature['string_number'] = basic_number.strip('-')
+                            featureobj.feature['modified_string_number'] = basic_number.strip('-')
                         except KeyError:
                             self.canvas_logger("String number field does not exist!", level=Qgis.Warning)
                         vlayer.updateFeature(featureobj.feature)
                     elif self.stringnum_type.currentText() == 'Basic+module':
                         basic_module_number = f"{prefix}-R{table_row}-T{table_column}-R{issue_row}-C{issue_column}-{suffix}"
-                        featureobj.feature['string_number'] = basic_module_number.strip('-')
+                        featureobj.feature['modified_string_number'] = basic_module_number.strip('-')
                         vlayer.updateFeature(featureobj.feature)
                     
         elif self.stringnum_type.currentText() == 'Existing+module':
             for featureobj in featuresobjlist:
                 if featureobj.feature['class_name'] == 'table' and featureobj.issue_obj :
-                    if not featureobj.feature['string_number']:
+                    if not featureobj.feature['modified_string_number']:
                         existing_string_number = "Existing string number does not exist"
                     else:
                         existing_string_number = featureobj.feature['string_number']
@@ -170,7 +170,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                         issue_row = issue_obj.feature['row']
                         issue_column = issue_obj.feature['column']
                         basic_module_number = f"{prefix}-{existing_string_number}-R{issue_row}-C{issue_column}-{suffix}"
-                        issue_obj.feature['string_number'] = basic_module_number.strip('-')
+                        issue_obj.feature['modified_string_number'] = basic_module_number.strip('-')
                         vlayer.updateFeature(issue_obj.feature)
         
         elif self.stringnum_type.currentText() == 'Existing':
@@ -182,7 +182,7 @@ class ThermNumberingWidget(QtWidgets.QWidget):
                         existing_string_number = featureobj.feature['string_number']
                     for issue_obj in featureobj.issue_obj:
                         basic_module_number = f"{prefix}-{existing_string_number}-{suffix}"
-                        issue_obj.feature['string_number'] = basic_module_number.strip('-')
+                        issue_obj.feature['modified_string_number'] = basic_module_number.strip('-')
                         vlayer.updateFeature(issue_obj.feature)
 
         
