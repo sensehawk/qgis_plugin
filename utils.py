@@ -270,8 +270,10 @@ def asset_details(task, org_uid, token, logger):  # fetching asset and org_conta
 
         user_id_url = CORE_URL + f'/api/v1/organizations/{org_uid}/?organization={org_uid}'
         org_user_response = requests.get(user_id_url, headers=headers)
-        user_id = org_user_response.json().get("owner", {"uid":"no org user"}).get('uid', None)
-        
+        owner = org_user_response.json().get("owner", None)
+        if not owner:
+            owner = {"uid":"no org user"}
+        user_id = owner.get('uid', None)
         apptype_url = CORE_URL + f'/api/v1/apptypes/?organization={org_uid}'
         apptype_response = requests.get(apptype_url, headers=headers)
         apptype_details = apptype_response.json()['results']
