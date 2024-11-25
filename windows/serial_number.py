@@ -56,6 +56,8 @@ class SerialNumberWidget(QtWidgets.QWidget):
             associate_issues_parent_table(self.thermToolObj.featuresobjlist)
             #Update Issue Row and Column number with respecte barcode tracker
             update_issue_Row_column(self.thermToolObj.featuresobjlist, self.vlayer, module_height, module_width)
+            self.vlayer.commitChanges()
+            self.vlayer.startEditing()
         except Exception as e:
             self.thermToolObj.canvas_logger(str(e), level=Qgis.Warning)
         else:
@@ -66,6 +68,13 @@ class SerialNumberWidget(QtWidgets.QWidget):
             self.thermToolObj.canvas_logger("Locate Row and Column Before Updating serial number", level=Qgis.Warning)
             return None
         
+        vfeatures = self.vlayer.getFeatures()
+        featureslist = [feature for feature in vfeatures] 
+
+        self.thermToolObj.featuresobjlist = [Table(feature) for feature in featureslist] 
+        #Associate issues Parent table
+        associate_issues_parent_table(self.thermToolObj.featuresobjlist)
+
         tablelist = [table for table in self.thermToolObj.featuresobjlist if table.feature['class_name'] == 'strings' and table.issue_obj]
         try:
             for table in tablelist:
